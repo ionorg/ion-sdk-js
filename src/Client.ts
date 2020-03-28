@@ -23,6 +23,10 @@ interface IonNotification extends Notification {
   };
 }
 
+interface IonRTCPeerConnection extends RTCPeerConnection {
+  sendOffer: boolean;
+}
+
 export default class Client extends EventEmitter {
   _url: string | undefined;
   _port: number;
@@ -111,19 +115,17 @@ export default class Client extends EventEmitter {
       let pc = await this._createSender(stream, options.codec);
 
       pc.onicecandidate = async () => {
-        // @ts-ignore
-        if (!pc.sendOffer) {
+        if (pc.sendOffer) {
           var offer = pc.localDescription;
           console.log("Send offer");
-          // @ts-ignore
-          pc.sendOffer = true;
+          pc.sendOffer = false;
           let result = await this._protoo?.request("publish", {
             rid: this._rid,
             jsep: offer,
             options
           });
           await pc.setRemoteDescription(result?.jsep);
-          console.log("publish success => " + JSON.stringify(result));
+          console.log("publish success");
           // this._streams[stream.mid] = stream;
           // this._pcs[stream.mid] = pc;
           return stream;
@@ -150,52 +152,48 @@ export default class Client extends EventEmitter {
 
   async subscribe(rid: string, mid: string) {
     console.log("subscribe rid => %s, mid => %s", rid, mid);
-    var promise = new Promise(async (resolve, reject) => {
-      try {
-        let pc = await this._createReceiver(mid);
-        var sub_mid = "";
+    try {
+      let pc = await this._createReceiver(mid);
+      var sub_mid = "";
+      // @ts-ignore : deprecated api
+      pc.onaddstream = (e: any) => {
+        console.log("Stream::pc::onaddstream", sub_mid);
+        this._streams[sub_mid] = e.stream;
+        return e.stream;
+      };
+      // @ts-ignore : deprecated api
+      pc.onremovestream = (e: any) => {
+        var stream = e.stream;
+        console.log("Stream::pc::onremovestream", stream.id);
+      };
+      // @ts-ignore : deprecated api
+      pc.onicecandidate = async (e: any) => {
         // @ts-ignore : deprecated api
-        pc.onaddstream = (e: any) => {
-          console.log("Stream::pc::onaddstream", sub_mid);
-          this._streams[sub_mid] = e.stream;
-          resolve(e.stream);
-        };
-        // @ts-ignore : deprecated api
-        pc.onremovestream = (e: any) => {
-          var stream = e.stream;
-          console.log("Stream::pc::onremovestream", stream.id);
-        };
-        // @ts-ignore : deprecated api
-        pc.onicecandidate = async (e: any) => {
+        if (pc.sendOffer) {
+          var jsep = pc.localDescription;
+          console.log("Send offer");
           // @ts-ignore : deprecated api
-          if (!pc.sendOffer) {
-            var jsep = pc.localDescription;
-            console.log("Send offer");
-            // @ts-ignore : deprecated api
-            pc.sendOffer = true;
-            let result = await this._protoo?.request("subscribe", {
-              rid,
-              jsep,
-              mid
-            });
-            sub_mid = result?.mid;
-            console.log(`subscribe success => result(mid: ${sub_mid})`);
-            await pc.setRemoteDescription(result?.jsep);
-          }
-        };
-      } catch (error) {
-        console.log("subscribe request error  => " + error);
-        reject(error);
-      }
-    });
-    return promise;
+          pc.sendOffer = false;
+          let result = await this._protoo?.request("subscribe", {
+            rid,
+            jsep,
+            mid
+          });
+          sub_mid = result?.mid;
+          console.log(`subscribe success => result(mid: ${sub_mid})`);
+          await pc.setRemoteDescription(result?.jsep);
+        }
+      };
+    } catch (error) {
+      console.log("subscribe request error  => " + error);
+    }
   }
 
   async unsubscribe(rid: string, mid: string) {
     console.log("unsubscribe rid => %s, mid => %s", rid, mid);
     try {
       let data = await this._protoo?.request("unsubscribe", { rid, mid });
-      console.log("unsubscribe success: result => " + JSON.stringify(data));
+      console.log("unsubscribe success");
       this._removePC(mid);
     } catch (error) {
       console.log("unsubscribe reject: error =>" + error);
@@ -290,9 +288,10 @@ export default class Client extends EventEmitter {
 
   async _createSender(stream: MediaStream, codec: string) {
     console.log("create sender => %s", codec);
-    let pc = new RTCPeerConnection({ iceServers: [{ urls: ices }] });
-    // @ts-ignore
-    pc.sendOffer = false;
+    let pc = new RTCPeerConnection({
+      iceServers: [{ urls: ices }]
+    }) as IonRTCPeerConnection;
+    pc.sendOffer = true;
     // @ts-ignore
     pc.addStream(stream);
     let offer = await pc.createOffer({
@@ -304,11 +303,12 @@ export default class Client extends EventEmitter {
     return pc;
   }
 
-  async _createReceiver(uid: string): Promise<RTCPeerConnection> {
+  async _createReceiver(uid: string): Promise<IonRTCPeerConnection> {
     console.log("create receiver => %s", uid);
-    let pc = new RTCPeerConnection({ iceServers: [{ urls: ices }] });
-    // @ts-ignore
-    pc.sendOffer = false;
+    let pc = new RTCPeerConnection({
+      iceServers: [{ urls: ices }]
+    }) as IonRTCPeerConnection;
+    pc.sendOffer = true;
     pc.addTransceiver("audio", { direction: "recvonly" });
     pc.addTransceiver("video", { direction: "recvonly" });
     let desc = await pc.createOffer();
