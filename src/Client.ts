@@ -150,43 +150,46 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async subscribe(rid: string, mid: string) {
+  async subscribe(rid: string, mid: string): Promise<MediaStream> {
     console.log("subscribe rid => %s, mid => %s", rid, mid);
-    try {
-      let pc = await this._createReceiver(mid);
-      var sub_mid = "";
-      // @ts-ignore : deprecated api
-      pc.onaddstream = (e: any) => {
-        console.log("Stream::pc::onaddstream", sub_mid);
-        this._streams[sub_mid] = e.stream;
-        return e.stream;
-      };
-      // @ts-ignore : deprecated api
-      pc.onremovestream = (e: any) => {
-        var stream = e.stream;
-        console.log("Stream::pc::onremovestream", stream.id);
-      };
-      // @ts-ignore : deprecated api
-      pc.onicecandidate = async (e: any) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let pc = await this._createReceiver(mid);
+        var sub_mid = "";
         // @ts-ignore : deprecated api
-        if (pc.sendOffer) {
-          var jsep = pc.localDescription;
-          console.log("Send offer");
+        pc.onaddstream = (e: any) => {
+          console.log("Stream::pc::onaddstream", sub_mid);
+          this._streams[sub_mid] = e.stream;
+          resolve(e.stream);
+        };
+        // @ts-ignore : deprecated api
+        pc.onremovestream = (e: any) => {
+          var stream = e.stream;
+          console.log("Stream::pc::onremovestream", stream.id);
+        };
+        // @ts-ignore : deprecated api
+        pc.onicecandidate = async (e: any) => {
           // @ts-ignore : deprecated api
-          pc.sendOffer = false;
-          let result = await this._protoo?.request("subscribe", {
-            rid,
-            jsep,
-            mid
-          });
-          sub_mid = result?.mid;
-          console.log(`subscribe success => result(mid: ${sub_mid})`);
-          await pc.setRemoteDescription(result?.jsep);
-        }
-      };
-    } catch (error) {
-      console.log("subscribe request error  => " + error);
-    }
+          if (pc.sendOffer) {
+            var jsep = pc.localDescription;
+            console.log("Send offer");
+            // @ts-ignore : deprecated api
+            pc.sendOffer = false;
+            let result = await this._protoo?.request("subscribe", {
+              rid,
+              jsep,
+              mid
+            });
+            sub_mid = result?.mid;
+            console.log(`subscribe success => result(mid: ${sub_mid})`);
+            await pc.setRemoteDescription(result?.jsep);
+          }
+        };
+      } catch (error) {
+        console.log("subscribe request error  => " + error);
+        reject(error);
+      }
+    });
   }
 
   async unsubscribe(rid: string, mid: string) {

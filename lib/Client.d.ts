@@ -40,7 +40,7 @@ export default class Client extends EventEmitter {
         bandwidth: number;
     }): Promise<void>;
     unpublish(mid: string): Promise<void>;
-    subscribe(rid: string, mid: string): Promise<void>;
+    subscribe(rid: string, mid: string): Promise<MediaStream>;
     unsubscribe(rid: string, mid: string): Promise<void>;
     close(): void;
     _payloadModify(desc: RTCSessionDescriptionInit, codec: string): RTCSessionDescriptionInit;
