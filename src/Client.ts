@@ -114,7 +114,7 @@ export default class Client extends EventEmitter {
         // @ts-ignore
         if (!pc.sendOffer) {
           var offer = pc.localDescription;
-          console.log("Send offer sdp => " + offer?.sdp);
+          console.log("Send offer");
           // @ts-ignore
           pc.sendOffer = true;
           let result = await this._protoo?.request("publish", {
@@ -170,7 +170,7 @@ export default class Client extends EventEmitter {
           // @ts-ignore : deprecated api
           if (!pc.sendOffer) {
             var jsep = pc.localDescription;
-            console.log("Send offer sdp => " + jsep?.sdp);
+            console.log("Send offer");
             // @ts-ignore : deprecated api
             pc.sendOffer = true;
             let result = await this._protoo?.request("subscribe", {
@@ -179,12 +179,7 @@ export default class Client extends EventEmitter {
               mid
             });
             sub_mid = result?.mid;
-            console.log(
-              "subscribe success => result(mid: " +
-                sub_mid +
-                ") sdp => " +
-                result?.jsep.sdp
-            );
+            console.log(`subscribe success => result(mid: ${sub_mid})`);
             await pc.setRemoteDescription(result?.jsep);
           }
         };
