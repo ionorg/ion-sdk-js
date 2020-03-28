@@ -1,7 +1,5 @@
-/// <reference types="node" />
 import { EventEmitter } from "events";
 import * as protoo from "protoo-client";
-import Stream from "./Stream";
 interface IonNotification extends Notification {
     method: string;
     data: {
@@ -21,7 +19,7 @@ export default class Client extends EventEmitter {
         [name: string]: RTCPeerConnection;
     };
     _streams: {
-        [name: string]: Stream;
+        [name: string]: MediaStream;
     };
     constructor();
     get uid(): string;
@@ -30,7 +28,7 @@ export default class Client extends EventEmitter {
         name: string;
     }): Promise<void>;
     leave(): Promise<void>;
-    publish(options?: {
+    publish(stream: MediaStream, options?: {
         audio: boolean;
         video: boolean;
         screen: boolean;

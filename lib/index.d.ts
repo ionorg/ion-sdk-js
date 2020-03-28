@@ -1,3 +1,2 @@
-import Client from './Client';
-import Stream from './Stream';
-export { Client, Stream };
+import Client from "./Client";
+export { Client };

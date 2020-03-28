@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
 import * as protoo from "protoo-client";
 import { v4 as uuidv4 } from "uuid";
-import Stream from "./Stream";
 import * as sdpTransform from "sdp-transform";
 
 const ices = "stun:stun.stunprotocol.org:3478";
@@ -31,7 +30,7 @@ export default class Client extends EventEmitter {
   _rid: string | undefined;
   _protoo: protoo.Peer | undefined;
   _pcs: { [name: string]: RTCPeerConnection };
-  _streams: { [name: string]: Stream };
+  _streams: { [name: string]: MediaStream };
 
   constructor() {
     super();
@@ -97,6 +96,7 @@ export default class Client extends EventEmitter {
   }
 
   async publish(
+    stream: MediaStream,
     options = {
       audio: true,
       video: true,
@@ -106,19 +106,9 @@ export default class Client extends EventEmitter {
       bandwidth: 1024
     }
   ) {
-    console.log("publish options => %o", options);
+    console.log("publish optiond => %o", options);
     try {
-      let stream = new Stream();
-      await stream.init(true, {
-        audio: options.audio,
-        video: options.video,
-        screen: options.screen,
-        resolution: options.resolution
-      });
-      let pc = await this._createSender(
-        stream.stream as MediaStream,
-        options.codec
-      );
+      let pc = await this._createSender(stream, options.codec);
 
       pc.onicecandidate = async () => {
         // @ts-ignore
@@ -134,9 +124,8 @@ export default class Client extends EventEmitter {
           });
           await pc.setRemoteDescription(result?.jsep);
           console.log("publish success => " + JSON.stringify(result));
-          stream.mid = result?.mid;
-          this._streams[stream.mid as string] = stream;
-          this._pcs[stream.mid as string] = pc;
+          // this._streams[stream.mid] = stream;
+          // this._pcs[stream.mid] = pc;
           return stream;
         }
       };
@@ -167,10 +156,9 @@ export default class Client extends EventEmitter {
         var sub_mid = "";
         // @ts-ignore : deprecated api
         pc.onaddstream = (e: any) => {
-          var stream = new Stream(sub_mid, e.stream);
-          console.log("Stream::pc::onaddstream", stream.mid);
-          this._streams[sub_mid] = stream;
-          resolve(stream);
+          console.log("Stream::pc::onaddstream", sub_mid);
+          this._streams[sub_mid] = e.stream;
+          resolve(e.stream);
         };
         // @ts-ignore : deprecated api
         pc.onremovestream = (e: any) => {
