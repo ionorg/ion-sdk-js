@@ -9,6 +9,9 @@ interface IonNotification extends Notification {
         info?: string;
     };
 }
+interface IonRTCPeerConnection extends RTCPeerConnection {
+    sendOffer: boolean;
+}
 export default class Client extends EventEmitter {
     _url: string | undefined;
     _port: number;
@@ -37,12 +40,12 @@ export default class Client extends EventEmitter {
         bandwidth: number;
     }): Promise<void>;
     unpublish(mid: string): Promise<void>;
-    subscribe(rid: string, mid: string): Promise<unknown>;
+    subscribe(rid: string, mid: string): Promise<void>;
     unsubscribe(rid: string, mid: string): Promise<void>;
     close(): void;
     _payloadModify(desc: RTCSessionDescriptionInit, codec: string): RTCSessionDescriptionInit;
-    _createSender(stream: MediaStream, codec: string): Promise<RTCPeerConnection>;
-    _createReceiver(uid: string): Promise<RTCPeerConnection>;
+    _createSender(stream: MediaStream, codec: string): Promise<IonRTCPeerConnection>;
+    _createReceiver(uid: string): Promise<IonRTCPeerConnection>;
     _removePC(id: string): void;
     _getProtooUrl(pid: string): string;
     _handleRequest(request: protoo.Request): void;

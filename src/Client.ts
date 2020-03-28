@@ -127,7 +127,7 @@ export default class Client extends EventEmitter {
           await pc.setRemoteDescription(result?.jsep);
           console.log("publish success");
           // this._streams[stream.mid] = stream;
-          // this._pcs[stream.mid] = pc;
+          this._pcs[result?.mid] = pc;
           return stream;
         }
       };
