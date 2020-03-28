@@ -2,10 +2,9 @@
   "name": "ion-sdk",
   "version": "0.0.1",
   "description": "A js sdk for ion sfu",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "build": "webpack --mode=production --config webpack.config.js",
-    "start": "webpack-dev-server --config ./webpack.config.js --mode development --open --https --cert ../../configs/cert.pem --key  ../../configs/key.pem"
+    "build": "tsc"
   },
   "author": "pion",
   "license": "MIT",
@@ -16,17 +15,16 @@
     "@babel/preset-env": "^7.4.3",
     "@babel/preset-react": "^7.0.0",
     "@babel/runtime": "^7.4.4",
-    "babel-loader": "^8.0.5",
-    "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.1",
-    "webpack-dev-server": "^3.3.1"
+    "@types/sdp-transform": "^2.4.3",
+    "@types/uuid": "^7.0.2",
+    "@types/webrtc": "^0.0.26"
   },
   "dependencies": {
     "events": "^3.0.0",
     "lodash": "^4.17.15",
     "protoo-client": "^4.0.3",
     "sdp-transform": "^2.13.0",
-    "uuid": "^3.3.2"
+    "uuid": "^7.0.2"
   },
   "keywords": [
     "pion",
