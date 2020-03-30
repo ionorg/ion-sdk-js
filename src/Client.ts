@@ -28,18 +28,17 @@ interface IonRTCPeerConnection extends RTCPeerConnection {
 }
 
 export default class Client extends EventEmitter {
-  _url: string | undefined;
-  _port: number;
+  _url: string;
   _uid: string;
   _rid: string | undefined;
   _protoo: protoo.Peer | undefined;
   _pcs: { [name: string]: RTCPeerConnection };
   _streams: { [name: string]: MediaStream };
 
-  constructor() {
+  constructor(url: string) {
     super();
-    this._port = 8443;
     this._uid = uuidv4();
+    this._url = this._getProtooUrl(url, this._uid);
     this._pcs = {};
     this._streams = {};
   }
@@ -49,8 +48,6 @@ export default class Client extends EventEmitter {
   }
 
   init() {
-    this._url = this._getProtooUrl(this._uid);
-
     const transport = new protoo.WebSocketTransport(this._url);
     this._protoo = new protoo.Peer(transport);
 
@@ -109,31 +106,46 @@ export default class Client extends EventEmitter {
       resolution: "hd",
       bandwidth: 1024
     }
-  ) {
+  ): Promise<string> {
     console.log("publish optiond => %o", options);
-    try {
-      let pc = await this._createSender(stream, options.codec);
+    return new Promise(async (resolve, reject) => {
+      try {
+        let pc = await this._createSender(stream, options.codec);
+        pc.onicecandidate = async () => {
+          if (pc.sendOffer) {
+            var offer = pc.localDescription;
+            console.log("Send offer");
+            pc.sendOffer = false;
+            let result = await this._protoo?.request("publish", {
+              rid: this._rid,
+              jsep: offer,
+              options
+            });
+            await pc.setRemoteDescription(result?.jsep);
+            console.log("publish success ", result?.mid);
+            this._streams[result?.mid] = stream;
+            this._pcs[result?.mid] = pc;
+            resolve(result?.mid);
+          }
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
 
-      pc.onicecandidate = async () => {
-        if (pc.sendOffer) {
-          var offer = pc.localDescription;
-          console.log("Send offer");
-          pc.sendOffer = false;
-          let result = await this._protoo?.request("publish", {
-            rid: this._rid,
-            jsep: offer,
-            options
-          });
-          await pc.setRemoteDescription(result?.jsep);
-          console.log("publish success");
-          // this._streams[stream.mid] = stream;
-          this._pcs[result?.mid] = pc;
-          return stream;
-        }
-      };
-    } catch (error) {
-      throw error;
-    }
+  updateTracks(mid: string, tracks: MediaStreamTrack[]) {
+    this._pcs[mid].getSenders().forEach(async (sender: RTCRtpSender) => {
+      const nextTrack = tracks.find(
+        (track: MediaStreamTrack) => track.kind === sender?.track?.kind
+      );
+
+      // stop existing track (turns off camera light)
+      sender.track?.stop();
+      if (nextTrack) {
+        sender.replaceTrack(nextTrack);
+      }
+    });
   }
 
   async unpublish(mid: string) {
@@ -327,7 +339,7 @@ export default class Client extends EventEmitter {
       let stream = this._streams[id];
       if (stream) {
         // @ts-ignore : deprecated api
-        pc.removeStream(stream.stream);
+        pc.removeStream(stream);
         delete this._streams[id];
       }
       // @ts-ignore : deprecated api
@@ -342,11 +354,8 @@ export default class Client extends EventEmitter {
     }
   }
 
-  _getProtooUrl(pid: string) {
-    const hostname = window.location.hostname;
-    const websocketProtocol = location.protocol === "https:" ? "wss" : "ws";
-    let url = `${websocketProtocol}://${hostname}:${this._port}/ws?peer=${pid}`;
-    return url;
+  _getProtooUrl(baseUrl: string, pid: string) {
+    return `${baseUrl}/ws?peer=${pid}`;
   }
 
   _handleRequest(request: protoo.Request) {

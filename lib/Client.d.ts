@@ -13,8 +13,7 @@ interface IonRTCPeerConnection extends RTCPeerConnection {
     sendOffer: boolean;
 }
 export default class Client extends EventEmitter {
-    _url: string | undefined;
-    _port: number;
+    _url: string;
     _uid: string;
     _rid: string | undefined;
     _protoo: protoo.Peer | undefined;
@@ -24,7 +23,7 @@ export default class Client extends EventEmitter {
     _streams: {
         [name: string]: MediaStream;
     };
-    constructor();
+    constructor(url: string);
     get uid(): string;
     init(): void;
     join(roomId: string, info?: {
@@ -38,7 +37,8 @@ export default class Client extends EventEmitter {
         codec: string;
         resolution: string;
         bandwidth: number;
-    }): Promise<void>;
+    }): Promise<string>;
+    updateTracks(mid: string, tracks: MediaStreamTrack[]): void;
     unpublish(mid: string): Promise<void>;
     subscribe(rid: string, mid: string): Promise<MediaStream>;
     unsubscribe(rid: string, mid: string): Promise<void>;
@@ -47,7 +47,7 @@ export default class Client extends EventEmitter {
     _createSender(stream: MediaStream, codec: string): Promise<IonRTCPeerConnection>;
     _createReceiver(uid: string): Promise<IonRTCPeerConnection>;
     _removePC(id: string): void;
-    _getProtooUrl(pid: string): string;
+    _getProtooUrl(baseUrl: string, pid: string): string;
     _handleRequest(request: protoo.Request): void;
     _handleNotification(notification: IonNotification): void;
 }
