@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import * as protoo from "protoo-client";
 import { v4 as uuidv4 } from "uuid";
 import * as sdpTransform from "sdp-transform";
+import * as log from "loglevel";
 
 const ices = "stun:stun.stunprotocol.org:3478";
 
@@ -28,6 +29,7 @@ interface IonRTCPeerConnection extends RTCPeerConnection {
 }
 
 export default class Client extends EventEmitter {
+  _debug: boolean;
   _url: string;
   _uid: string;
   _rid: string | undefined;
@@ -35,8 +37,9 @@ export default class Client extends EventEmitter {
   _pcs: { [name: string]: RTCPeerConnection };
   _streams: { [name: string]: MediaStream };
 
-  constructor(url: string) {
+  constructor(url: string, debug = false) {
     super();
+    this._debug = debug;
     this._uid = uuidv4();
     this._url = this._getProtooUrl(url, this._uid);
     this._pcs = {};
@@ -52,17 +55,17 @@ export default class Client extends EventEmitter {
     this._protoo = new protoo.Peer(transport);
 
     this._protoo?.on("open", () => {
-      console.log('Peer "open" event');
+      log.info('Peer "open" event');
       this.emit("transport-open");
     });
 
     this._protoo?.on("disconnected", () => {
-      console.log('Peer "disconnected" event');
+      log.info('Peer "disconnected" event');
       this.emit("transport-failed");
     });
 
     this._protoo?.on("close", () => {
-      console.log('Peer "close" event');
+      log.info('Peer "close" event');
       this.emit("transport-closed");
     });
 
@@ -76,11 +79,11 @@ export default class Client extends EventEmitter {
       let data = await this._protoo?.request("join", {
         rid: this._rid,
         uid: this._uid,
-        info
+        info,
       });
-      console.log("join success: result => " + JSON.stringify(data));
+      log.debug("join success: result => " + JSON.stringify(data));
     } catch (error) {
-      console.log("join reject: error =>" + error);
+      log.debug("join reject: error =>" + error);
     }
   }
 
@@ -88,11 +91,11 @@ export default class Client extends EventEmitter {
     try {
       let data = await this._protoo?.request("leave", {
         rid: this._rid,
-        uid: this._uid
+        uid: this._uid,
       });
-      console.log("leave success: result => " + JSON.stringify(data));
+      log.debug("leave success: result => " + JSON.stringify(data));
     } catch (error) {
-      console.log("leave reject: error =>" + error);
+      log.debug("leave reject: error =>" + error);
     }
   }
 
@@ -104,25 +107,25 @@ export default class Client extends EventEmitter {
       screen: false,
       codec: "h264",
       resolution: "hd",
-      bandwidth: 1024
+      bandwidth: 1024,
     }
   ): Promise<string> {
-    console.log("publish optiond => %o", options);
+    log.debug("publish optiond => %o", options);
     return new Promise(async (resolve, reject) => {
       try {
         let pc = await this._createSender(stream, options.codec);
         pc.onicecandidate = async () => {
           if (pc.sendOffer) {
             var offer = pc.localDescription;
-            console.log("Send offer");
+            log.debug("Send offer");
             pc.sendOffer = false;
             let result = await this._protoo?.request("publish", {
               rid: this._rid,
               jsep: offer,
-              options
+              options,
             });
             await pc.setRemoteDescription(result?.jsep);
-            console.log("publish success ", result?.mid);
+            log.debug("publish success ", result?.mid);
             this._streams[result?.mid] = stream;
             this._pcs[result?.mid] = pc;
             resolve(result?.mid);
@@ -149,69 +152,90 @@ export default class Client extends EventEmitter {
   }
 
   async unpublish(mid: string) {
-    console.log("unpublish rid => %s, mid => %s", this._rid, mid);
+    log.debug("unpublish rid => %s, mid => %s", this._rid, mid);
     this._removePC(mid);
     try {
       let data = await this._protoo?.request("unpublish", {
         rid: this._rid,
-        mid
+        mid,
       });
-      console.log("unpublish success: result => " + JSON.stringify(data));
+      log.debug("unpublish success: result => " + JSON.stringify(data));
     } catch (error) {
-      console.log("unpublish reject: error =>" + error);
+      log.debug("unpublish reject: error =>" + error);
     }
   }
 
   async subscribe(rid: string, mid: string): Promise<MediaStream> {
-    console.log("subscribe rid => %s, mid => %s", rid, mid);
+    log.debug("subscribe rid => %s, mid => %s", rid, mid);
     return new Promise(async (resolve, reject) => {
       try {
         let pc = await this._createReceiver(mid);
         var sub_mid = "";
         // @ts-ignore : deprecated api
         pc.onaddstream = (e: any) => {
-          console.log("Stream::pc::onaddstream", sub_mid);
+          log.debug("Stream::pc::onaddstream", sub_mid);
           this._streams[sub_mid] = e.stream;
           resolve(e.stream);
+        };
+        pc.onnegotiationneeded = () => {
+          console.log("negotiation needed");
+        };
+        pc.ontrack = () => {
+          console.log("on track called");
         };
         // @ts-ignore : deprecated api
         pc.onremovestream = (e: any) => {
           var stream = e.stream;
-          console.log("Stream::pc::onremovestream", stream.id);
+          log.debug("Stream::pc::onremovestream", stream.id);
         };
         // @ts-ignore : deprecated api
         pc.onicecandidate = async (e: any) => {
           // @ts-ignore : deprecated api
           if (pc.sendOffer) {
             var jsep = pc.localDescription;
-            console.log("Send offer");
+            log.debug("Send offer");
             // @ts-ignore : deprecated api
             pc.sendOffer = false;
             let result = await this._protoo?.request("subscribe", {
               rid,
               jsep,
-              mid
+              mid,
             });
             sub_mid = result?.mid;
-            console.log(`subscribe success => result(mid: ${sub_mid})`);
+            if (this._debug)
+              console.log(`subscribe success => result(mid: ${sub_mid})`);
             await pc.setRemoteDescription(result?.jsep);
           }
         };
       } catch (error) {
-        console.log("subscribe request error  => " + error);
+        log.debug("subscribe request error  => " + error);
         reject(error);
       }
     });
   }
 
   async unsubscribe(rid: string, mid: string) {
-    console.log("unsubscribe rid => %s, mid => %s", rid, mid);
+    log.debug("unsubscribe rid => %s, mid => %s", rid, mid);
     try {
-      let data = await this._protoo?.request("unsubscribe", { rid, mid });
-      console.log("unsubscribe success");
+      await this._protoo?.request("unsubscribe", { rid, mid });
+      log.debug("unsubscribe success");
       this._removePC(mid);
     } catch (error) {
-      console.log("unsubscribe reject: error =>" + error);
+      log.debug("unsubscribe reject: error =>" + error);
+    }
+  }
+
+  async broadcast(rid: string, info: any) {
+    try {
+      let data = await this._protoo?.request("broadcast", {
+        rid: rid,
+        uid: this._uid,
+        info,
+      });
+      if (this._debug)
+        console.log("broadcast success: result => " + JSON.stringify(data));
+    } catch (error) {
+      log.debug("broadcast reject: error =>" + error);
     }
   }
 
@@ -234,7 +258,7 @@ export default class Client extends EventEmitter {
     let payload;
     let codeName = "";
     const session = sdpTransform.parse(desc?.sdp as string);
-    console.log("SDP object => %o", session);
+    log.debug("SDP object => %o", session);
     var videoIdx = -1;
     session["media"].map((m, index) => {
       if (m.type == "video") {
@@ -257,15 +281,14 @@ export default class Client extends EventEmitter {
       return desc;
     }
 
-    console.log("Setup codec => " + codeName + ", payload => " + payload);
+    log.debug("Setup codec => " + codeName + ", payload => " + payload);
 
     var rtp = [
-      { payload: payload, codec: codeName, rate: 90000, encoding: null }
+      { payload: payload, codec: codeName, rate: 90000, encoding: undefined },
       //{ "payload": 97, "codec": "rtx", "rate": 90000, "encoding": null }
     ];
 
     session["media"][videoIdx]["payloads"] = "" + payload; //+ " 97";
-    // @ts-ignore
     session["media"][videoIdx]["rtp"] = rtp;
 
     var fmtp: any[] = [
@@ -278,7 +301,7 @@ export default class Client extends EventEmitter {
       { payload: payload, type: "transport-cc", subtype: null },
       { payload: payload, type: "ccm", subtype: "fir" },
       { payload: payload, type: "nack", subtype: null },
-      { payload: payload, type: "nack", subtype: "pli" }
+      { payload: payload, type: "nack", subtype: "pli" },
     ];
     // @ts-ignore
     session["media"][videoIdx]["rtcpFb"] = rtcpFB;
@@ -287,11 +310,11 @@ export default class Client extends EventEmitter {
     let ssrcGroup = session["media"][videoIdx].ssrcGroups[0];
     let ssrcs = ssrcGroup.ssrcs;
     let videoSsrc = ssrcs.split(" ")[0];
-    console.log("ssrcs => %s, video %s", ssrcs, videoSsrc);
+    log.debug("ssrcs => %s, video %s", ssrcs, videoSsrc);
 
     let newSsrcs = session["media"][videoIdx].ssrcs;
     // @ts-ignore
-    newSsrcs = newSsrcs.filter(item => item.id == videoSsrc);
+    newSsrcs = newSsrcs.filter((item) => item.id == videoSsrc);
 
     session["media"][videoIdx].ssrcGroups = [];
     session["media"][videoIdx].ssrcs = newSsrcs;
@@ -302,16 +325,16 @@ export default class Client extends EventEmitter {
   }
 
   async _createSender(stream: MediaStream, codec: string) {
-    console.log("create sender => %s", codec);
+    log.debug("create sender => %s", codec);
     let pc = new RTCPeerConnection({
-      iceServers: [{ urls: ices }]
+      iceServers: [{ urls: ices }],
     }) as IonRTCPeerConnection;
     pc.sendOffer = true;
     // @ts-ignore
     pc.addStream(stream);
     let offer = await pc.createOffer({
       offerToReceiveVideo: false,
-      offerToReceiveAudio: false
+      offerToReceiveAudio: false,
     });
     let desc = this._payloadModify(offer, codec);
     pc.setLocalDescription(desc);
@@ -319,9 +342,9 @@ export default class Client extends EventEmitter {
   }
 
   async _createReceiver(uid: string): Promise<IonRTCPeerConnection> {
-    console.log("create receiver => %s", uid);
+    log.debug("create receiver => %s", uid);
     let pc = new RTCPeerConnection({
-      iceServers: [{ urls: ices }]
+      iceServers: [{ urls: ices }],
     }) as IonRTCPeerConnection;
     pc.sendOffer = true;
     pc.addTransceiver("audio", { direction: "recvonly" });
@@ -335,7 +358,7 @@ export default class Client extends EventEmitter {
   _removePC(id: string) {
     let pc = this._pcs[id];
     if (pc) {
-      console.log("remove pc mid => %s", id);
+      log.debug("remove pc mid => %s", id);
       let stream = this._streams[id];
       if (stream) {
         // @ts-ignore : deprecated api
@@ -359,7 +382,7 @@ export default class Client extends EventEmitter {
   }
 
   _handleRequest(request: protoo.Request) {
-    console.log(
+    log.debug(
       "Handle request from server: [method:%s, data:%o]",
       request.method,
       request.data
@@ -368,7 +391,7 @@ export default class Client extends EventEmitter {
 
   _handleNotification(notification: IonNotification) {
     const { method, data } = notification;
-    console.log(
+    log.info(
       "Handle notification from server: [method:%s, data:%o]",
       method,
       data
@@ -376,7 +399,7 @@ export default class Client extends EventEmitter {
     switch (method) {
       case "peer-join": {
         const { rid, uid, info } = data;
-        console.log(
+        log.debug(
           "peer-join peer rid => %s, uid => %s, info => %o",
           rid,
           uid,
@@ -387,21 +410,27 @@ export default class Client extends EventEmitter {
       }
       case "peer-leave": {
         const { rid, uid } = data;
-        console.log("peer-leave peer rid => %s, uid => %s", rid, uid);
+        log.debug("peer-leave peer rid => %s, uid => %s", rid, uid);
         this.emit("peer-leave", rid, uid);
         break;
       }
       case "stream-add": {
         const { rid, mid, info } = data;
-        console.log("stream-add peer rid => %s, mid => %s", rid, mid);
+        log.debug("stream-add peer rid => %s, mid => %s", rid, mid);
         this.emit("stream-add", rid, mid, info);
         break;
       }
       case "stream-remove": {
         const { rid, mid } = data;
-        console.log("stream-remove peer rid => %s, mid => %s", rid, mid);
+        log.debug("stream-remove peer rid => %s, mid => %s", rid, mid);
         this.emit("stream-remove", rid, mid);
         this._removePC(mid as string);
+        break;
+      }
+      case "broadcast": {
+        const { rid, uid, info } = data;
+        log.debug("broadcast peer rid => %s, uid => %s", rid, uid);
+        this.emit("broadcast", rid, uid, info);
         break;
       }
     }

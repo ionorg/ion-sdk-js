@@ -13,6 +13,7 @@ interface IonRTCPeerConnection extends RTCPeerConnection {
     sendOffer: boolean;
 }
 export default class Client extends EventEmitter {
+    _debug: boolean;
     _url: string;
     _uid: string;
     _rid: string | undefined;
@@ -23,7 +24,7 @@ export default class Client extends EventEmitter {
     _streams: {
         [name: string]: MediaStream;
     };
-    constructor(url: string);
+    constructor(url: string, debug?: boolean);
     get uid(): string;
     init(): void;
     join(roomId: string, info?: {
@@ -42,6 +43,7 @@ export default class Client extends EventEmitter {
     unpublish(mid: string): Promise<void>;
     subscribe(rid: string, mid: string): Promise<MediaStream>;
     unsubscribe(rid: string, mid: string): Promise<void>;
+    broadcast(rid: string, info: any): Promise<void>;
     close(): void;
     _payloadModify(desc: RTCSessionDescriptionInit, codec: string): RTCSessionDescriptionInit;
     _createSender(stream: MediaStream, codec: string): Promise<IonRTCPeerConnection>;
