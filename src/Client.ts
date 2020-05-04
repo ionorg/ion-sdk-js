@@ -37,9 +37,9 @@ export default class Client extends EventEmitter {
   _pcs: { [name: string]: RTCPeerConnection };
   _streams: { [name: string]: MediaStream };
 
-  constructor(url: string, debug = false) {
+  constructor(url: string, level = log.LogLevel.WARN) {
     super();
-    this._debug = debug;
+    log.setLevel(level);
     this._uid = uuidv4();
     this._url = this._getProtooUrl(url, this._uid);
     this._pcs = {};
