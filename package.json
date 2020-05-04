@@ -28,7 +28,7 @@
     "@babel/runtime": "7.9.2",
     "@types/events": "3.0.0",
     "@types/sdp-transform": "2.4.3",
-    "@types/uuid": "7.0.2",
+    "@types/uuid": "7.0.3",
     "@types/webrtc": "0.0.26",
     "prettier": "2.0.5",
     "tslint": "6.1.2",
