@@ -41,7 +41,7 @@
     "loglevel": "^1.6.7",
     "protoo-client": "^4.0.3",
     "sdp-transform": "^2.13.0",
-    "uuid": "^7.0.2"
+    "uuid": "^8.0.0"
   },
   "keywords": [
     "pion",
