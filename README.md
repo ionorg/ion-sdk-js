@@ -1,1 +1,1 @@
-# ion-sdk
+# ion-sdk-js
