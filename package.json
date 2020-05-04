@@ -4,8 +4,18 @@
   "description": "A js sdk for ion sfu",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "author": "pion",
   "license": "MIT",
@@ -19,7 +29,11 @@
     "@types/events": "^3.0.0",
     "@types/sdp-transform": "^2.4.3",
     "@types/uuid": "^7.0.2",
-    "@types/webrtc": "^0.0.26"
+    "@types/webrtc": "^0.0.26",
+    "prettier": "^2.0.5",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "events": "^3.0.0",
