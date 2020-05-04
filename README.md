@@ -8,7 +8,7 @@ Frontend sdk for the Ion backend.
 
 ## Usage
 
-```js
+```ts
 import { Client } from 'ion-sdk-js';
 const client = new Client('wss://endpoint');
 
