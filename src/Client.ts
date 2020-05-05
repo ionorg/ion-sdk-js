@@ -135,8 +135,8 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async subscribe(rid: string, mid: string): Promise<MediaStream> {
-    log.debug('subscribe rid => %s, mid => %s', rid, mid);
+  async subscribe(mid: string): Promise<MediaStream> {
+    log.debug('subscribe mid => %s', mid);
     return new Promise(async (resolve, reject) => {
       try {
         let sendOffer = true;
@@ -163,7 +163,7 @@ export default class Client extends EventEmitter {
             sendOffer = false;
             const jsep = transport.localDescription;
             const result = await this.protoo.request('subscribe', {
-              rid,
+              rid: this.rid,
               jsep,
               mid,
             });
@@ -178,10 +178,10 @@ export default class Client extends EventEmitter {
     });
   }
 
-  async unsubscribe(rid: string, mid: string) {
-    log.debug('unsubscribe rid => %s, mid => %s', rid, mid);
+  async unsubscribe(mid: string) {
+    log.debug('unsubscribe mid => %s', mid);
     try {
-      await this.protoo.request('unsubscribe', { rid, mid });
+      await this.protoo.request('unsubscribe', { mid });
       log.debug('unsubscribe success');
       this.remove(mid);
     } catch (error) {

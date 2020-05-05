@@ -36,11 +36,11 @@ client.publish(stream, options);
 client.unpublish(mid);
 
 // Subscribe to a stream
-client.subscribe(rid, mid);
+client.subscribe(mid);
 
 // Unsubscribe from a stream
-client.unsubscribe(rid, mid);
+client.unsubscribe(mid);
 
 // Broadcast a payload to room
-client.unsubscribe(rid, payload);
+client.broadcast(payload);
 ```
