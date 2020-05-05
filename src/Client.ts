@@ -1,16 +1,9 @@
 import { EventEmitter } from 'events';
 import * as protoo from 'protoo-client';
 import { v4 as uuidv4 } from 'uuid';
-import * as sdpTransform from 'sdp-transform';
 import * as log from 'loglevel';
 
-// const DefaultPayloadTypePCMU = 0;
-// const DefaultPayloadTypePCMA = 8;
-// const DefaultPayloadTypeG722 = 9;
-// const DefaultPayloadTypeOpus = 111;
-const DefaultPayloadTypeVP8 = 96;
-const DefaultPayloadTypeVP9 = 98;
-const DefaultPayloadTypeH264 = 102;
+import WebRTCTransport, { Codec } from './transport';
 
 interface IonNotification extends Notification {
   method: string;
@@ -23,32 +16,35 @@ interface IonNotification extends Notification {
 }
 
 interface Config {
-  ice?: { urls: 'stun:stun.stunprotocol.org:3478' };
+  url: string;
+  ice?: RTCConfiguration;
   loglevel?: log.LogLevelDesc;
 }
 
 export default class Client extends EventEmitter {
-  config: RTCConfiguration;
-  url: string;
+  ice: RTCConfiguration;
+  protoo: protoo.Peer;
   uid: string;
   rid: string | undefined;
-  protoo: protoo.Peer;
-  pcs: { [name: string]: RTCPeerConnection };
+  transports: { [name: string]: WebRTCTransport };
   senders: { [name: string]: RTCRtpSender[] };
 
-  constructor(url: string, config: Config) {
+  constructor(config: Config) {
     super();
+    const uid = uuidv4();
+    const transport = new protoo.WebSocketTransport(`${config.url}/ws?peer=${uid}`);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
-    this.config = {
-      iceServers: [config.ice !== undefined ? config.ice : { urls: 'stun:stun.stunprotocol.org:3478' }],
-    };
-    this.uid = uuidv4();
-    this.url = this.getProtooUrl(url, this.uid);
-    this.pcs = {};
-    this.senders = {};
 
-    const transport = new protoo.WebSocketTransport(this.url);
+    this.uid = uid;
+    this.transports = {};
+    this.senders = {};
     this.protoo = new protoo.Peer(transport);
+    this.ice =
+      config.ice !== undefined
+        ? config.ice
+        : {
+            iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
+          };
 
     this.protoo.on('open', () => {
       log.info('Peer "open" event');
@@ -69,8 +65,16 @@ export default class Client extends EventEmitter {
     this.protoo.on('notification', this.onNotification);
   }
 
-  async join(roomId: string, info = { name: 'Guest' }) {
-    this.rid = roomId;
+  broadcast(info: any) {
+    return this.protoo.request('broadcast', {
+      rid: this.rid,
+      uid: this.uid,
+      info,
+    });
+  }
+
+  async join(rid: string, info = { name: 'Guest' }) {
+    this.rid = rid;
     try {
       const data = await this.protoo.request('join', {
         rid: this.rid,
@@ -83,74 +87,36 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async leave() {
-    try {
-      const data = await this.protoo.request('leave', {
-        rid: this.rid,
-        uid: this.uid,
-      });
-      log.debug('leave success: result => ' + JSON.stringify(data));
-    } catch (error) {
-      log.debug('leave reject: error =>' + error);
-    }
-  }
-
-  async publish(
-    stream: MediaStream,
-    options = {
-      audio: true,
-      video: true,
-      screen: false,
-      codec: 'h264',
-      resolution: 'hd',
-      bandwidth: 1024,
-    },
-  ): Promise<string> {
-    log.debug('publish optiond => %o', options);
+  async publish(stream: MediaStream, codec: Codec): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
         let sendOffer = true;
-        const pc = new RTCPeerConnection(this.config);
-        const senders = stream.getTracks().map((track) => pc.addTrack(track, stream));
-        const offer = await pc.createOffer({
-          offerToReceiveVideo: false,
-          offerToReceiveAudio: false,
+        const transport = new WebRTCTransport({
+          ...this.ice,
+          codec,
         });
-        const desc = this.createDescription(offer, options.codec);
-        pc.setLocalDescription(desc);
-        pc.onicecandidate = async () => {
+        stream.getTracks().map((track) => transport.addTrack(track, stream));
+        const offer = await transport.createOffer();
+        transport.setLocalDescription(offer);
+        transport.onicecandidate = async () => {
           if (sendOffer) {
             log.debug('Send offer');
             sendOffer = false;
-            const jsep = pc.localDescription;
+            const jsep = transport.localDescription;
             const result = await this.protoo.request('publish', {
               rid: this.rid,
               jsep,
-              options,
             });
-            await pc.setRemoteDescription(result?.jsep);
-            this.pcs[result!.mid] = pc;
-            this.senders[result!.mid] = senders;
+            await transport.setRemoteDescription(result?.jsep);
+            this.transports[result!.mid] = transport;
             resolve(result!.mid);
           }
         };
-        pc.onnegotiationneeded = async () => {
+        transport.onnegotiationneeded = async () => {
           log.info('negotiation needed');
         };
       } catch (error) {
         reject(error);
-      }
-    });
-  }
-
-  updateTracks(mid: string, tracks: MediaStreamTrack[]) {
-    this.pcs[mid].getSenders().forEach(async (sender: RTCRtpSender) => {
-      const nextTrack = tracks.find((track: MediaStreamTrack) => track.kind === sender?.track?.kind);
-
-      // stop existing track (turns off camera light)
-      sender.track?.stop();
-      if (nextTrack) {
-        sender.replaceTrack(nextTrack);
       }
     });
   }
@@ -175,34 +141,34 @@ export default class Client extends EventEmitter {
       try {
         let sendOffer = true;
         log.debug('create receiver => %s', this.uid);
-        const pc = new RTCPeerConnection(this.config);
-        pc.addTransceiver('audio', { direction: 'recvonly' });
-        pc.addTransceiver('video', { direction: 'recvonly' });
-        const desc = await pc.createOffer();
-        pc.setLocalDescription(desc);
-        this.pcs[this.uid] = pc;
-        pc.onnegotiationneeded = () => {
+        const transport = new WebRTCTransport(this.ice);
+        transport.addTransceiver('audio');
+        transport.addTransceiver('video');
+        const desc = await transport.createOffer();
+        transport.setLocalDescription(desc);
+        this.transports[this.uid] = transport;
+        transport.onnegotiationneeded = () => {
           log.debug('negotiation needed');
         };
-        pc.ontrack = ({ track, streams }: RTCTrackEvent) => {
+        transport.ontrack = ({ track, streams }: RTCTrackEvent) => {
           log.debug('on track called');
           // once media for a remote track arrives, show it in the remote video element
           track.onunmute = () => {
             resolve(streams[0]);
           };
         };
-        pc.onicecandidate = async (e: RTCPeerConnectionIceEvent) => {
+        transport.onicecandidate = async (e: RTCPeerConnectionIceEvent) => {
           if (sendOffer) {
             log.debug('Send offer');
             sendOffer = false;
-            const jsep = pc.localDescription;
+            const jsep = transport.localDescription;
             const result = await this.protoo.request('subscribe', {
               rid,
               jsep,
               mid,
             });
             log.info(`subscribe success => result(mid: ${result!.mid})`);
-            await pc.setRemoteDescription(result?.jsep);
+            await transport.setRemoteDescription(result?.jsep);
           }
         };
       } catch (error) {
@@ -223,107 +189,26 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async broadcast(rid: string, info: any) {
-    try {
-      const data = await this.protoo.request('broadcast', {
-        rid,
-        uid: this.uid,
-        info,
-      });
-      log.info('broadcast success: result => ' + JSON.stringify(data));
-    } catch (error) {
-      log.debug('broadcast reject: error =>' + error);
-    }
-  }
-
-  close() {
-    this.protoo.close();
-  }
-
-  private createDescription(desc: RTCSessionDescriptionInit, codec: string) {
-    if (codec === undefined) return desc;
-
-    /*
-     * DefaultPayloadTypePCMU = 0
-     * DefaultPayloadTypePCMA = 8
-     * DefaultPayloadTypeG722 = 9
-     * DefaultPayloadTypeOpus = 111
-     * DefaultPayloadTypeVP8  = 96
-     * DefaultPayloadTypeVP9  = 98
-     * DefaultPayloadTypeH264 = 102
-     */
-    let payload;
-    let codeName = '';
-    const session = sdpTransform.parse(desc?.sdp as string);
-    log.debug('SDP object => %o', session);
-
-    const videoIdx = session.media.findIndex(({ type }) => type === 'video');
-    if (videoIdx === -1) return desc;
-
-    if (codec.toLowerCase() === 'vp8') {
-      payload = DefaultPayloadTypeVP8;
-      codeName = 'VP8';
-    } else if (codec.toLowerCase() === 'vp9') {
-      payload = DefaultPayloadTypeVP9;
-      codeName = 'VP9';
-    } else if (codec.toLowerCase() === 'h264') {
-      payload = DefaultPayloadTypeH264;
-      codeName = 'H264';
-    } else {
-      return desc;
-    }
-
-    log.debug('Setup codec => ' + codeName + ', payload => ' + payload);
-
-    const rtp = [
-      { payload, codec: codeName, rate: 90000, encoding: undefined },
-      // { "payload": 97, "codec": "rtx", "rate": 90000, "encoding": null }
-    ];
-
-    session.media[videoIdx].payloads = `${payload}`; // + " 97";
-    session.media[videoIdx].rtp = rtp;
-
-    const fmtp: any[] = [
-      // { "payload": 97, "config": "apt=" + payload }
-    ];
-
-    session.media[videoIdx].fmtp = fmtp;
-
-    const rtcpFB = [
-      { payload, type: 'transport-cc', subtype: undefined },
-      { payload, type: 'ccm', subtype: 'fir' },
-      { payload, type: 'nack', subtype: undefined },
-      { payload, type: 'nack', subtype: 'pli' },
-    ];
-
-    session.media[videoIdx].rtcpFb = rtcpFB;
-
-    const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
-    const ssrcs = ssrcGroup.ssrcs;
-    const ssrc = parseInt(ssrcs.split(' ')[0], 10);
-    log.debug('ssrcs => %s, video %s', ssrcs, ssrc);
-
-    session.media[videoIdx].ssrcGroups = [];
-    session.media[videoIdx].ssrcs = session.media[videoIdx].ssrcs!.filter((item) => item.id === ssrc);
-
-    desc.sdp = sdpTransform.write(session);
-    return desc;
-  }
-
   private remove(mid: string) {
-    const pc = this.pcs[mid];
-    if (pc) {
-      log.debug('remove pc mid => %s', mid);
-      this.senders[mid].forEach(pc.removeTrack);
-      delete this.senders[mid];
-      pc.onicecandidate = null;
-      pc.close();
-      delete this.pcs[mid];
+    const transport = this.transports[mid];
+    if (transport) {
+      log.debug('remove transport mid => %s', mid);
+      transport.close();
+      delete this.transports[mid];
     }
   }
 
-  private getProtooUrl(baseUrl: string, pid: string) {
-    return `${baseUrl}/ws?peer=${pid}`;
+  async leave() {
+    try {
+      const data = await this.protoo.request('leave', {
+        rid: this.rid,
+        uid: this.uid,
+      });
+      this.protoo.close();
+      log.debug('leave success: result => ' + JSON.stringify(data));
+    } catch (error) {
+      log.debug('leave reject: error =>' + error);
+    }
   }
 
   private onRequest = (request: protoo.Request) => {
