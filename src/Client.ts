@@ -64,7 +64,7 @@ export default class Client extends EventEmitter {
       this.emit('transport-closed');
     });
 
-    this.protoo?.on('request', this._handleRequest.bind(this));
+    this.protoo?.on('request', this.handleRequest.bind(this));
     this.protoo?.on('notification', this.onNotification.bind(this));
   }
 
@@ -234,7 +234,7 @@ export default class Client extends EventEmitter {
     this.protoo?.close();
   }
 
-  _payloadModify(desc: RTCSessionDescriptionInit, codec: string) {
+  private payloadModify(desc: RTCSessionDescriptionInit, codec: string) {
     if (codec === undefined) return desc;
 
     /*
@@ -289,30 +289,24 @@ export default class Client extends EventEmitter {
     session.media[videoIdx].fmtp = fmtp;
 
     const rtcpFB = [
-      { payload, type: 'transport-cc', subtype: null },
+      { payload, type: 'transport-cc', subtype: undefined },
       { payload, type: 'ccm', subtype: 'fir' },
-      { payload, type: 'nack', subtype: null },
+      { payload, type: 'nack', subtype: undefined },
       { payload, type: 'nack', subtype: 'pli' },
     ];
-    // @ts-ignore
+
     session.media[videoIdx].rtcpFb = rtcpFB;
 
-    // @ts-ignore
-    const ssrcGroup = session.media[videoIdx].ssrcGroups[0];
+    const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
     const ssrcs = ssrcGroup.ssrcs;
-    const videoSsrc = parseInt(ssrcs.split(' ')[0], 10);
-    log.debug('ssrcs => %s, video %s', ssrcs, videoSsrc);
-
-    let newSsrcs = session.media[videoIdx].ssrcs;
-    // @ts-ignore
-    newSsrcs = newSsrcs.filter((item) => item.id === videoSsrc);
+    const ssrc = parseInt(ssrcs.split(' ')[0], 10);
+    log.debug('ssrcs => %s, video %s', ssrcs, ssrc);
 
     session.media[videoIdx].ssrcGroups = [];
-    session.media[videoIdx].ssrcs = newSsrcs;
+    session.media[videoIdx].ssrcs = session.media[videoIdx].ssrcs!.filter((item) => item.id === ssrc);
 
-    const tmp = desc;
-    tmp.sdp = sdpTransform.write(session);
-    return tmp;
+    desc.sdp = sdpTransform.write(session);
+    return desc;
   }
 
   private async createSender(stream: MediaStream, codec: string) {
@@ -328,7 +322,7 @@ export default class Client extends EventEmitter {
       offerToReceiveVideo: false,
       offerToReceiveAudio: false,
     });
-    const desc = this._payloadModify(offer, codec);
+    const desc = this.payloadModify(offer, codec);
     pc.setLocalDescription(desc);
     return pc;
   }
@@ -369,11 +363,11 @@ export default class Client extends EventEmitter {
     }
   }
 
-  getProtooUrl(baseUrl: string, pid: string) {
+  private getProtooUrl(baseUrl: string, pid: string) {
     return `${baseUrl}/ws?peer=${pid}`;
   }
 
-  _handleRequest(request: protoo.Request) {
+  private handleRequest(request: protoo.Request) {
     log.debug('Handle request from server: [method:%s, data:%o]', request.method, request.data);
   }
 
