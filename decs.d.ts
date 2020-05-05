@@ -38,11 +38,4 @@ declare module "protoo-client" {
     jsep: any;
     mid: any;
   }
-
-  // const defaultInterface: {
-  //   Peer: Peer;
-  //   WebSocketTransport: WebSocketTransport;
-  // };
-
-  // export default defaultInterface;
 }

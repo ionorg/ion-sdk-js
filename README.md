@@ -12,8 +12,6 @@ Frontend sdk for the Ion backend.
 import { Client } from 'ion-sdk-js';
 const client = new Client('wss://endpoint');
 
-client.init();
-
 // Setup handlers
 client.on('peer-join', (rid: string, uid: string, info: any) => {});
 client.on('peer-leave', (rid: string, uid: string) => {});
