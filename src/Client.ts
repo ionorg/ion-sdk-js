@@ -87,7 +87,7 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async publish(stream: MediaStream, codec: Codec): Promise<string> {
+  async publish(stream: MediaStream, codec: Codec, bandwith?: number): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
         let sendOffer = true;
@@ -96,7 +96,10 @@ export default class Client extends EventEmitter {
           codec,
         });
         stream.getTracks().map((track) => transport.addTrack(track, stream));
-        const offer = await transport.createOffer();
+        const offer = await transport.createOffer({
+          offerToReceiveVideo: false,
+          offerToReceiveAudio: false,
+        });
         transport.setLocalDescription(offer);
         transport.onicecandidate = async () => {
           if (sendOffer) {
@@ -106,6 +109,10 @@ export default class Client extends EventEmitter {
             const result = await this.protoo.request('publish', {
               rid: this.rid,
               jsep,
+              options: {
+                codec: codec,
+                bandwidth: bandwith,
+              },
             });
             await transport.setRemoteDescription(result?.jsep);
             this.transports[result!.mid] = transport;

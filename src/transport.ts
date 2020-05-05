@@ -88,11 +88,8 @@ export default class WebRTCTransport {
     return this.pc.setRemoteDescription(desc);
   }
 
-  async createOffer(): Promise<RTCSessionDescriptionInit> {
-    const offer = await this.pc.createOffer({
-      offerToReceiveVideo: false,
-      offerToReceiveAudio: false,
-    });
+  async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
+    const offer = await this.pc.createOffer(options);
 
     if (!this.rtp) return offer;
 
