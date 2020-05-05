@@ -26,7 +26,7 @@ client.join(rid, {
     name: "name"
 });
 
-// Leave room
+// Leave room and close connection
 client.leave();
 
 // Publish a stream
@@ -43,7 +43,4 @@ client.unsubscribe(rid, mid);
 
 // Broadcast a payload to room
 client.unsubscribe(rid, payload);
-
-// Close connection
-client.close()
 ```
