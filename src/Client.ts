@@ -39,7 +39,7 @@ export default class Client extends EventEmitter {
     this.streams = {};
     this.dispatch = new Peer(transport);
 
-    config.rtc && WebRTCTransport.setRTCConfiguration(config.rtc);
+    if (config.rtc) WebRTCTransport.setRTCConfiguration(config.rtc);
     Stream.setDispatch(this.dispatch);
 
     this.dispatch.on('open', () => {
