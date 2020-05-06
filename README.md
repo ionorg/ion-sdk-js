@@ -9,17 +9,17 @@ Frontend sdk for the Ion backend.
 ## Usage
 
 ```ts
-import { Client, LocalStream } from 'ion-sdk-js';
+import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
 const client = new Client({ url: 'wss://endpoint' });
 
 // Setup handlers
-client.on('peer-join', (rid: string, uid: string, info: any) => {});
-client.on('peer-leave', (rid: string, uid: string) => {});
+client.on('peer-join', (uid: string, info: any) => {});
+client.on('peer-leave', (uid: string) => {});
 client.on('transport-open', () => {}));
 client.on('transport-closed', () => {});
-client.on('stream-add', (rid: string, uid: string, info: any) => {});
-client.on('stream-remove', (rid: string, mid: string) => {});
-client.on('broadcast', (rid: string, uid: string, info: any) => {});
+client.on('stream-add', (uid: string, info: any) => {});
+client.on('stream-remove', (stream: RemoteStream) => {});
+client.on('broadcast', (uid: string, info: any) => {});
 
 // Join a room
 client.join(rid, {

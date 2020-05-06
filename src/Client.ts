@@ -131,32 +131,33 @@ export default class Client extends EventEmitter {
       case 'peer-join': {
         const { rid, uid, info } = data;
         log.debug('peer-join peer rid => %s, uid => %s, info => %o', rid, uid, info);
-        this.emit('peer-join', rid, uid, info);
+        this.emit('peer-join', uid, info);
         break;
       }
       case 'peer-leave': {
         const { rid, uid } = data;
         log.debug('peer-leave peer rid => %s, uid => %s', rid, uid);
-        this.emit('peer-leave', rid, uid);
+        this.emit('peer-leave', uid);
         break;
       }
       case 'stream-add': {
         const { rid, mid, info } = data;
         log.debug('stream-add peer rid => %s, mid => %s', rid, mid);
-        this.emit('stream-add', rid, mid, info);
+        this.emit('stream-add', mid, info);
         break;
       }
       case 'stream-remove': {
         const { rid, mid } = data;
         log.debug('stream-remove peer rid => %s, mid => %s', rid, mid);
-        this.emit('stream-remove', rid, mid);
-        this.streams[mid!].unsubscribe();
+        const stream = this.streams[mid!];
+        this.emit('stream-remove', stream);
+        stream.unsubscribe();
         break;
       }
       case 'broadcast': {
         const { rid, uid, info } = data;
         log.debug('broadcast peer rid => %s, uid => %s', rid, uid);
-        this.emit('broadcast', rid, uid, info);
+        this.emit('broadcast', uid, info);
         break;
       }
     }
