@@ -9,8 +9,8 @@ Frontend sdk for the Ion backend.
 ## Usage
 
 ```ts
-import { Client } from 'ion-sdk-js';
-const client = new Client('wss://endpoint');
+import { Client, LocalStream } from 'ion-sdk-js';
+const client = new Client({ url: 'wss://endpoint' });
 
 // Setup handlers
 client.on('peer-join', (rid: string, uid: string, info: any) => {});
@@ -26,21 +26,30 @@ client.join(rid, {
     name: "name"
 });
 
-// Leave room and close connection
+// Leave current room
 client.leave();
 
-// Publish a stream
-client.publish(stream, options);
+// Get a local stream
+const local = await LocalStream.getUserMedia({
+    audio: true,
+    video: true
+});
 
-// Unpublish a stream
-client.unpublish(mid);
+// Publish local stream
+client.publish(local);
 
-// Subscribe to a stream
-client.subscribe(mid);
+// Unpublish local stream
+local.unpublish();
+
+// Subscribe to a remote stream
+const remote = client.subscribe(mid);
 
 // Unsubscribe from a stream
-client.unsubscribe(mid);
+remote.unsubscribe();
 
-// Broadcast a payload to room
+// Broadcast a payload to the room
 client.broadcast(payload);
+
+// Close client connection
+client.close();
 ```

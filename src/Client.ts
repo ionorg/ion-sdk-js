@@ -28,7 +28,6 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
-  senders: { [name: string]: RTCRtpSender[] };
 
   constructor(config: Config) {
     super();
@@ -38,7 +37,6 @@ export default class Client extends EventEmitter {
 
     this.uid = uid;
     this.streams = {};
-    this.senders = {};
     this.dispatch = new Peer(transport);
 
     config.rtc && WebRTCTransport.setRTCConfiguration(config.rtc);
@@ -108,7 +106,6 @@ export default class Client extends EventEmitter {
         rid: this.rid,
         uid: this.uid,
       });
-      this.dispatch.close();
       if (this.local) {
         this.local.unpublish();
       }
@@ -117,6 +114,10 @@ export default class Client extends EventEmitter {
     } catch (error) {
       log.debug('leave reject: error =>' + error);
     }
+  }
+
+  close() {
+    this.dispatch.close();
   }
 
   private onRequest = (request: Request) => {
