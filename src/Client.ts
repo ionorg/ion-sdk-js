@@ -1,9 +1,10 @@
 import { EventEmitter } from 'events';
-import * as protoo from 'protoo-client';
+import { Peer, Request, WebSocketTransport } from 'protoo-client';
 import { v4 as uuidv4 } from 'uuid';
 import * as log from 'loglevel';
 
-import WebRTCTransport, { Codec } from './transport';
+import { LocalStream, RemoteStream, Stream } from './stream';
+import WebRTCTransport from './transport';
 
 interface IonNotification extends Notification {
   method: string;
@@ -17,56 +18,53 @@ interface IonNotification extends Notification {
 
 interface Config {
   url: string;
-  ice?: RTCConfiguration;
+  rtc?: RTCConfiguration;
   loglevel?: log.LogLevelDesc;
 }
 
 export default class Client extends EventEmitter {
-  ice: RTCConfiguration;
-  protoo: protoo.Peer;
+  dispatch: Peer;
   uid: string;
   rid: string | undefined;
-  transports: { [name: string]: WebRTCTransport };
+  local?: LocalStream;
+  streams: { [name: string]: RemoteStream };
   senders: { [name: string]: RTCRtpSender[] };
 
   constructor(config: Config) {
     super();
     const uid = uuidv4();
-    const transport = new protoo.WebSocketTransport(`${config.url}/ws?peer=${uid}`);
+    const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
     this.uid = uid;
-    this.transports = {};
+    this.streams = {};
     this.senders = {};
-    this.protoo = new protoo.Peer(transport);
-    this.ice =
-      config.ice !== undefined
-        ? config.ice
-        : {
-            iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
-          };
+    this.dispatch = new Peer(transport);
 
-    this.protoo.on('open', () => {
+    config.rtc && WebRTCTransport.setRTCConfiguration(config.rtc);
+    Stream.setDispatch(this.dispatch);
+
+    this.dispatch.on('open', () => {
       log.info('Peer "open" event');
       this.emit('transport-open');
     });
 
-    this.protoo.on('disconnected', () => {
+    this.dispatch.on('disconnected', () => {
       log.info('Peer "disconnected" event');
       this.emit('transport-failed');
     });
 
-    this.protoo.on('close', () => {
+    this.dispatch.on('close', () => {
       log.info('Peer "close" event');
       this.emit('transport-closed');
     });
 
-    this.protoo.on('request', this.onRequest);
-    this.protoo.on('notification', this.onNotification);
+    this.dispatch.on('request', this.onRequest);
+    this.dispatch.on('notification', this.onNotification);
   }
 
   broadcast(info: any) {
-    return this.protoo.request('broadcast', {
+    return this.dispatch.request('broadcast', {
       rid: this.rid,
       uid: this.uid,
       info,
@@ -76,7 +74,7 @@ export default class Client extends EventEmitter {
   async join(rid: string, info = { name: 'Guest' }) {
     this.rid = rid;
     try {
-      const data = await this.protoo.request('join', {
+      const data = await this.dispatch.request('join', {
         rid: this.rid,
         uid: this.uid,
         info,
@@ -87,138 +85,41 @@ export default class Client extends EventEmitter {
     }
   }
 
-  async publish(stream: MediaStream, codec: Codec, bandwith?: number): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let sendOffer = true;
-        const transport = new WebRTCTransport({
-          ...this.ice,
-          codec,
-        });
-        stream.getTracks().map((track) => transport.addTrack(track, stream));
-        const offer = await transport.createOffer({
-          offerToReceiveVideo: false,
-          offerToReceiveAudio: false,
-        });
-        transport.setLocalDescription(offer);
-        transport.onicecandidate = async () => {
-          if (sendOffer) {
-            log.debug('Send offer');
-            sendOffer = false;
-            const jsep = transport.localDescription;
-            const result = await this.protoo.request('publish', {
-              rid: this.rid,
-              jsep,
-              options: {
-                codec: codec,
-                bandwidth: bandwith,
-              },
-            });
-            await transport.setRemoteDescription(result?.jsep);
-            this.transports[result!.mid] = transport;
-            resolve(result!.mid);
-          }
-        };
-        transport.onnegotiationneeded = async () => {
-          log.info('negotiation needed');
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async unpublish(mid: string) {
-    log.debug('unpublish rid => %s, mid => %s', this.rid, mid);
-    this.remove(mid);
-    try {
-      const data = await this.protoo.request('unpublish', {
-        rid: this.rid,
-        mid,
-      });
-      log.debug('unpublish success: result => ' + JSON.stringify(data));
-    } catch (error) {
-      log.debug('unpublish reject: error =>' + error);
+  async publish(stream: LocalStream) {
+    if (!this.rid) {
+      throw new Error('You must join a room before publishing.');
     }
+    this.local = stream;
+    return await stream.publish(this.rid);
   }
 
-  async subscribe(mid: string): Promise<MediaStream> {
-    log.debug('subscribe mid => %s', mid);
-    return new Promise(async (resolve, reject) => {
-      try {
-        let sendOffer = true;
-        log.debug('create receiver => %s', this.uid);
-        const transport = new WebRTCTransport(this.ice);
-        transport.addTransceiver('audio');
-        transport.addTransceiver('video');
-        const desc = await transport.createOffer();
-        transport.setLocalDescription(desc);
-        this.transports[this.uid] = transport;
-        transport.onnegotiationneeded = () => {
-          log.debug('negotiation needed');
-        };
-        transport.ontrack = ({ track, streams }: RTCTrackEvent) => {
-          log.debug('on track called');
-          // once media for a remote track arrives, show it in the remote video element
-          track.onunmute = () => {
-            resolve(streams[0]);
-          };
-        };
-        transport.onicecandidate = async (e: RTCPeerConnectionIceEvent) => {
-          if (sendOffer) {
-            log.debug('Send offer');
-            sendOffer = false;
-            const jsep = transport.localDescription;
-            const result = await this.protoo.request('subscribe', {
-              rid: this.rid,
-              jsep,
-              mid,
-            });
-            log.info(`subscribe success => result(mid: ${result!.mid})`);
-            await transport.setRemoteDescription(result?.jsep);
-          }
-        };
-      } catch (error) {
-        log.debug('subscribe request error  => ' + error);
-        reject(error);
-      }
-    });
-  }
-
-  async unsubscribe(mid: string) {
-    log.debug('unsubscribe mid => %s', mid);
-    try {
-      await this.protoo.request('unsubscribe', { mid });
-      log.debug('unsubscribe success');
-      this.remove(mid);
-    } catch (error) {
-      log.debug('unsubscribe reject: error =>' + error);
+  async subscribe(mid: string): Promise<RemoteStream> {
+    if (!this.rid) {
+      throw new Error('You must join a room before subscribing.');
     }
-  }
-
-  private remove(mid: string) {
-    const transport = this.transports[mid];
-    if (transport) {
-      log.debug('remove transport mid => %s', mid);
-      transport.close();
-      delete this.transports[mid];
-    }
+    const stream = await RemoteStream.getRemoteMedia(this.rid, mid);
+    this.streams[mid] = stream;
+    return stream;
   }
 
   async leave() {
     try {
-      const data = await this.protoo.request('leave', {
+      const data = await this.dispatch.request('leave', {
         rid: this.rid,
         uid: this.uid,
       });
-      this.protoo.close();
+      this.dispatch.close();
+      if (this.local) {
+        this.local.unpublish();
+      }
+      Object.values(this.streams).forEach((stream) => stream.unsubscribe());
       log.debug('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
       log.debug('leave reject: error =>' + error);
     }
   }
 
-  private onRequest = (request: protoo.Request) => {
+  private onRequest = (request: Request) => {
     log.debug('Handle request from server: [method:%s, data:%o]', request.method, request.data);
   };
 
@@ -248,7 +149,7 @@ export default class Client extends EventEmitter {
         const { rid, mid } = data;
         log.debug('stream-remove peer rid => %s, mid => %s', rid, mid);
         this.emit('stream-remove', rid, mid);
-        this.remove(mid as string);
+        this.streams[mid!].unsubscribe();
         break;
       }
       case 'broadcast': {

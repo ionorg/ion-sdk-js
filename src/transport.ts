@@ -49,11 +49,22 @@ function rtp(name: Codec): MediaAttributes['rtp'] {
 }
 
 export default class WebRTCTransport {
+  private static config: RTCConfiguration = {
+    iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
+  };
+
+  static setRTCConfiguration(config: RTCConfiguration) {
+    WebRTCTransport.config = config;
+  }
+
   private pc: RTCPeerConnection;
   private rtp: MediaAttributes['rtp'] | null;
-  constructor(config: Config) {
-    this.pc = new RTCPeerConnection(config);
-    this.rtp = config.codec ? rtp(config.codec) : null;
+  constructor(codec?: Codec) {
+    if (!WebRTCTransport.config) {
+      throw new Error('RTConfiguration not set.');
+    }
+    this.pc = new RTCPeerConnection(WebRTCTransport.config);
+    this.rtp = codec ? rtp(codec) : null;
   }
 
   close() {
