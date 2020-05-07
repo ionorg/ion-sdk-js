@@ -128,58 +128,19 @@ export class LocalStream extends Stream {
   }
 
   mute(kind: 'audio' | 'video') {
-    let track: MediaStreamTrack;
     if (kind === 'audio') {
-      track = this.getAudioTracks()[0];
+      this.getAudioTracks()[0].enabled = false;
     } else if (kind === 'video') {
-      track = this.getVideoTracks()[0];
-    }
-    this.removeTrack(track!);
-    track!.stop();
-
-    // If published, replace published track with track from new device
-    if (this.transport) {
-      this.transport.getSenders().forEach(async (sender: RTCRtpSender) => {
-        if (sender?.track?.kind === track.kind) {
-          sender.track?.stop();
-          this.transport!.removeTrack(sender);
-        }
-      });
+      this.getVideoTracks()[0].enabled = false;
     }
   }
 
   async unmute(kind: 'audio' | 'video') {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: kind === 'video' ? this.getVideoConstraints() : this.options.audio,
-    });
-    const track = stream.getTracks()[0];
-    this.addTrack(track);
-
-    // If published, replace published track with track from new device
-    if (this.transport) {
-      this.transport.addTrack(track, this);
+    if (kind === 'audio') {
+      this.getAudioTracks()[0].enabled = true;
+    } else if (kind === 'video') {
+      this.getVideoTracks()[0].enabled = true;
     }
-  }
-
-  private async negotiate(rid: string) {
-    if (!this.transport) return;
-    const { bandwidth, codec } = this.options!;
-    const offer = await this.transport.createOffer({
-      offerToReceiveVideo: false,
-      offerToReceiveAudio: false,
-    });
-    this.transport.setLocalDescription(offer);
-    const jsep = this.transport.localDescription;
-    const result = await Stream.dispatch.request('publish', {
-      rid,
-      jsep,
-      options: {
-        codec,
-        bandwidth,
-      },
-    });
-    this.mid = result.mid;
-    await this.transport!.setRemoteDescription(result?.jsep);
   }
 
   async publish(rid: string) {
@@ -212,7 +173,6 @@ export class LocalStream extends Stream {
     };
     this.transport.onnegotiationneeded = async () => {
       log.info('negotiation needed');
-      this.negotiate(this.rid!);
     };
   }
 
