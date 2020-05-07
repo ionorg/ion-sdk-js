@@ -6,7 +6,7 @@ import * as log from 'loglevel';
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
 
-interface IonNotification extends Notification {
+interface Notification {
   method: string;
   data: {
     rid: string;
@@ -124,7 +124,7 @@ export default class Client extends EventEmitter {
     log.debug('Handle request from server: [method:%s, data:%o]', request.method, request.data);
   };
 
-  private onNotification = (notification: IonNotification) => {
+  private onNotification = (notification: Notification) => {
     const { method, data } = notification;
     log.info('Handle notification from server: [method:%s, data:%o]', method, data);
     switch (method) {

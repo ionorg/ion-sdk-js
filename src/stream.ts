@@ -13,7 +13,7 @@ export const VideoResolutions: VideoResolutions = {
   hd: { width: { ideal: 1280 }, height: { ideal: 720 } },
 };
 
-export interface StreamOptions {
+export interface StreamOptions extends MediaStreamConstraints {
   audioDevice?: string;
   videoDevice?: string;
   resolution: string;
@@ -21,7 +21,6 @@ export interface StreamOptions {
   codec: string;
   audio: boolean;
   video: boolean;
-  screen: boolean;
 }
 
 export class Stream extends MediaStream {
@@ -51,12 +50,27 @@ export class LocalStream extends Stream {
       resolution: 'hd',
       audio: false,
       video: false,
-      screen: false,
     },
   ) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: options.audio,
       video: options.video ? VideoResolutions[options.resolution] : options.video,
+    });
+
+    return new LocalStream(stream, options);
+  }
+
+  static async getDisplayMedia(
+    options: StreamOptions = {
+      codec: 'VP8',
+      resolution: 'hd',
+      audio: false,
+      video: true,
+    },
+  ) {
+    // @ts-ignore
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
     });
 
     return new LocalStream(stream, options);
