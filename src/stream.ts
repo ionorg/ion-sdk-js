@@ -14,13 +14,9 @@ export const VideoResolutions: VideoResolutions = {
 };
 
 export interface StreamOptions extends MediaStreamConstraints {
-  audioDevice?: string;
-  videoDevice?: string;
   resolution: string;
   bandwidth?: number;
   codec: string;
-  audio: boolean;
-  video: boolean;
 }
 
 export class Stream extends MediaStream {
@@ -31,11 +27,9 @@ export class Stream extends MediaStream {
 
   mid?: string;
   rid?: string;
-  options?: StreamOptions;
   transport?: WebRTCTransport;
-  constructor(stream: MediaStream, options?: StreamOptions) {
+  constructor(stream: MediaStream) {
     super(stream);
-    this.options = options;
 
     if (!Stream.dispatch) {
       throw new Error('Dispatch not set.');
@@ -54,7 +48,15 @@ export class LocalStream extends Stream {
   ) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: options.audio,
-      video: options.video ? VideoResolutions[options.resolution] : options.video,
+      video:
+        options.video instanceof Object
+          ? {
+              ...VideoResolutions[options.resolution],
+              ...options.video,
+            }
+          : options.video
+          ? VideoResolutions[options.resolution]
+          : false,
     });
 
     return new LocalStream(stream, options);
@@ -74,6 +76,40 @@ export class LocalStream extends Stream {
     });
 
     return new LocalStream(stream, options);
+  }
+
+  options: StreamOptions;
+  constructor(stream: MediaStream, options: StreamOptions) {
+    super(stream);
+    this.options = options;
+  }
+
+  async switchDevice(kind: 'audio' | 'video', deviceId: string) {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      [kind]: { ...VideoResolutions[this.options.resolution], deviceId },
+    });
+    console.log(deviceId);
+    const track = stream.getTracks()[0];
+
+    let prev: MediaStreamTrack;
+    if (kind === 'audio') {
+      prev = this.getAudioTracks()[0];
+    } else if (kind === 'video') {
+      prev = this.getVideoTracks()[0];
+    }
+    this.addTrack(track);
+    prev!.stop();
+    this.removeTrack(prev!);
+
+    // If published, replace published track with track from new device
+    if (this.transport) {
+      this.transport.getSenders().forEach(async (sender: RTCRtpSender) => {
+        if (sender?.track?.kind === track.kind) {
+          sender.track?.stop();
+          sender.replaceTrack(track);
+        }
+      });
+    }
   }
 
   async publish(rid: string) {
