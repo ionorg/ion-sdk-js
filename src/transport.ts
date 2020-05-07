@@ -129,6 +129,8 @@ export default class WebRTCTransport {
 
     session.media[videoIdx].rtcpFb = rtcpFB;
 
+    if (!session.media[videoIdx].ssrcGroups) return offer;
+
     const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
     const ssrcs = ssrcGroup.ssrcs;
     const ssrc = parseInt(ssrcs.split(' ')[0], 10);

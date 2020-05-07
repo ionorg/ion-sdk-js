@@ -84,11 +84,26 @@ export class LocalStream extends Stream {
     this.options = options;
   }
 
+  private getVideoConstraints() {
+    return this.options.video instanceof Object
+      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as Object) }
+      : { video: this.options.video };
+  }
+
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
+    this.options = {
+      ...this.options,
+      [kind]:
+        this.options[kind] instanceof Object
+          ? {
+              ...(this.options[kind] as Object),
+              deviceId,
+            }
+          : { deviceId },
+    };
     const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: { ...VideoResolutions[this.options.resolution], deviceId },
+      [kind]: kind === 'video' ? { ...this.getVideoConstraints(), deviceId } : { deviceId },
     });
-    console.log(deviceId);
     const track = stream.getTracks()[0];
 
     let prev: MediaStreamTrack;
@@ -98,8 +113,8 @@ export class LocalStream extends Stream {
       prev = this.getVideoTracks()[0];
     }
     this.addTrack(track);
-    prev!.stop();
     this.removeTrack(prev!);
+    prev!.stop();
 
     // If published, replace published track with track from new device
     if (this.transport) {
@@ -110,6 +125,61 @@ export class LocalStream extends Stream {
         }
       });
     }
+  }
+
+  mute(kind: 'audio' | 'video') {
+    let track: MediaStreamTrack;
+    if (kind === 'audio') {
+      track = this.getAudioTracks()[0];
+    } else if (kind === 'video') {
+      track = this.getVideoTracks()[0];
+    }
+    this.removeTrack(track!);
+    track!.stop();
+
+    // If published, replace published track with track from new device
+    if (this.transport) {
+      this.transport.getSenders().forEach(async (sender: RTCRtpSender) => {
+        if (sender?.track?.kind === track.kind) {
+          sender.track?.stop();
+          this.transport!.removeTrack(sender);
+        }
+      });
+    }
+  }
+
+  async unmute(kind: 'audio' | 'video') {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      [kind]: kind === 'video' ? this.getVideoConstraints() : this.options.audio,
+    });
+    const track = stream.getTracks()[0];
+    this.addTrack(track);
+
+    // If published, replace published track with track from new device
+    if (this.transport) {
+      this.transport.addTrack(track, this);
+    }
+  }
+
+  private async negotiate(rid: string) {
+    if (!this.transport) return;
+    const { bandwidth, codec } = this.options!;
+    const offer = await this.transport.createOffer({
+      offerToReceiveVideo: false,
+      offerToReceiveAudio: false,
+    });
+    this.transport.setLocalDescription(offer);
+    const jsep = this.transport.localDescription;
+    const result = await Stream.dispatch.request('publish', {
+      rid,
+      jsep,
+      options: {
+        codec,
+        bandwidth,
+      },
+    });
+    this.mid = result.mid;
+    await this.transport!.setRemoteDescription(result?.jsep);
   }
 
   async publish(rid: string) {
@@ -142,6 +212,7 @@ export class LocalStream extends Stream {
     };
     this.transport.onnegotiationneeded = async () => {
       log.info('negotiation needed');
+      this.negotiate(this.rid!);
     };
   }
 
