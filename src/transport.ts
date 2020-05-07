@@ -107,7 +107,7 @@ export default class WebRTCTransport {
     const session = parse(offer.sdp!);
     log.debug('SDP object => %o', session);
 
-    const videoIdx = session.media.findIndex(({ type }) => type === 'video');
+    const videoIdx = session.media.findIndex(({ type, ssrcGroups }) => type === 'video' && !!ssrcGroups);
     if (videoIdx === -1) return offer;
 
     const { payload } = this.rtp[0];

@@ -84,11 +84,26 @@ export class LocalStream extends Stream {
     this.options = options;
   }
 
+  private getVideoConstraints() {
+    return this.options.video instanceof Object
+      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as Object) }
+      : { video: this.options.video };
+  }
+
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
+    this.options = {
+      ...this.options,
+      [kind]:
+        this.options[kind] instanceof Object
+          ? {
+              ...(this.options[kind] as Object),
+              deviceId,
+            }
+          : { deviceId },
+    };
     const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: { ...VideoResolutions[this.options.resolution], deviceId },
+      [kind]: kind === 'video' ? { ...this.getVideoConstraints(), deviceId } : { deviceId },
     });
-    console.log(deviceId);
     const track = stream.getTracks()[0];
 
     let prev: MediaStreamTrack;
@@ -98,8 +113,8 @@ export class LocalStream extends Stream {
       prev = this.getVideoTracks()[0];
     }
     this.addTrack(track);
-    prev!.stop();
     this.removeTrack(prev!);
+    prev!.stop();
 
     // If published, replace published track with track from new device
     if (this.transport) {
@@ -109,6 +124,22 @@ export class LocalStream extends Stream {
           sender.replaceTrack(track);
         }
       });
+    }
+  }
+
+  mute(kind: 'audio' | 'video') {
+    if (kind === 'audio') {
+      this.getAudioTracks()[0].enabled = false;
+    } else if (kind === 'video') {
+      this.getVideoTracks()[0].enabled = false;
+    }
+  }
+
+  async unmute(kind: 'audio' | 'video') {
+    if (kind === 'audio') {
+      this.getAudioTracks()[0].enabled = true;
+    } else if (kind === 'video') {
+      this.getVideoTracks()[0].enabled = true;
     }
   }
 
