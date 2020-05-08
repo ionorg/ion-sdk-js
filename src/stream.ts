@@ -86,7 +86,7 @@ export class LocalStream extends Stream {
 
   private getVideoConstraints() {
     return this.options.video instanceof Object
-      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as Object) }
+      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as object) }
       : { video: this.options.video };
   }
 
@@ -96,7 +96,7 @@ export class LocalStream extends Stream {
       [kind]:
         this.options[kind] instanceof Object
           ? {
-              ...(this.options[kind] as Object),
+              ...(this.options[kind] as object),
               deviceId,
             }
           : { deviceId },
