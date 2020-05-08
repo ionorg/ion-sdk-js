@@ -248,16 +248,22 @@ export class RemoteStream extends Stream {
     return remote;
   }
 
+  close() {
+    if (!this.transport) {
+      throw new Error('Stream is not open.');
+    }
+    if (this.transport) {
+      this.transport.close();
+      delete this.transport;
+    }
+  }
+
   async unsubscribe() {
     if (!this.transport) {
       throw new Error('Stream is not subscribed.');
     }
     log.debug('unsubscribe mid => %s', this.mid);
-
-    if (this.transport) {
-      this.transport.close();
-      delete this.transport;
-    }
+    this.close();
     return await RemoteStream.dispatch.request('unsubscribe', { mid: this.mid });
   }
 }

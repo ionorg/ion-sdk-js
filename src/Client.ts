@@ -32,6 +32,11 @@ export default class Client extends EventEmitter {
   constructor(config: Config) {
     super();
     const uid = uuidv4();
+
+    if (!config || !config.url) {
+      throw new Error('Undefined config or config.url in ion-sdk.');
+    }
+
     const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
@@ -151,7 +156,7 @@ export default class Client extends EventEmitter {
         log.debug('stream-remove peer rid => %s, mid => %s', rid, mid);
         const stream = this.streams[mid!];
         this.emit('stream-remove', stream);
-        stream.unsubscribe();
+        stream.close();
         break;
       }
       case 'broadcast': {
