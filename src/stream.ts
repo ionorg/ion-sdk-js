@@ -153,6 +153,7 @@ export class LocalStream extends Stream {
       offerToReceiveVideo: false,
       offerToReceiveAudio: false,
     });
+    log.debug('Created offer => %o', offer);
     this.transport.setLocalDescription(offer);
     this.transport.onicecandidate = async () => {
       if (sendOffer) {
@@ -168,6 +169,7 @@ export class LocalStream extends Stream {
           },
         });
         this.mid = result.mid;
+        log.debug('Got answer => %o', result?.jsep);
         await this.transport!.setRemoteDescription(result?.jsep);
         this.rid = rid;
       }
@@ -181,7 +183,7 @@ export class LocalStream extends Stream {
     if (!this.rid || !this.mid) {
       throw new Error('Stream is not published.');
     }
-    log.debug('unpublish rid => %s, mid => %s', this.rid, this.mid);
+    log.info('unpublish rid => %s, mid => %s', this.rid, this.mid);
 
     if (this.transport) {
       this.transport.close();
@@ -208,6 +210,7 @@ export class RemoteStream extends Stream {
     transport.addTransceiver('audio');
     transport.addTransceiver('video');
     const desc = await transport.createOffer();
+    log.debug('Created offer => %o', desc);
     transport.setLocalDescription(desc);
     transport.onnegotiationneeded = () => {
       log.debug('negotiation needed');
@@ -223,6 +226,7 @@ export class RemoteStream extends Stream {
           mid,
         });
         log.info(`subscribe success => result(mid: ${result!.mid})`);
+        log.debug('Got answer => %o', result?.jsep);
         await transport.setRemoteDescription(result?.jsep);
       }
     };
@@ -236,7 +240,7 @@ export class RemoteStream extends Stream {
           };
         };
       } catch (error) {
-        log.debug('subscribe request error  => ' + error);
+        log.error('subscribe request error  => ' + error);
         reject(error);
       }
     });
@@ -262,7 +266,7 @@ export class RemoteStream extends Stream {
     if (!this.transport) {
       throw new Error('Stream is not subscribed.');
     }
-    log.debug('unsubscribe mid => %s', this.mid);
+    log.info('unsubscribe mid => %s', this.mid);
     this.close();
     return await RemoteStream.dispatch.request('unsubscribe', { mid: this.mid });
   }

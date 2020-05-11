@@ -13,10 +13,6 @@ enum PayloadType {
 
 export type Codec = 'H264' | 'VP8' | 'VP9' | undefined;
 
-interface Config extends RTCConfiguration {
-  codec?: Codec;
-}
-
 function rtp(name: Codec): MediaAttributes['rtp'] {
   switch (name) {
     case 'H264':
@@ -105,7 +101,6 @@ export default class WebRTCTransport {
     if (!this.rtp) return offer;
 
     const session = parse(offer.sdp!);
-    log.debug('SDP object => %o', session);
 
     const videoIdx = session.media.findIndex(({ type, ssrcGroups }) => type === 'video' && !!ssrcGroups);
     if (videoIdx === -1) return offer;

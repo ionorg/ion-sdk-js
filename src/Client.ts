@@ -82,9 +82,9 @@ export default class Client extends EventEmitter {
         uid: this.uid,
         info,
       });
-      log.debug('join success: result => ' + JSON.stringify(data));
+      log.info('join success: result => ' + JSON.stringify(data));
     } catch (error) {
-      log.debug('join reject: error =>' + error);
+      log.error('join reject: error =>' + error);
     }
   }
 
@@ -115,9 +115,9 @@ export default class Client extends EventEmitter {
         this.local.unpublish();
       }
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
-      log.debug('leave success: result => ' + JSON.stringify(data));
+      log.info('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
-      log.debug('leave reject: error =>' + error);
+      log.error('leave reject: error =>' + error);
     }
   }
 
@@ -134,34 +134,29 @@ export default class Client extends EventEmitter {
     log.info('Handle notification from server: [method:%s, data:%o]', method, data);
     switch (method) {
       case 'peer-join': {
-        const { rid, uid, info } = data;
-        log.debug('peer-join peer rid => %s, uid => %s, info => %o', rid, uid, info);
+        const { uid, info } = data;
         this.emit('peer-join', uid, info);
         break;
       }
       case 'peer-leave': {
-        const { rid, uid } = data;
-        log.debug('peer-leave peer rid => %s, uid => %s', rid, uid);
+        const { uid } = data;
         this.emit('peer-leave', uid);
         break;
       }
       case 'stream-add': {
-        const { rid, mid, info } = data;
-        log.debug('stream-add peer rid => %s, mid => %s', rid, mid);
+        const { mid, info } = data;
         this.emit('stream-add', mid, info);
         break;
       }
       case 'stream-remove': {
-        const { rid, mid } = data;
-        log.debug('stream-remove peer rid => %s, mid => %s', rid, mid);
+        const { mid } = data;
         const stream = this.streams[mid!];
         this.emit('stream-remove', stream);
         stream.close();
         break;
       }
       case 'broadcast': {
-        const { rid, uid, info } = data;
-        log.debug('broadcast peer rid => %s, uid => %s', rid, uid);
+        const { uid, info } = data;
         this.emit('broadcast', uid, info);
         break;
       }
