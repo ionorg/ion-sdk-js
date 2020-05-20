@@ -5,16 +5,7 @@ import * as log from 'loglevel';
 
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
-
-interface Notification {
-  method: string;
-  data: {
-    rid: string;
-    mid?: string;
-    uid: string;
-    info?: string;
-  };
-}
+import {TrackInfo, Notification} from './proto';
 
 interface Config {
   url: string;
@@ -96,11 +87,14 @@ export default class Client extends EventEmitter {
     return await stream.publish(this.rid);
   }
 
-  async subscribe(mid: string): Promise<RemoteStream> {
+  async subscribe(mid: string, tracks: Map<string, Array<TrackInfo>>): Promise<RemoteStream> {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    const stream = await RemoteStream.getRemoteMedia(this.rid, mid);
+    if (tracks.size == 0) {
+      throw new Error('Subscribe tracks can not be enpty.');
+    }
+    const stream = await RemoteStream.getRemoteMedia(this.rid, mid, tracks);
     this.streams[mid] = stream;
     return stream;
   }
@@ -144,8 +138,9 @@ export default class Client extends EventEmitter {
         break;
       }
       case 'stream-add': {
-        const { mid, info } = data;
-        this.emit('stream-add', mid, info);
+        const { mid, info, tracks } = data;
+        const trackMap = objToStrMap(tracks);
+        this.emit('stream-add', mid, info, trackMap);
         break;
       }
       case 'stream-remove': {
@@ -162,4 +157,12 @@ export default class Client extends EventEmitter {
       }
     }
   };
+}
+
+function objToStrMap(obj: any) {
+  let strMap = new Map();
+  for (let k of Object.keys(obj)) {
+    strMap.set(k, obj[k]);
+  }
+  return strMap;
 }

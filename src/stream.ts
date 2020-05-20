@@ -1,6 +1,8 @@
 import * as log from 'loglevel';
 import { Peer } from 'protoo-client';
 import WebRTCTransport, { Codec } from './transport';
+import {TrackInfo} from './proto';
+
 
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
@@ -203,12 +205,19 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
-  static async getRemoteMedia(rid: string, mid: string) {
+  static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, Array<TrackInfo>>) {
+    const allTracks = Array.from(tracks.values()).flat()
+    const audio =  allTracks.map((t) => t.type.toLowerCase() === "audio").includes(true)
+    const video =  allTracks.map((t) => t.type.toLowerCase() === "video").includes(true)
     let sendOffer = true;
     log.debug('Creating receiver => %s', mid);
     const transport = new WebRTCTransport();
-    transport.addTransceiver('audio');
-    transport.addTransceiver('video');
+    if(audio) {
+      transport.addTransceiver('audio');
+    }
+    if(video) {
+      transport.addTransceiver('video');
+    }
     const desc = await transport.createOffer();
     log.debug('Created offer => %o', desc);
     transport.setLocalDescription(desc);
