@@ -236,7 +236,9 @@ export class RemoteStream extends Stream {
           log.debug('on track called');
           // once media for a remote track arrives, show it in the remote video element
           track.onunmute = () => {
-            resolve(streams[0]);
+            if(streams.length > 0) {
+              resolve(streams[0]);
+            }
           };
         };
       } catch (error) {
