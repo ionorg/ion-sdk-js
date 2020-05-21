@@ -1,4 +1,4 @@
-import Client from './Client';
+import Client from './client';
 import { LocalStream, Stream, StreamOptions } from './stream';
 import { Codec } from './transport';
 
