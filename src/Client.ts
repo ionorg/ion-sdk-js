@@ -19,6 +19,7 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
+  knownStreams: Map<string, Map<string, Array<TrackInfo>>>;
 
   constructor(config: Config) {
     super();
@@ -31,6 +32,7 @@ export default class Client extends EventEmitter {
     const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
+    this.knownStreams = new Map();
     this.uid = uid;
     this.streams = {};
     this.dispatch = new Peer(transport);
@@ -87,12 +89,13 @@ export default class Client extends EventEmitter {
     return await stream.publish(this.rid);
   }
 
-  async subscribe(mid: string, tracks: Map<string, Array<TrackInfo>>): Promise<RemoteStream> {
+  async subscribe(mid: string): Promise<RemoteStream> {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    if (tracks.size == 0) {
-      throw new Error('Subscribe tracks can not be enpty.');
+    const tracks = this.knownStreams.get(mid)
+    if (!tracks) {
+      throw new Error('Subscribe mid is not known.');
     }
     const stream = await RemoteStream.getRemoteMedia(this.rid, mid, tracks);
     this.streams[mid] = stream;
@@ -109,6 +112,7 @@ export default class Client extends EventEmitter {
         this.local.unpublish();
       }
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
+      this.knownStreams.clear()
       log.info('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
       log.error('leave reject: error =>' + error);
@@ -139,8 +143,11 @@ export default class Client extends EventEmitter {
       }
       case 'stream-add': {
         const { mid, info, tracks } = data;
-        const trackMap = objToStrMap(tracks);
-        this.emit('stream-add', mid, info, trackMap);
+        if(mid) {
+          const trackMap: Map<string, Array<TrackInfo>> = objToStrMap(tracks);
+          this.knownStreams.set(mid, trackMap)
+        }
+        this.emit('stream-add', mid, info);
         break;
       }
       case 'stream-remove': {

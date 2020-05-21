@@ -14,6 +14,6 @@ export interface Notification {
     mid?: string;
     uid: string;
     info?: string;
-    tracks?: any
+    tracks?: { [name: string]: TrackInfo };
   };
 }
