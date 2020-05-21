@@ -247,6 +247,8 @@ export class RemoteStream extends Stream {
           track.onunmute = () => {
             if(streams.length > 0) {
               resolve(streams[0]);
+            } else {
+              reject(new Error("Not enough streams"));
             }
           };
         };
