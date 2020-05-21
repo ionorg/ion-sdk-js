@@ -1,8 +1,7 @@
 import * as log from 'loglevel';
 import { Peer } from 'protoo-client';
 import WebRTCTransport, { Codec } from './transport';
-import {TrackInfo} from './proto';
-
+import { TrackInfo } from './proto';
 
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
@@ -206,16 +205,16 @@ export class LocalStream extends Stream {
 
 export class RemoteStream extends Stream {
   static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, TrackInfo[]>) {
-    const allTracks = Array.from(tracks.values()).flat()
-    const audio =  allTracks.map((t) => t.type.toLowerCase() === "audio").includes(true)
-    const video =  allTracks.map((t) => t.type.toLowerCase() === "video").includes(true)
+    const allTracks = Array.from(tracks.values()).flat();
+    const audio = allTracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
+    const video = allTracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
     let sendOffer = true;
     log.debug('Creating receiver => %s', mid);
     const transport = new WebRTCTransport();
-    if(audio) {
+    if (audio) {
       transport.addTransceiver('audio');
     }
-    if(video) {
+    if (video) {
       transport.addTransceiver('video');
     }
     const desc = await transport.createOffer();
@@ -245,10 +244,10 @@ export class RemoteStream extends Stream {
           log.debug('on track called');
           // once media for a remote track arrives, show it in the remote video element
           track.onunmute = () => {
-            if(streams.length > 0) {
+            if (streams.length > 0) {
               resolve(streams[0]);
             } else {
-              reject(new Error("Not enough streams"));
+              reject(new Error('Not enough streams'));
             }
           };
         };
