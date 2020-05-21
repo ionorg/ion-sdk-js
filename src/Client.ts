@@ -5,16 +5,7 @@ import * as log from 'loglevel';
 
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
-
-interface Notification {
-  method: string;
-  data: {
-    rid: string;
-    mid?: string;
-    uid: string;
-    info?: string;
-  };
-}
+import {TrackInfo, Notification} from './proto';
 
 interface Config {
   url: string;
@@ -28,6 +19,7 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
+  knownStreams: Map<string, Map<string, Array<TrackInfo>>>;
 
   constructor(config: Config) {
     super();
@@ -40,6 +32,7 @@ export default class Client extends EventEmitter {
     const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
+    this.knownStreams = new Map();
     this.uid = uid;
     this.streams = {};
     this.dispatch = new Peer(transport);
@@ -100,7 +93,11 @@ export default class Client extends EventEmitter {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    const stream = await RemoteStream.getRemoteMedia(this.rid, mid);
+    const tracks = this.knownStreams.get(mid)
+    if (!tracks) {
+      throw new Error('Subscribe mid is not known.');
+    }
+    const stream = await RemoteStream.getRemoteMedia(this.rid, mid, tracks);
     this.streams[mid] = stream;
     return stream;
   }
@@ -115,6 +112,7 @@ export default class Client extends EventEmitter {
         this.local.unpublish();
       }
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
+      this.knownStreams.clear()
       log.info('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
       log.error('leave reject: error =>' + error);
@@ -144,7 +142,11 @@ export default class Client extends EventEmitter {
         break;
       }
       case 'stream-add': {
-        const { mid, info } = data;
+        const { mid, info, tracks } = data;
+        if(mid) {
+          const trackMap: Map<string, Array<TrackInfo>> = objToStrMap(tracks);
+          this.knownStreams.set(mid, trackMap)
+        }
         this.emit('stream-add', mid, info);
         break;
       }
@@ -162,4 +164,12 @@ export default class Client extends EventEmitter {
       }
     }
   };
+}
+
+function objToStrMap(obj: any) {
+  let strMap = new Map();
+  for (let k of Object.keys(obj)) {
+    strMap.set(k, obj[k]);
+  }
+  return strMap;
 }
