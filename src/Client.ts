@@ -5,7 +5,7 @@ import * as log from 'loglevel';
 
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
-import {TrackInfo, Notification} from './proto';
+import { TrackInfo, Notification } from './proto';
 
 interface Config {
   url: string;
@@ -19,7 +19,7 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
-  knownStreams: Map<string, Map<string, Array<TrackInfo>>>;
+  knownStreams: Map<string, Map<string, TrackInfo[]>>;
 
   constructor(config: Config) {
     super();
@@ -93,7 +93,7 @@ export default class Client extends EventEmitter {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    const tracks = this.knownStreams.get(mid)
+    const tracks = this.knownStreams.get(mid);
     if (!tracks) {
       throw new Error('Subscribe mid is not known.');
     }
@@ -112,7 +112,7 @@ export default class Client extends EventEmitter {
         this.local.unpublish();
       }
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
-      this.knownStreams.clear()
+      this.knownStreams.clear();
       log.info('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
       log.error('leave reject: error =>' + error);
@@ -143,9 +143,9 @@ export default class Client extends EventEmitter {
       }
       case 'stream-add': {
         const { mid, info, tracks } = data;
-        if(mid) {
-          const trackMap: Map<string, Array<TrackInfo>> = objToStrMap(tracks);
-          this.knownStreams.set(mid, trackMap)
+        if (mid) {
+          const trackMap: Map<string, TrackInfo[]> = objToStrMap(tracks);
+          this.knownStreams.set(mid, trackMap);
         }
         this.emit('stream-add', mid, info);
         break;
@@ -167,8 +167,8 @@ export default class Client extends EventEmitter {
 }
 
 function objToStrMap(obj: any) {
-  let strMap = new Map();
-  for (let k of Object.keys(obj)) {
+  const strMap = new Map();
+  for (const k of Object.keys(obj)) {
     strMap.set(k, obj[k]);
   }
   return strMap;

@@ -205,7 +205,7 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
-  static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, Array<TrackInfo>>) {
+  static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, TrackInfo[]>) {
     const allTracks = Array.from(tracks.values()).flat()
     const audio =  allTracks.map((t) => t.type.toLowerCase() === "audio").includes(true)
     const video =  allTracks.map((t) => t.type.toLowerCase() === "video").includes(true)
