@@ -166,7 +166,7 @@ export class LocalStream extends Stream {
           jsep,
           options: {
             codec,
-            bandwidth,
+            bandwidth: Number(bandwidth),
           },
         });
         this.mid = result.mid;
