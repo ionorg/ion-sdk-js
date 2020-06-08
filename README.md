@@ -10,7 +10,7 @@ Frontend sdk for the Ion backend.
 
 ```ts
 import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
-const client = new Client({ url: 'wss://endpoint' });
+const client = new Client({ url: 'wss://endpoint/ws' });
 
 // Setup handlers
 client.on('peer-join', (uid: string, info: any) => {});
