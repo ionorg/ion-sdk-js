@@ -30,12 +30,13 @@ export class Stream extends MediaStream {
   mid?: string;
   rid?: string;
   transport?: WebRTCTransport;
-  constructor(stream: MediaStream) {
-    super(stream);
 
+  get dispatch(): Peer {
     if (!Stream.dispatch) {
       throw new Error('Dispatch not set.');
     }
+
+    return Stream.dispatch;
   }
 }
 
@@ -161,7 +162,7 @@ export class LocalStream extends Stream {
         sendOffer = false;
         const jsep = this.transport!.localDescription;
         log.debug(`Sending offer ${jsep}`);
-        const result = await Stream.dispatch.request('publish', {
+        const result = await this.dispatch.request('publish', {
           rid,
           jsep,
           options: {
@@ -191,7 +192,7 @@ export class LocalStream extends Stream {
       delete this.transport;
     }
 
-    return await Stream.dispatch
+    return await this.dispatch
       .request('unpublish', {
         rid: this.rid,
         mid: this.mid,
@@ -280,6 +281,6 @@ export class RemoteStream extends Stream {
     }
     log.info('unsubscribe mid => %s', this.mid);
     this.close();
-    return await RemoteStream.dispatch.request('unsubscribe', { mid: this.mid });
+    return await this.dispatch.request('unsubscribe', { mid: this.mid });
   }
 }
