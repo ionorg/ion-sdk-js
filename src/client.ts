@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Peer, Request, WebSocketTransport } from 'protoo-client';
+import { Peer, Request, WebSocketTransport, ProtooOptions } from 'protoo-client';
 import { v4 as uuidv4 } from 'uuid';
 import * as log from 'loglevel';
 
@@ -9,6 +9,7 @@ import { TrackInfo, Notification } from './proto';
 
 interface Config {
   url: string;
+  options?: ProtooOptions;
   rtc?: RTCConfiguration;
   loglevel?: log.LogLevelDesc;
 }
@@ -29,7 +30,7 @@ export default class Client extends EventEmitter {
       throw new Error('Undefined config or config.url in ion-sdk.');
     }
 
-    const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`);
+    const transport = new WebSocketTransport(`${config.url}/ws?peer=${uid}`, config.options);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
     this.knownStreams = new Map();
