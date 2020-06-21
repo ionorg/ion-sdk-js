@@ -52,4 +52,14 @@ client.broadcast(payload);
 
 // Close client connection
 client.close();
+
+// To add your custom stream
+import { LocalStream } from 'ion-sdk-js';
+(...)
+var streamOptions = {
+        codec: 'VP8',
+        resolution: 'hd'
+    }
+var myLocalStream = new LocalStream (yourStreamHere, streamOptions)
+
 ```
