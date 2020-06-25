@@ -5,7 +5,7 @@ import * as log from 'loglevel';
 
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
-import { TrackInfo, Notification } from './proto';
+import { Stream as ProtoSteam, Notification } from './proto';
 
 interface Config {
   url: string;
@@ -21,7 +21,7 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
-  knownStreams: Map<string, Map<string, TrackInfo[]>>;
+  knownStreams: Map<string, ProtoSteam>;
 
   constructor(config: Config) {
     super();
@@ -97,11 +97,11 @@ export default class Client extends EventEmitter {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    const tracks = this.knownStreams.get(mid);
-    if (!tracks) {
+    const knownStream = this.knownStreams.get(mid);
+    if (!knownStream) {
       throw new Error('Subscribe mid is not known.');
     }
-    const stream = await RemoteStream.getRemoteMedia(this.rid, mid, tracks);
+    const stream = await RemoteStream.getRemoteMedia(this.rid, mid, knownStream.tracks);
     this.streams[mid] = stream;
     return stream;
   }
@@ -146,10 +146,9 @@ export default class Client extends EventEmitter {
         break;
       }
       case 'stream-add': {
-        const { mid, info, tracks } = data;
-        if (mid) {
-          const trackMap: Map<string, TrackInfo[]> = objToStrMap(tracks);
-          this.knownStreams.set(mid, trackMap);
+        const { mid, info, stream } = data;
+        if (mid && stream) {
+          this.knownStreams.set(mid, stream);
         }
         this.emit('stream-add', mid, info);
         break;

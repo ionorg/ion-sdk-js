@@ -160,19 +160,19 @@ export class LocalStream extends Stream {
     this.transport.onicecandidate = async () => {
       if (sendOffer) {
         sendOffer = false;
-        const jsep = this.transport!.localDescription;
-        log.debug(`Sending offer ${jsep}`);
+        const description = this.transport!.localDescription;
+        log.debug(`Sending offer ${description}`);
         const result = await this.dispatch.request('publish', {
           rid,
-          jsep,
+          description,
           options: {
             codec,
             bandwidth: Number(bandwidth),
           },
         });
         this.mid = result.mid;
-        log.debug('Got answer => %o', result?.jsep);
-        await this.transport!.setRemoteDescription(result?.jsep);
+        log.debug('Got answer => %o', result?.description);
+        await this.transport!.setRemoteDescription(result?.description);
         this.rid = rid;
       }
     };
@@ -205,10 +205,9 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
-  static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, TrackInfo[]>) {
-    const allTracks = Array.from(tracks.values()).flat();
-    const audio = allTracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
-    const video = allTracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
+  static async getRemoteMedia(rid: string, mid: string, tracks: TrackInfo[]) {
+    const audio = tracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
+    const video = tracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
     let sendOffer = true;
     log.debug('Creating receiver => %s', mid);
     const transport = new WebRTCTransport();
@@ -228,15 +227,15 @@ export class RemoteStream extends Stream {
       if (sendOffer) {
         log.debug('Send offer');
         sendOffer = false;
-        const jsep = transport.localDescription;
+        const description = transport.localDescription;
         const result = await this.dispatch.request('subscribe', {
           rid,
-          jsep,
+          description,
           mid,
         });
         log.info(`subscribe success => result(mid: ${result!.mid})`);
-        log.debug('Got answer => %o', result?.jsep);
-        await transport.setRemoteDescription(result?.jsep);
+        log.debug('Got answer => %o', result?.description);
+        await transport.setRemoteDescription(result?.description);
       }
     };
     const stream: MediaStream = await new Promise(async (resolve, reject) => {

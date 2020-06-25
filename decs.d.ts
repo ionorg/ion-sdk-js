@@ -42,7 +42,7 @@ declare module 'protoo-client' {
     data: any;
     errorCode?: number;
     errorReason?: string;
-    jsep: any;
+    description: any;
     mid: any;
   }
 }

@@ -7,6 +7,11 @@ export interface TrackInfo {
   fmtp?: string;
 }
 
+export interface Stream {
+  id: string;
+  tracks: TrackInfo[];
+}
+
 export interface Notification {
   method: string;
   data: {
@@ -14,6 +19,6 @@ export interface Notification {
     mid?: string;
     uid: string;
     info?: string;
-    tracks?: { [name: string]: TrackInfo };
+    stream?: Stream;
   };
 }
