@@ -205,18 +205,13 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
-  static async getRemoteMedia(rid: string, mid: string, tracks: TrackInfo[]) {
-    const audio = tracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
-    const video = tracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
+  static async getRemoteMedia(rid: string, mid: string) {
     let sendOffer = true;
     log.debug('Creating receiver => %s', mid);
     const transport = new WebRTCTransport();
-    if (audio) {
-      transport.addTransceiver('audio');
-    }
-    if (video) {
-      transport.addTransceiver('video');
-    }
+    transport.addTransceiver('audio');
+    transport.addTransceiver('video');
+
     const desc = await transport.createOffer();
     log.debug('Created offer => %o', desc);
     transport.setLocalDescription(desc);

@@ -5,7 +5,7 @@ import * as log from 'loglevel';
 
 import { LocalStream, RemoteStream, Stream } from './stream';
 import WebRTCTransport from './transport';
-import { Stream as ProtoSteam, Notification } from './proto';
+import { Notification } from './proto';
 
 interface Config {
   url: string;
@@ -21,7 +21,6 @@ export default class Client extends EventEmitter {
   rid: string | undefined;
   local?: LocalStream;
   streams: { [name: string]: RemoteStream };
-  knownStreams: Map<string, ProtoSteam>;
 
   constructor(config: Config) {
     super();
@@ -36,7 +35,6 @@ export default class Client extends EventEmitter {
     const transport = new WebSocketTransport(url.toString(), config.options);
     log.setLevel(config.loglevel !== undefined ? config.loglevel : log.levels.WARN);
 
-    this.knownStreams = new Map();
     this.uid = uid;
     this.streams = {};
     this.dispatch = new Peer(transport);
@@ -97,11 +95,7 @@ export default class Client extends EventEmitter {
     if (!this.rid) {
       throw new Error('You must join a room before subscribing.');
     }
-    const knownStream = this.knownStreams.get(mid);
-    if (!knownStream) {
-      throw new Error('Subscribe mid is not known.');
-    }
-    const stream = await RemoteStream.getRemoteMedia(this.rid, mid, knownStream.tracks);
+    const stream = await RemoteStream.getRemoteMedia(this.rid, mid);
     this.streams[mid] = stream;
     return stream;
   }
@@ -116,7 +110,6 @@ export default class Client extends EventEmitter {
         this.local.unpublish();
       }
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
-      this.knownStreams.clear();
       log.info('leave success: result => ' + JSON.stringify(data));
     } catch (error) {
       log.error('leave reject: error =>' + error);
@@ -146,10 +139,7 @@ export default class Client extends EventEmitter {
         break;
       }
       case 'stream-add': {
-        const { mid, info, stream } = data;
-        if (mid && stream) {
-          this.knownStreams.set(mid, stream);
-        }
+        const { mid, info } = data;
         this.emit('stream-add', mid, info);
         break;
       }
