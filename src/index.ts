@@ -1,5 +1,5 @@
 import Client from './client';
-import { LocalStream, Stream, StreamOptions } from './stream';
+import { LocalStream, RemoteStream, Stream, StreamOptions } from './stream';
 import { Codec } from './transport';
 
-export { Client, Codec, LocalStream, Stream, StreamOptions };
+export { Client, Codec, LocalStream, RemoteStream, Stream, StreamOptions };
