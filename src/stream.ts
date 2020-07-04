@@ -85,6 +85,7 @@ export class LocalStream extends Stream {
   constructor(stream: MediaStream, options: StreamOptions) {
     super(stream);
     this.options = options;
+    Object.setPrototypeOf(this, LocalStream.prototype);
   }
 
   private getVideoConstraints() {
@@ -205,6 +206,10 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
+  constructor(stream: MediaStream) {
+    super(stream);
+    Object.setPrototypeOf(this, RemoteStream.prototype);
+  }
   static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, TrackInfo[]>) {
     const allTracks = Array.from(tracks.values()).flat();
     const audio = allTracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
