@@ -921,10 +921,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.0.11.tgz#61d4886e2424da73b7b25547f59fdcb534c165a3"
   integrity sha512-lCvvI24L21ZVeIiyIUHZ5Oflv1hhHQ5E1S25IRlKIXaRkVgmXpJMI3wUJkmym2bTbCe+WoIibQnMVAU3FguaOg==
 
-"@types/sdp-transform@2.4.3":
-  version "2.4.3"
-  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.3.tgz#67cb3e8319f2de37e95e376002b89e870e19c69e"
-  integrity sha512-DaDNfnjtnO2KMw0XxO3cUEs9G6wioOCWnUTG/g24zh1jccCsV5hzHILZoDRds0LLFhKcMEJfoC7YFuMAYL51uw==
+"@types/sdp-transform@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.4.tgz#e7d3b4323d1ae9fab8199508effa1620279bbf1a"
+  integrity sha512-cTpXVbNaN1YL++3mYArwlaujujeVe8ty66rbZPdFWx94fxM7jFjs5X621esca40yRe45htNdXROMIr2cgI+xGg==
 
 "@types/uuid@7.0.4":
   version "7.0.4"
