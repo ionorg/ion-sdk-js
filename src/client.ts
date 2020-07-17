@@ -19,7 +19,7 @@ export default class Client extends EventEmitter {
   dispatch: Peer;
   uid: string;
   rid: string | undefined;
-  local?: LocalStream;
+  localStreams: LocalStream[];
   streams: { [name: string]: RemoteStream };
   knownStreams: Map<string, Map<string, TrackInfo[]>>;
 
@@ -39,6 +39,7 @@ export default class Client extends EventEmitter {
     this.knownStreams = new Map();
     this.uid = uid;
     this.streams = {};
+    this.localStreams = [];
     this.dispatch = new Peer(transport);
 
     if (config.rtc) WebRTCTransport.setRTCConfiguration(config.rtc);
@@ -89,8 +90,16 @@ export default class Client extends EventEmitter {
     if (!this.rid) {
       throw new Error('You must join a room before publishing.');
     }
-    this.local = stream;
+    this.localStreams?.push(stream);
     return await stream.publish(this.rid);
+  }
+
+  async unpublish(stream: LocalStream) {
+    if (!stream) {
+      throw new Error('Undefined LocalStream in unpublish.')
+    }
+    this.localStreams = this.localStreams.filter(localStream => localStream !== stream)
+    return await stream.unpublish()
   }
 
   async subscribe(mid: string): Promise<RemoteStream> {
@@ -112,9 +121,12 @@ export default class Client extends EventEmitter {
         rid: this.rid,
         uid: this.uid,
       });
-      if (this.local) {
-        this.local.unpublish();
+      for (const localStream of this.localStreams) {
+        if (localStream.mid) {
+          await localStream.unpublish()
+        }
       }
+      this.localStreams = []
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
       this.knownStreams.clear();
       log.info('leave success: result => ' + JSON.stringify(data));
