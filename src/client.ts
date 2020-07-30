@@ -121,11 +121,11 @@ export default class Client extends EventEmitter {
         rid: this.rid,
         uid: this.uid,
       });
-      for (const localStream of this.localStreams) {
+      await Promise.all(this.localStreams.map(async (localStream) => {
         if (localStream.mid) {
-          await localStream.unpublish()
+          await localStream.unpublish();
         }
-      }
+      }));
       this.localStreams = []
       Object.values(this.streams).forEach((stream) => stream.unsubscribe());
       this.knownStreams.clear();
