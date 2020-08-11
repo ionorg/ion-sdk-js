@@ -158,12 +158,12 @@ export default class Client extends EventEmitter {
         break;
       }
       case 'stream-add': {
-        const { mid, info, tracks } = data;
+        const { mid, info, tracks, description } = data;
         if (mid) {
           const trackMap: Map<string, TrackInfo[]> = objToStrMap(tracks);
           this.knownStreams.set(mid, trackMap);
         }
-        this.emit('stream-add', mid, info);
+        this.emit('stream-add', mid, info, description);
         break;
       }
       case 'stream-remove': {

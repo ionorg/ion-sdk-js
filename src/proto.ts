@@ -15,5 +15,6 @@ export interface Notification {
     uid: string;
     info?: string;
     tracks?: { [name: string]: TrackInfo };
+    description?: string;
   };
 }

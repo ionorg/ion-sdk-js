@@ -20,6 +20,7 @@ export interface StreamOptions extends MediaStreamConstraints {
   resolution: string;
   bandwidth?: number;
   codec: string;
+  description?: string;
 }
 
 export class Stream extends MediaStream {
@@ -149,7 +150,7 @@ export class LocalStream extends Stream {
   }
 
   async publish(rid: string) {
-    const { bandwidth, codec } = this.options!;
+    const { bandwidth, codec, description } = this.options!;
     let sendOffer = true;
     this.transport = new WebRTCTransport(codec as Codec);
     this.getTracks().map((track) => this.transport!.addTrack(track, this));
@@ -170,6 +171,7 @@ export class LocalStream extends Stream {
           options: {
             codec,
             bandwidth: Number(bandwidth),
+            description,
           },
         });
         this.mid = result.mid;
