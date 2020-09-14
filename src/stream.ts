@@ -209,6 +209,9 @@ export class LocalStream extends Stream {
 }
 
 export class RemoteStream extends Stream {
+
+  sid?: string;
+  
   constructor(stream: MediaStream) {
     super(stream);
     Object.setPrototypeOf(this, RemoteStream.prototype);
@@ -218,6 +221,7 @@ export class RemoteStream extends Stream {
     const audio = allTracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
     const video = allTracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
     let sendOffer = true;
+    let sid = '';
     log.debug('Creating receiver => %s', mid);
     const transport = new WebRTCTransport();
     if (audio) {
@@ -242,8 +246,9 @@ export class RemoteStream extends Stream {
           jsep,
           mid,
         });
-        log.info(`subscribe success => result(mid: ${result!.mid})`);
+        log.info(`subscribe success => result(sid: ${result!.sid})`);
         log.debug('Got answer => %o', result?.jsep);
+        sid = result?.sid
         await transport.setRemoteDescription(result?.jsep);
       }
     };
@@ -270,6 +275,7 @@ export class RemoteStream extends Stream {
     remote.transport = transport;
     remote.mid = mid;
     remote.rid = rid;
+    remote.sid = sid;
     return remote;
   }
 
@@ -289,6 +295,6 @@ export class RemoteStream extends Stream {
     }
     log.info('unsubscribe mid => %s', this.mid);
     this.close();
-    return await this.dispatch.request('unsubscribe', { mid: this.mid });
+    return await this.dispatch.request('unsubscribe', { mid: this.mid, sid: this.sid });
   }
 }

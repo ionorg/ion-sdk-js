@@ -44,5 +44,6 @@ declare module 'protoo-client' {
     errorReason?: string;
     jsep: any;
     mid: any;
+    sid: any;
   }
 }
