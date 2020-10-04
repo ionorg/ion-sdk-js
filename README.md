@@ -10,24 +10,13 @@ Frontend sdk for the Ion backend.
 
 ```ts
 import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
-const client = new Client({ url: 'wss://endpoint/ws' });
+const signal = new IonSFUJSONRPCSignal("wss://endpoint/ws");
+const client = new Client("test session", signal);
 
 // Setup handlers
-client.on('peer-join', (uid: string, info: any) => {});
-client.on('peer-leave', (uid: string) => {});
-client.on('transport-open', () => {}));
-client.on('transport-closed', () => {});
-client.on('stream-add', (uid: string, info: any) => {});
-client.on('stream-remove', (stream: RemoteStream) => {});
-client.on('broadcast', (uid: string, info: any) => {});
-
-// Join a room
-client.join(rid, {
-    name: "name"
+client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
+    ...
 });
-
-// Leave current room
-client.leave();
 
 // Get a local stream
 const local = await LocalStream.getUserMedia({
@@ -38,18 +27,6 @@ const local = await LocalStream.getUserMedia({
 // Publish local stream
 client.publish(local);
 
-// Unpublish local stream
-local.unpublish();
-
-// Subscribe to a remote stream
-const remote = client.subscribe(mid);
-
-// Unsubscribe from a stream
-remote.unsubscribe();
-
-// Broadcast a payload to the room
-client.broadcast(payload);
-
 // Close client connection
 client.close();
 
@@ -57,9 +34,9 @@ client.close();
 import { LocalStream } from 'ion-sdk-js';
 (...)
 var streamOptions = {
-        codec: 'VP8',
-        resolution: 'hd'
-    }
+    codec: 'VP8',
+    resolution: 'hd'
+}
 var myLocalStream = new LocalStream (yourStreamHere, streamOptions)
 
 ```

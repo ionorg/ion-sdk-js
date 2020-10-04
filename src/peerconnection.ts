@@ -2,9 +2,6 @@ import { parse, write, MediaAttributes } from 'sdp-transform';
 import * as log from 'loglevel';
 
 enum PayloadType {
-  PCMU = 0,
-  PCMA = 8,
-  G722 = 9,
   Opus = 111,
   VP8 = 96,
   VP9 = 98,
@@ -44,59 +41,20 @@ function rtp(name: Codec): MediaAttributes['rtp'] {
   }
 }
 
-export default class WebRTCTransport {
-  private static config: RTCConfiguration = {
-    iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
-  };
-
-  static setRTCConfiguration(config: RTCConfiguration) {
-    WebRTCTransport.config = config;
-  }
-
-  private pc: RTCPeerConnection;
+export default class PeerConnection extends RTCPeerConnection {
   private rtp: MediaAttributes['rtp'] | null;
-  constructor(codec?: Codec) {
-    if (!WebRTCTransport.config) {
-      throw new Error('RTConfiguration not set.');
-    }
-    this.pc = new RTCPeerConnection(WebRTCTransport.config);
+  constructor(config: RTCConfiguration, codec?: Codec) {
+    super(config);
     this.rtp = codec ? rtp(codec) : null;
   }
 
   close() {
-    this.pc.ontrack = null;
-    this.pc.onicecandidate = null;
-    this.pc.onnegotiationneeded = null;
-    this.pc.getSenders().forEach((sender) => this.pc.removeTrack(sender));
-    this.pc.close();
-  }
-
-  addTrack(track: MediaStreamTrack, stream: MediaStream) {
-    return this.pc.addTrack(track, stream);
-  }
-
-  addTransceiver(kind: string) {
-    this.pc.addTransceiver(kind, { direction: 'recvonly' });
-  }
-
-  removeTrack(sender: RTCRtpSender) {
-    this.pc.removeTrack(sender);
-  }
-
-  getSenders(): RTCRtpSender[] {
-    return this.pc.getSenders();
-  }
-
-  setLocalDescription(offer: RTCSessionDescriptionInit) {
-    this.pc.setLocalDescription(offer);
-  }
-
-  setRemoteDescription(desc: RTCSessionDescriptionInit): Promise<void> {
-    return this.pc.setRemoteDescription(desc);
+    super.getSenders().forEach((sender) => super.removeTrack(sender));
+    super.close();
   }
 
   async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
-    const offer = await this.pc.createOffer(options);
+    const offer = await super.createOffer(options);
 
     if (!this.rtp) return offer;
 
@@ -134,21 +92,5 @@ export default class WebRTCTransport {
 
     offer.sdp = write(session);
     return offer;
-  }
-
-  get localDescription(): RTCSessionDescription | null {
-    return this.pc.localDescription;
-  }
-
-  set onicecandidate(cb: (ev: RTCPeerConnectionIceEvent) => any | null) {
-    this.pc.onicecandidate = cb;
-  }
-
-  set onnegotiationneeded(cb: (ev: Event) => any | null) {
-    this.pc.onnegotiationneeded = cb;
-  }
-
-  set ontrack(cb: (ev: RTCTrackEvent) => any | null) {
-    this.pc.ontrack = cb;
   }
 }
