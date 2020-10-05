@@ -1,3 +1,5 @@
+import PeerConnection from './peerconnection';
+
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
 }
@@ -146,9 +148,51 @@ export class LocalStream extends MediaStream {
   }
 }
 
+type Layers = 'none' | 'low' | 'medium' | 'high';
+
 export class RemoteStream extends MediaStream {
-  constructor(stream: MediaStream) {
+  private api: RTCDataChannel;
+  private audio: Boolean;
+  private video: Layers;
+
+  constructor(stream: MediaStream, api: RTCDataChannel) {
     super(stream);
     Object.setPrototypeOf(this, RemoteStream.prototype);
+    this.api = api;
+    this.audio = true;
+    this.video = 'high';
+  }
+
+  private select() {
+    this.api.send(
+      JSON.stringify({
+        streamId: this.id,
+        video: this.video,
+        audio: this.audio,
+      }),
+    );
+  }
+
+  selectLayer(layer: Layers) {
+    this.video = layer;
+    this.select();
+  }
+
+  mute(kind: 'audio' | 'video') {
+    if (kind === 'audio') {
+      this.audio = false;
+    } else if (kind === 'video') {
+      this.video = 'none';
+    }
+    this.select();
+  }
+
+  unmute(kind: 'audio' | 'video') {
+    if (kind === 'audio') {
+      this.audio = true;
+    } else if (kind === 'video') {
+      this.video = 'high';
+    }
+    this.select();
   }
 }
