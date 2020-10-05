@@ -45,6 +45,10 @@ export default class PeerConnection extends RTCPeerConnection {
   private rtp: MediaAttributes['rtp'] | null;
   constructor(config: RTCConfiguration, codec?: Codec) {
     super(config);
+
+    // This is required for Safari support
+    Object.setPrototypeOf(this, PeerConnection.prototype);
+
     this.rtp = codec ? rtp(codec) : null;
   }
 

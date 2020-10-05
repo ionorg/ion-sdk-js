@@ -154,13 +154,18 @@ export class RemoteStream extends MediaStream {
   private api: RTCDataChannel;
   private audio: Boolean;
   private video: Layers;
+  private videoPreMute: Layers;
 
   constructor(stream: MediaStream, api: RTCDataChannel) {
     super(stream);
+
+    // This is required for Safari support
     Object.setPrototypeOf(this, RemoteStream.prototype);
+
     this.api = api;
     this.audio = true;
     this.video = 'high';
+    this.videoPreMute = 'none';
   }
 
   private select() {
@@ -182,6 +187,7 @@ export class RemoteStream extends MediaStream {
     if (kind === 'audio') {
       this.audio = false;
     } else if (kind === 'video') {
+      this.videoPreMute = this.video;
       this.video = 'none';
     }
     this.select();
@@ -191,7 +197,7 @@ export class RemoteStream extends MediaStream {
     if (kind === 'audio') {
       this.audio = true;
     } else if (kind === 'video') {
-      this.video = 'high';
+      this.video = this.videoPreMute;
     }
     this.select();
   }
