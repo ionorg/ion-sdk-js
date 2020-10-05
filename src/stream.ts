@@ -66,10 +66,21 @@ export class LocalStream extends MediaStream {
     Object.setPrototypeOf(this, LocalStream.prototype);
   }
 
+  private getAudioConstraints() {
+    return this.options.audio;
+  }
+
   private getVideoConstraints() {
     return this.options.video instanceof Object
       ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as object) }
       : { video: this.options.video };
+  }
+
+  private async getTrack(kind: 'audio' | 'video') {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      [kind]: kind === 'video' ? this.getVideoConstraints() : this.getAudioConstraints(),
+    });
+    return stream.getTracks()[0];
   }
 
   publish(pc: RTCPeerConnection) {
@@ -87,10 +98,7 @@ export class LocalStream extends MediaStream {
             }
           : { deviceId },
     };
-    const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: kind === 'video' ? { ...this.getVideoConstraints(), deviceId } : { deviceId },
-    });
-    const track = stream.getTracks()[0];
+    const track = await this.getTrack(kind);
 
     let prev: MediaStreamTrack;
     if (kind === 'audio') {
@@ -132,11 +140,9 @@ export class LocalStream extends MediaStream {
   }
 
   async unmute(kind: 'audio' | 'video') {
-    if (kind === 'audio') {
-      this.getAudioTracks()[0].enabled = true;
-    } else if (kind === 'video') {
-      this.getVideoTracks()[0].enabled = true;
-    }
+    const track = await this.getTrack(kind);
+    this.addTrack(track);
+    this.pc?.addTrack(track);
   }
 }
 
