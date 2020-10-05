@@ -173,7 +173,7 @@ export class RemoteStream extends MediaStream {
     );
   }
 
-  selectLayer(layer: Layers) {
+  preferLayer(layer: Layers) {
     this.video = layer;
     this.select();
   }
