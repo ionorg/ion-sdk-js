@@ -17,7 +17,7 @@ export default class Client {
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
   localStreams: LocalStream[];
-  remotes: { [name: string]: RemoteStream };
+  remotes: Map<string, RemoteStream>;
 
   constructor(
     sid: string,
@@ -32,7 +32,7 @@ export default class Client {
     log.setLevel(config.loglevel);
 
     this.candidates = [];
-    this.remotes = {};
+    this.remotes = new Map();
     this.localStreams = [];
 
     this.signal = signal;
@@ -40,10 +40,10 @@ export default class Client {
     this.api = this.pc.createDataChannel('ion-sfu');
     this.pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      let remote = this.remotes[stream.id];
+      let remote = this.remotes.get(stream.id);
       if (!remote) {
         remote = new RemoteStream(stream);
-        this.remotes[stream.id] = remote;
+        this.remotes.set(stream.id, remote);
       }
 
       if (this.ontrack) {

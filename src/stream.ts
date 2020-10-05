@@ -14,7 +14,6 @@ export const VideoResolutions: VideoResolutions = {
 export interface StreamOptions extends MediaStreamConstraints {
   resolution: string;
   codec: string;
-  description?: string;
 }
 
 export class LocalStream extends MediaStream {
@@ -115,10 +114,20 @@ export class LocalStream extends MediaStream {
   }
 
   mute(kind: 'audio' | 'video') {
-    if (kind === 'audio') {
-      this.getAudioTracks()[0].enabled = false;
-    } else if (kind === 'video') {
-      this.getVideoTracks()[0].enabled = false;
+    let track = this.getAudioTracks()[0];
+    if (kind === 'video') {
+      track = this.getVideoTracks()[0];
+    }
+
+    this.removeTrack(track);
+
+    // If published, remove the track from the peer connection
+    if (this.pc) {
+      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
+        if (sender?.track === track) {
+          this.pc!.removeTrack(sender);
+        }
+      });
     }
   }
 
