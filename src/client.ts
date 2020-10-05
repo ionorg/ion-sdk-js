@@ -16,7 +16,6 @@ export default class Client {
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
-  localStreams: LocalStream[];
   remotes: Map<string, RemoteStream>;
 
   constructor(
@@ -33,7 +32,6 @@ export default class Client {
 
     this.candidates = [];
     this.remotes = new Map();
-    this.localStreams = [];
 
     this.signal = signal;
     this.pc = new PeerConnection(config.rtc);
@@ -42,7 +40,7 @@ export default class Client {
       const stream = ev.streams[0];
       let remote = this.remotes.get(stream.id);
       if (!remote) {
-        remote = new RemoteStream(stream);
+        remote = new RemoteStream(stream, this.api);
         this.remotes.set(stream.id, remote);
       }
 

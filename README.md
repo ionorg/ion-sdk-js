@@ -10,7 +10,7 @@ Frontend sdk for the Ion backend.
 
 ```ts
 import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
-const signal = new IonSFUJSONRPCSignal("wss://endpoint/ws");
+const signal = new IonSFUJSONRPCSignal("wss://ion-sfu:7000");
 const client = new Client("test session", signal);
 
 // Setup handlers
