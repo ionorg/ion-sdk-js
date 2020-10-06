@@ -72,9 +72,11 @@ export default class Client {
 
   publish(stream: MediaStream) {
     if (stream.hasOwnProperty('publish')) {
-      (stream as LocalStream).publish(this.pc);
+      const localStream = stream as LocalStream;
+      localStream.publish(this.pc);
+    } else {
+      stream.getTracks().forEach((track) => this.pc.addTrack(track));
     }
-    stream.getTracks().forEach((track) => this.pc.addTrack(track));
   }
 
   close() {

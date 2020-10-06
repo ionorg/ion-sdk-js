@@ -1,5 +1,5 @@
 import Client from './client';
-import { LocalStream, RemoteStream, StreamOptions } from './stream';
+import { LocalStream, RemoteStream, Constraints } from './stream';
 import { Codec } from './peerconnection';
 
-export { Client, Codec, LocalStream, RemoteStream, StreamOptions };
+export { Client, Codec, LocalStream, RemoteStream, Constraints };

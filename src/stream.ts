@@ -13,20 +13,23 @@ export const VideoResolutions: VideoResolutions = {
   qhd: { width: { ideal: 2560 }, height: { ideal: 1440 } },
 };
 
-export interface StreamOptions extends MediaStreamConstraints {
+export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
+  simulcast: boolean;
+  encodings?: RTCRtpEncodingParameters[];
 }
 
 export class LocalStream extends MediaStream {
   pc?: RTCPeerConnection;
 
   static async getUserMedia(
-    options: StreamOptions = {
+    options: Constraints = {
       codec: 'VP8',
       resolution: 'hd',
       audio: false,
       video: false,
+      simulcast: false,
     },
   ) {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -46,11 +49,12 @@ export class LocalStream extends MediaStream {
   }
 
   static async getDisplayMedia(
-    options: StreamOptions = {
+    options: Constraints = {
       codec: 'VP8',
       resolution: 'hd',
       audio: false,
       video: true,
+      simulcast: false,
     },
   ) {
     // @ts-ignore
@@ -61,8 +65,8 @@ export class LocalStream extends MediaStream {
     return new LocalStream(stream, options);
   }
 
-  options: StreamOptions;
-  constructor(stream: MediaStream, options: StreamOptions) {
+  options: Constraints;
+  constructor(stream: MediaStream, options: Constraints) {
     super(stream);
     this.options = options;
     Object.setPrototypeOf(this, LocalStream.prototype);
@@ -85,8 +89,41 @@ export class LocalStream extends MediaStream {
     return stream.getTracks()[0];
   }
 
+  addTrack(track: MediaStreamTrack) {
+    super.addTrack(track);
+
+    if (this.pc) {
+      if (track.kind === 'video' && this.options.simulcast) {
+        this.pc.addTransceiver(track, {
+          streams: [this],
+          direction: 'sendrecv',
+          sendEncodings: this.options.encodings
+            ? this.options.encodings
+            : [
+                {
+                  rid: 'f',
+                },
+                {
+                  rid: 'h',
+                  scaleResolutionDownBy: 2.0,
+                  maxBitrate: 150000,
+                },
+                {
+                  rid: 'q',
+                  scaleResolutionDownBy: 4.0,
+                  maxBitrate: 100000,
+                },
+              ],
+        });
+      } else {
+        this.pc.addTrack(track);
+      }
+    }
+  }
+
   publish(pc: RTCPeerConnection) {
     this.pc = pc;
+    this.getTracks().forEach(this.addTrack);
   }
 
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
@@ -108,7 +145,7 @@ export class LocalStream extends MediaStream {
     } else if (kind === 'video') {
       prev = this.getVideoTracks()[0];
     }
-    this.addTrack(track);
+    super.addTrack(track);
     this.removeTrack(prev!);
     prev!.stop();
 
@@ -144,17 +181,16 @@ export class LocalStream extends MediaStream {
   async unmute(kind: 'audio' | 'video') {
     const track = await this.getTrack(kind);
     this.addTrack(track);
-    this.pc?.addTrack(track);
   }
 }
 
-type Layers = 'none' | 'low' | 'medium' | 'high';
+type Layer = 'none' | 'low' | 'medium' | 'high';
 
 export class RemoteStream extends MediaStream {
   private api: RTCDataChannel;
   private audio: Boolean;
-  private video: Layers;
-  private videoPreMute: Layers;
+  private video: Layer;
+  private videoPreMute: Layer;
 
   constructor(stream: MediaStream, api: RTCDataChannel) {
     super(stream);
@@ -178,7 +214,7 @@ export class RemoteStream extends MediaStream {
     );
   }
 
-  preferLayer(layer: Layers) {
+  preferLayer(layer: Layer) {
     this.video = layer;
     this.select();
   }

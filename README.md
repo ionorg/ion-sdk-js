@@ -29,7 +29,8 @@ client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
 // Get a local stream
 const local = await LocalStream.getUserMedia({
     audio: true,
-    video: true
+    video: true,
+    simulcast: true, // enable simulcast
 });
 
 // Publish local stream
