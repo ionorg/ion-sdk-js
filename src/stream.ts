@@ -13,11 +13,19 @@ export const VideoResolutions: VideoResolutions = {
   qhd: { width: { ideal: 2560 }, height: { ideal: 1440 } },
 };
 
+type Layer = 'none' | 'low' | 'medium' | 'high';
+
+export interface Encoding {
+  layer: Layer;
+  maxBitrate: number;
+  maxFramerate: number;
+}
+
 export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
   simulcast: boolean;
-  encodings?: RTCRtpEncodingParameters[];
+  encodings?: Encoding[];
 }
 
 export class LocalStream extends MediaStream {
@@ -94,26 +102,60 @@ export class LocalStream extends MediaStream {
 
     if (this.pc) {
       if (track.kind === 'video' && this.options.simulcast) {
+        const encodings: RTCRtpEncodingParameters[] = [
+          {
+            rid: 'f',
+          },
+          {
+            rid: 'h',
+            scaleResolutionDownBy: 2.0,
+            maxBitrate: 150000,
+          },
+          {
+            rid: 'q',
+            scaleResolutionDownBy: 4.0,
+            maxBitrate: 100000,
+          },
+        ];
+
+        if (this.options.encodings) {
+          this.options.encodings.forEach((encoding) => {
+            switch (encoding.layer) {
+              case 'high':
+                if (encoding.maxBitrate) {
+                  encodings[0].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[0].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'medium':
+                if (encoding.maxBitrate) {
+                  encodings[1].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[1].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'low':
+                if (encoding.maxBitrate) {
+                  encodings[2].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[2].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+            }
+          });
+        }
+
         this.pc.addTransceiver(track, {
           streams: [this],
           direction: 'sendrecv',
-          sendEncodings: this.options.encodings
-            ? this.options.encodings
-            : [
-                {
-                  rid: 'f',
-                },
-                {
-                  rid: 'h',
-                  scaleResolutionDownBy: 2.0,
-                  maxBitrate: 150000,
-                },
-                {
-                  rid: 'q',
-                  scaleResolutionDownBy: 4.0,
-                  maxBitrate: 100000,
-                },
-              ],
+          sendEncodings: encodings,
         });
       } else {
         this.pc.addTrack(track);
@@ -183,8 +225,6 @@ export class LocalStream extends MediaStream {
     this.addTrack(track);
   }
 }
-
-type Layer = 'none' | 'low' | 'medium' | 'high';
 
 export class RemoteStream extends MediaStream {
   private api: RTCDataChannel;
