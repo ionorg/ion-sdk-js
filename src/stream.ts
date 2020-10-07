@@ -1,4 +1,4 @@
-import PeerConnection from './peerconnection';
+import * as log from 'loglevel';
 
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
@@ -28,36 +28,35 @@ export interface Constraints extends MediaStreamConstraints {
   encodings?: Encoding[];
 }
 
+const defaults = {
+  codec: 'VP8',
+  resolution: 'hd',
+  audio: true,
+  video: true,
+  simulcast: false,
+};
+
 export class LocalStream extends MediaStream {
   pc?: RTCPeerConnection;
 
-  static async getUserMedia(
-    options: Constraints = {
-      codec: 'VP8',
-      resolution: 'hd',
-      audio: false,
-      video: false,
-      simulcast: false,
-    },
-  ) {
+  static async getUserMedia(contraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: options.audio,
+      audio: contraints.audio ? contraints.audio : defaults.audio,
       video:
-        options.video instanceof Object
+        contraints.video instanceof Object
           ? {
-              ...VideoResolutions[options.resolution],
-              ...options.video,
+              ...VideoResolutions[contraints.resolution],
+              ...contraints.video,
             }
-          : options.video
-          ? VideoResolutions[options.resolution]
-          : false,
+          : contraints.video
+          ? VideoResolutions[contraints.resolution]
+          : defaults.video,
     });
-
-    return new LocalStream(stream, options);
+    return new LocalStream(stream, contraints);
   }
 
   static async getDisplayMedia(
-    options: Constraints = {
+    constraints: Constraints = {
       codec: 'VP8',
       resolution: 'hd',
       audio: false,
@@ -70,24 +69,25 @@ export class LocalStream extends MediaStream {
       video: true,
     });
 
-    return new LocalStream(stream, options);
+    return new LocalStream(stream, constraints);
   }
 
-  options: Constraints;
-  constructor(stream: MediaStream, options: Constraints) {
+  constraints: Constraints;
+  constructor(stream: MediaStream, constraints: Constraints) {
     super(stream);
-    this.options = options;
+    this.constraints = constraints;
     Object.setPrototypeOf(this, LocalStream.prototype);
+    log.debug('New local stream: %s with constraints: %o', this.id, constraints);
   }
 
   private getAudioConstraints() {
-    return this.options.audio;
+    return this.constraints.audio;
   }
 
   private getVideoConstraints() {
-    return this.options.video instanceof Object
-      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as object) }
-      : { video: this.options.video };
+    return this.constraints.video instanceof Object
+      ? { ...VideoResolutions[this.constraints.resolution], ...(this.constraints.video as object) }
+      : { video: this.constraints.video };
   }
 
   private async getTrack(kind: 'audio' | 'video') {
@@ -98,10 +98,10 @@ export class LocalStream extends MediaStream {
   }
 
   addTrack(track: MediaStreamTrack) {
-    super.addTrack(track);
+    // super.addTrack(track);
 
     if (this.pc) {
-      if (track.kind === 'video' && this.options.simulcast) {
+      if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
           {
             rid: 'f',
@@ -118,8 +118,8 @@ export class LocalStream extends MediaStream {
           },
         ];
 
-        if (this.options.encodings) {
-          this.options.encodings.forEach((encoding) => {
+        if (this.constraints.encodings) {
+          this.constraints.encodings.forEach((encoding) => {
             switch (encoding.layer) {
               case 'high':
                 if (encoding.maxBitrate) {
@@ -158,23 +158,25 @@ export class LocalStream extends MediaStream {
           sendEncodings: encodings,
         });
       } else {
-        this.pc.addTrack(track);
+        this.pc.addTrack(track, this);
       }
     }
   }
 
   publish(pc: RTCPeerConnection) {
+    log.debug('Publish stream: %s', this.id);
     this.pc = pc;
-    this.getTracks().forEach(this.addTrack);
+    this.getTracks().forEach(this.addTrack.bind(this));
   }
 
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
-    this.options = {
-      ...this.options,
+    log.debug('Stream %s %s track switch device: %s', this.id, kind, deviceId);
+    this.constraints = {
+      ...this.constraints,
       [kind]:
-        this.options[kind] instanceof Object
+        this.constraints[kind] instanceof Object
           ? {
-              ...(this.options[kind] as object),
+              ...(this.constraints[kind] as object),
               deviceId,
             }
           : { deviceId },
@@ -203,6 +205,7 @@ export class LocalStream extends MediaStream {
   }
 
   mute(kind: 'audio' | 'video') {
+    log.debug('Stream %s mute %s', this.id, kind);
     let track = this.getAudioTracks()[0];
     if (kind === 'video') {
       track = this.getVideoTracks()[0];
@@ -221,60 +224,65 @@ export class LocalStream extends MediaStream {
   }
 
   async unmute(kind: 'audio' | 'video') {
+    log.debug('Stream %s unmute %s', this.id, kind);
     const track = await this.getTrack(kind);
     this.addTrack(track);
   }
 }
 
-export class RemoteStream extends MediaStream {
-  private api: RTCDataChannel;
-  private audio: Boolean;
-  private video: Layer;
-  private videoPreMute: Layer;
+export interface RemoteStream extends MediaStream {
+  api: RTCDataChannel;
+  audio: Boolean;
+  video: Layer;
+  _videoPreMute: Layer;
 
-  constructor(stream: MediaStream, api: RTCDataChannel) {
-    super(stream);
+  preferLayer(layer: Layer): void;
+  mute(kind: 'audio' | 'video'): void;
+  unmute(kind: 'audio' | 'video'): void;
+}
 
-    // This is required for Safari support
-    Object.setPrototypeOf(this, RemoteStream.prototype);
+export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
+  const remote = stream as RemoteStream;
+  remote.audio = true;
+  remote.video = 'high';
+  remote._videoPreMute = 'none';
 
-    this.api = api;
-    this.audio = true;
-    this.video = 'high';
-    this.videoPreMute = 'none';
-  }
+  const select = () => {
+    const call = {
+      streamId: remote.id,
+      video: remote.video,
+      audio: remote.audio,
+    };
+    log.debug('Stream %s api call %o', remote.id, call);
+    api.send(JSON.stringify(call));
+  };
 
-  private select() {
-    this.api.send(
-      JSON.stringify({
-        streamId: this.id,
-        video: this.video,
-        audio: this.audio,
-      }),
-    );
-  }
+  remote.preferLayer = (layer: Layer) => {
+    log.debug('Stream %s prefer layer %s', remote.id, layer);
+    remote.video = layer;
+    select();
+  };
 
-  preferLayer(layer: Layer) {
-    this.video = layer;
-    this.select();
-  }
-
-  mute(kind: 'audio' | 'video') {
+  remote.mute = (kind: 'audio' | 'video') => {
+    log.debug('Stream %s mute %s', remote.id, kind);
     if (kind === 'audio') {
-      this.audio = false;
+      remote.audio = false;
     } else if (kind === 'video') {
-      this.videoPreMute = this.video;
-      this.video = 'none';
+      remote._videoPreMute = remote.video;
+      remote.video = 'none';
     }
-    this.select();
-  }
+    select();
+  };
 
-  unmute(kind: 'audio' | 'video') {
+  remote.unmute = (kind: 'audio' | 'video') => {
+    log.debug('Stream %s unmute %s', remote.id, kind);
     if (kind === 'audio') {
-      this.audio = true;
+      remote.audio = true;
     } else if (kind === 'video') {
-      this.video = this.videoPreMute;
+      remote.video = remote._videoPreMute;
     }
-    this.select();
-  }
+    select();
+  };
+
+  return remote;
 }

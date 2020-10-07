@@ -1,6 +1,7 @@
 import * as log from 'loglevel';
 
-import { LocalStream, RemoteStream } from './stream';
+import { Signal } from './signal';
+import { LocalStream, makeRemote, RemoteStream } from './stream';
 import PeerConnection from './peerconnection';
 
 interface Config {
@@ -8,9 +9,19 @@ interface Config {
   loglevel: log.LogLevelDesc;
 }
 
+// function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
+//   const remote = new Remote(stream, api);
+//   let remoteStream = stream as RemoteStream;
+//   for (let id in remote) {
+//     (<any>remoteStream)[id] = (<any>remote)[id];
+//   }
+//   debugger
+//   return remoteStream;
+// }
+
 export default class Client {
   private api: RTCDataChannel;
-  private pc: RTCPeerConnection;
+  pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
 
@@ -22,7 +33,7 @@ export default class Client {
     sid: string,
     signal: Signal,
     config: Config = {
-      loglevel: log.levels.WARN,
+      loglevel: log.levels.DEBUG,
       rtc: {
         iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
       },
@@ -35,12 +46,20 @@ export default class Client {
 
     this.signal = signal;
     this.pc = new PeerConnection(config.rtc);
+    this.pc.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        signal.trickle(candidate);
+      }
+    };
     this.api = this.pc.createDataChannel('ion-sfu');
+
     this.pc.ontrack = (ev: RTCTrackEvent) => {
+      console.log(ev);
       const stream = ev.streams[0];
+
       let remote = this.remotes.get(stream.id);
       if (!remote) {
-        remote = new RemoteStream(stream, this.api);
+        remote = makeRemote(stream, this.api);
         this.remotes.set(stream.id, remote);
       }
 
@@ -49,38 +68,41 @@ export default class Client {
       }
     };
 
-    this.join(sid);
+    signal.onready = () => this.join(sid);
   }
 
-  async join(sid: string) {
-    try {
-      const offer = await this.pc.createOffer();
-      await this.pc.setLocalDescription(offer);
-      const answer = await this.signal.join(sid, offer);
-
-      this.pc.onnegotiationneeded = this.onNegotiationNeeded;
-      this.pc.setRemoteDescription(answer);
-
-      this.candidates.forEach(this.pc.addIceCandidate);
-
-      this.signal.onNegotiate(this.negotiate);
-      this.signal.onTrickle(this.trickle);
-    } catch (error) {
-      log.error('join error:' + error);
-    }
+  getStats(selector?: MediaStreamTrack) {
+    return this.pc.getStats(selector);
   }
 
   publish(stream: MediaStream) {
-    if (stream.hasOwnProperty('publish')) {
+    if (stream.hasOwnProperty('options')) {
       const localStream = stream as LocalStream;
       localStream.publish(this.pc);
     } else {
-      stream.getTracks().forEach((track) => this.pc.addTrack(track));
+      stream.getTracks().forEach((track) => this.pc.addTrack(track, stream));
     }
   }
 
   close() {
     this.signal.close();
+  }
+
+  private async join(sid: string) {
+    try {
+      const offer = await this.pc.createOffer();
+      await this.pc.setLocalDescription(offer);
+      const answer = await this.signal.join(sid, offer);
+
+      await this.pc.setRemoteDescription(answer);
+      this.candidates.forEach(this.pc.addIceCandidate.bind(this));
+      this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
+
+      this.signal.onnegotiate = this.negotiate.bind(this);
+      this.signal.ontrickle = this.trickle.bind(this);
+    } catch (error) {
+      log.error('join error:' + error);
+    }
   }
 
   private trickle(candidate: RTCIceCandidateInit) {
@@ -96,7 +118,7 @@ export default class Client {
       await this.pc.setRemoteDescription(jsep);
       const answer = await this.pc.createAnswer();
       await this.pc.setLocalDescription(answer);
-      this.signal.negotiate(answer);
+      this.signal.answer(answer);
     } else if (jsep.type === 'answer') {
       this.pc.setRemoteDescription(jsep);
     }
@@ -104,7 +126,8 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     const offer = await this.pc!.createOffer();
-    await this.pc!.setLocalDescription(offer);
-    this.signal.negotiate(offer);
+    await this.pc.setLocalDescription(offer);
+    const answer = await this.signal.offer(offer);
+    this.pc.setRemoteDescription(answer);
   }
 }

@@ -1,5 +1,5 @@
 import Client from './client';
-import { LocalStream, RemoteStream, Constraints } from './stream';
+import { LocalStream, Constraints } from './stream';
 import { Codec } from './peerconnection';
-
-export { Client, Codec, LocalStream, RemoteStream, Constraints };
+import { Signal, IonSFUJSONRPCSignal } from './signal';
+export { Client, Codec, LocalStream, Constraints, Signal, IonSFUJSONRPCSignal };

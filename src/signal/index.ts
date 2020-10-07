@@ -1,9 +1,15 @@
-interface Signal {
+import IonSFUJSONRPCSignal from './ion-sfu';
+
+export interface Signal {
+  onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
+  onready?: () => void;
+  ontrickle?: (candidate: RTCIceCandidateInit) => void;
+
   join(sid: string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
-  negotiate(jsep: RTCSessionDescriptionInit): void;
+  offer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
+  answer(answer: RTCSessionDescriptionInit): void;
   trickle(candidate: RTCIceCandidateInit): void;
   close(): void;
-
-  onNegotiate(callback: (jsep: RTCSessionDescriptionInit) => void): void;
-  onTrickle(callback: (candidate: RTCIceCandidateInit) => void): void;
 }
+
+export { IonSFUJSONRPCSignal };

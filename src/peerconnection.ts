@@ -57,44 +57,44 @@ export default class PeerConnection extends RTCPeerConnection {
     super.close();
   }
 
-  async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
-    const offer = await super.createOffer(options);
+  // async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
+  //   const offer = await super.createOffer(options);
 
-    if (!this.rtp) return offer;
+  //   if (!this.rtp) return offer;
 
-    const session = parse(offer.sdp!);
+  //   const session = parse(offer.sdp!);
 
-    const videoIdx = session.media.findIndex(({ type, ssrcGroups }) => type === 'video' && !!ssrcGroups);
-    if (videoIdx === -1) return offer;
+  //   const videoIdx = session.media.findIndex(({ type, ssrcGroups }) => type === 'video' && !!ssrcGroups);
+  //   if (videoIdx === -1) return offer;
 
-    const { payload } = this.rtp[0];
-    session.media[videoIdx].payloads = `${payload}`; // + " 97";
-    session.media[videoIdx].rtp = this.rtp;
+  //   const { payload } = this.rtp[0];
+  //   session.media[videoIdx].payloads = `${payload}`; // + " 97";
+  //   session.media[videoIdx].rtp = this.rtp;
 
-    const fmtp: any[] = [
-      // { "payload": 97, "config": "apt=" + payload }
-    ];
+  //   const fmtp: any[] = [
+  //     // { "payload": 97, "config": "apt=" + payload }
+  //   ];
 
-    session.media[videoIdx].fmtp = fmtp;
+  //   session.media[videoIdx].fmtp = fmtp;
 
-    const rtcpFB = [
-      { payload, type: 'transport-cc', subtype: undefined },
-      { payload, type: 'ccm', subtype: 'fir' },
-      { payload, type: 'nack', subtype: undefined },
-      { payload, type: 'nack', subtype: 'pli' },
-    ];
+  //   const rtcpFB = [
+  //     { payload, type: 'transport-cc', subtype: undefined },
+  //     { payload, type: 'ccm', subtype: 'fir' },
+  //     { payload, type: 'nack', subtype: undefined },
+  //     { payload, type: 'nack', subtype: 'pli' },
+  //   ];
 
-    session.media[videoIdx].rtcpFb = rtcpFB;
+  //   session.media[videoIdx].rtcpFb = rtcpFB;
 
-    const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
-    const ssrcs = ssrcGroup.ssrcs;
-    const ssrc = parseInt(ssrcs.split(' ')[0], 10);
-    log.debug('ssrcs => %s, video %s', ssrcs, ssrc);
+  //   const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
+  //   const ssrcs = ssrcGroup.ssrcs;
+  //   const ssrc = parseInt(ssrcs.split(' ')[0], 10);
+  //   log.debug('ssrcs => %s, video %s', ssrcs, ssrc);
 
-    session.media[videoIdx].ssrcGroups = [];
-    session.media[videoIdx].ssrcs = session.media[videoIdx].ssrcs!.filter((item) => item.id === ssrc);
+  //   session.media[videoIdx].ssrcGroups = [];
+  //   session.media[videoIdx].ssrcs = session.media[videoIdx].ssrcs!.filter((item) => item.id === ssrc);
 
-    offer.sdp = write(session);
-    return offer;
-  }
+  //   offer.sdp = write(session);
+  //   return offer;
+  // }
 }
