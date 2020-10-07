@@ -1,5 +1,3 @@
-import * as log from 'loglevel';
-
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
 }
@@ -77,7 +75,6 @@ export class LocalStream extends MediaStream {
     super(stream);
     this.constraints = constraints;
     Object.setPrototypeOf(this, LocalStream.prototype);
-    log.debug('New local stream: %s with constraints: %o', this.id, constraints);
   }
 
   private getAudioConstraints() {
@@ -97,9 +94,7 @@ export class LocalStream extends MediaStream {
     return stream.getTracks()[0];
   }
 
-  addTrack(track: MediaStreamTrack) {
-    // super.addTrack(track);
-
+  publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
@@ -164,13 +159,11 @@ export class LocalStream extends MediaStream {
   }
 
   publish(pc: RTCPeerConnection) {
-    log.debug('Publish stream: %s', this.id);
     this.pc = pc;
-    this.getTracks().forEach(this.addTrack.bind(this));
+    this.getTracks().forEach(this.publishTrack.bind(this));
   }
 
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
-    log.debug('Stream %s %s track switch device: %s', this.id, kind, deviceId);
     this.constraints = {
       ...this.constraints,
       [kind]:
@@ -189,7 +182,7 @@ export class LocalStream extends MediaStream {
     } else if (kind === 'video') {
       prev = this.getVideoTracks()[0];
     }
-    super.addTrack(track);
+    this.addTrack(track);
     this.removeTrack(prev!);
     prev!.stop();
 
@@ -205,7 +198,6 @@ export class LocalStream extends MediaStream {
   }
 
   mute(kind: 'audio' | 'video') {
-    log.debug('Stream %s mute %s', this.id, kind);
     let track = this.getAudioTracks()[0];
     if (kind === 'video') {
       track = this.getVideoTracks()[0];
@@ -224,9 +216,11 @@ export class LocalStream extends MediaStream {
   }
 
   async unmute(kind: 'audio' | 'video') {
-    log.debug('Stream %s unmute %s', this.id, kind);
     const track = await this.getTrack(kind);
     this.addTrack(track);
+    if (this.pc) {
+      this.publishTrack(track);
+    }
   }
 }
 
@@ -253,18 +247,15 @@ export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStre
       video: remote.video,
       audio: remote.audio,
     };
-    log.debug('Stream %s api call %o', remote.id, call);
     api.send(JSON.stringify(call));
   };
 
   remote.preferLayer = (layer: Layer) => {
-    log.debug('Stream %s prefer layer %s', remote.id, layer);
     remote.video = layer;
     select();
   };
 
   remote.mute = (kind: 'audio' | 'video') => {
-    log.debug('Stream %s mute %s', remote.id, kind);
     if (kind === 'audio') {
       remote.audio = false;
     } else if (kind === 'video') {
@@ -275,7 +266,6 @@ export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStre
   };
 
   remote.unmute = (kind: 'audio' | 'video') => {
-    log.debug('Stream %s unmute %s', remote.id, kind);
     if (kind === 'audio') {
       remote.audio = true;
     } else if (kind === 'video') {

@@ -1,23 +1,6 @@
-import * as log from 'loglevel';
-
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
 import PeerConnection from './peerconnection';
-
-interface Config {
-  rtc: RTCConfiguration;
-  loglevel: log.LogLevelDesc;
-}
-
-// function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
-//   const remote = new Remote(stream, api);
-//   let remoteStream = stream as RemoteStream;
-//   for (let id in remote) {
-//     (<any>remoteStream)[id] = (<any>remote)[id];
-//   }
-//   debugger
-//   return remoteStream;
-// }
 
 export default class Client {
   private api: RTCDataChannel;
@@ -32,20 +15,15 @@ export default class Client {
   constructor(
     sid: string,
     signal: Signal,
-    config: Config = {
-      loglevel: log.levels.DEBUG,
-      rtc: {
-        iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
-      },
+    config: RTCConfiguration = {
+      iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
-    log.setLevel(config.loglevel);
-
     this.candidates = [];
     this.remotes = new Map();
 
     this.signal = signal;
-    this.pc = new PeerConnection(config.rtc);
+    this.pc = new PeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
         signal.trickle(candidate);
@@ -54,7 +32,6 @@ export default class Client {
     this.api = this.pc.createDataChannel('ion-sfu');
 
     this.pc.ontrack = (ev: RTCTrackEvent) => {
-      console.log(ev);
       const stream = ev.streams[0];
 
       let remote = this.remotes.get(stream.id);
@@ -101,7 +78,7 @@ export default class Client {
       this.signal.onnegotiate = this.negotiate.bind(this);
       this.signal.ontrickle = this.trickle.bind(this);
     } catch (error) {
-      log.error('join error:' + error);
+      console.error('join error:' + error);
     }
   }
 

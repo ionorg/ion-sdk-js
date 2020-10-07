@@ -1,5 +1,4 @@
 import { parse, write, MediaAttributes } from 'sdp-transform';
-import * as log from 'loglevel';
 
 enum PayloadType {
   Opus = 111,
