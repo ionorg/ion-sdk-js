@@ -9,46 +9,15 @@ enum PayloadType {
 
 export type Codec = 'H264' | 'VP8' | 'VP9' | undefined;
 
-function rtp(name: Codec): MediaAttributes['rtp'] {
-  switch (name) {
-    case 'H264':
-      return [
-        {
-          payload: PayloadType.H264,
-          codec: 'H264',
-          rate: 90000,
-        },
-      ];
-    case 'VP8':
-      return [
-        {
-          payload: PayloadType.VP8,
-          codec: 'VP8',
-          rate: 90000,
-        },
-      ];
-    case 'VP9':
-      return [
-        {
-          payload: PayloadType.VP9,
-          codec: 'VP9',
-          rate: 90000,
-        },
-      ];
-    default:
-      return [];
-  }
-}
-
 export default class PeerConnection extends RTCPeerConnection {
-  private rtp: MediaAttributes['rtp'] | null;
+  private codec: Codec;
   constructor(config: RTCConfiguration, codec?: Codec) {
     super(config);
 
     // This is required for Safari support
     Object.setPrototypeOf(this, PeerConnection.prototype);
 
-    this.rtp = codec ? rtp(codec) : null;
+    this.codec = codec;
   }
 
   close() {
@@ -56,44 +25,21 @@ export default class PeerConnection extends RTCPeerConnection {
     super.close();
   }
 
-  // async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
-  //   const offer = await super.createOffer(options);
+  async createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit> {
+    const offer = await super.createOffer(options);
 
-  //   if (!this.rtp) return offer;
+    if (!this.codec) return offer;
 
-  //   const session = parse(offer.sdp!);
+    // munge sdp to update codec preference order
+    const session = parse(offer.sdp!);
+    session.media.forEach((media, i) => {
+      const j = media.rtp.findIndex((rtp) => rtp.codec === this.codec);
+      const prev = media.rtp[0];
+      session.media[i].rtp[0] = session.media[i].rtp[j];
+      session.media[i].rtp[j] = prev;
+    });
+    offer.sdp = write(session);
 
-  //   const videoIdx = session.media.findIndex(({ type, ssrcGroups }) => type === 'video' && !!ssrcGroups);
-  //   if (videoIdx === -1) return offer;
-
-  //   const { payload } = this.rtp[0];
-  //   session.media[videoIdx].payloads = `${payload}`; // + " 97";
-  //   session.media[videoIdx].rtp = this.rtp;
-
-  //   const fmtp: any[] = [
-  //     // { "payload": 97, "config": "apt=" + payload }
-  //   ];
-
-  //   session.media[videoIdx].fmtp = fmtp;
-
-  //   const rtcpFB = [
-  //     { payload, type: 'transport-cc', subtype: undefined },
-  //     { payload, type: 'ccm', subtype: 'fir' },
-  //     { payload, type: 'nack', subtype: undefined },
-  //     { payload, type: 'nack', subtype: 'pli' },
-  //   ];
-
-  //   session.media[videoIdx].rtcpFb = rtcpFB;
-
-  //   const ssrcGroup = session.media[videoIdx].ssrcGroups![0];
-  //   const ssrcs = ssrcGroup.ssrcs;
-  //   const ssrc = parseInt(ssrcs.split(' ')[0], 10);
-  //   log.debug('ssrcs => %s, video %s', ssrcs, ssrc);
-
-  //   session.media[videoIdx].ssrcGroups = [];
-  //   session.media[videoIdx].ssrcs = session.media[videoIdx].ssrcs!.filter((item) => item.id === ssrc);
-
-  //   offer.sdp = write(session);
-  //   return offer;
-  // }
+    return offer;
+  }
 }
