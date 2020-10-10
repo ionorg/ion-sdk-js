@@ -9,7 +9,4 @@ jobs:
       - name: install
         run: yarn
       - name: lint
-        uses: mooyoul/tslint-actions@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pattern: '*.ts'
+        run: yarn lint

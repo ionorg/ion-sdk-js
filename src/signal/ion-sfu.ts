@@ -11,15 +11,15 @@ export default class IonSFUJSONRPCSignal implements Signal {
     this.socket = new WebSocket(uri);
 
     this.socket.addEventListener('open', () => {
-      this._onready && this._onready();
+      if (this._onready) this._onready();
     });
 
     this.socket.addEventListener('message', async (event) => {
       const resp = JSON.parse(event.data);
       if (resp.method === 'offer' || resp.method === 'answer') {
-        this.onnegotiate && this.onnegotiate(resp.params);
+        if (this.onnegotiate) this.onnegotiate(resp.params);
       } else if (resp.method === 'trickle') {
-        this.ontrickle && this.ontrickle(resp.params);
+        if (this.ontrickle) this.ontrickle(resp.params);
       }
     });
   }
@@ -35,7 +35,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
     );
 
     return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
-      let handler = (event: MessageEvent<any>) => {
+      const handler = (event: MessageEvent<any>) => {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
           resolve(resp.result);
@@ -68,7 +68,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
     );
 
     return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
-      let handler = (event: MessageEvent<any>) => {
+      const handler = (event: MessageEvent<any>) => {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
           resolve(resp.result);

@@ -226,7 +226,7 @@ export class LocalStream extends MediaStream {
 
 export interface RemoteStream extends MediaStream {
   api: RTCDataChannel;
-  audio: Boolean;
+  audio: boolean;
   video: Layer;
   _videoPreMute: Layer;
 
