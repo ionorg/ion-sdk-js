@@ -66,20 +66,16 @@ export default class Client {
   }
 
   private async join(sid: string) {
-    try {
-      const offer = await this.pc.createOffer();
-      await this.pc.setLocalDescription(offer);
-      const answer = await this.signal.join(sid, offer);
+    const offer = await this.pc.createOffer();
+    await this.pc.setLocalDescription(offer);
+    const answer = await this.signal.join(sid, offer);
 
-      await this.pc.setRemoteDescription(answer);
-      this.candidates.forEach(this.pc.addIceCandidate.bind(this));
-      this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
+    await this.pc.setRemoteDescription(answer);
+    this.candidates.forEach(this.pc.addIceCandidate.bind(this));
+    this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
 
-      this.signal.onnegotiate = this.negotiate.bind(this);
-      this.signal.ontrickle = this.trickle.bind(this);
-    } catch (error) {
-      console.error('join error:' + error);
-    }
+    this.signal.onnegotiate = this.negotiate.bind(this);
+    this.signal.ontrickle = this.trickle.bind(this);
   }
 
   private trickle(candidate: RTCIceCandidateInit) {
