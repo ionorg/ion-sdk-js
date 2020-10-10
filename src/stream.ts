@@ -1,8 +1,3 @@
-import * as log from 'loglevel';
-import { Peer } from 'protoo-client';
-import WebRTCTransport, { Codec } from './transport';
-import { TrackInfo } from './proto';
-
 interface VideoResolutions {
   [name: string]: { width: { ideal: number }; height: { ideal: number } };
 }
@@ -16,63 +11,55 @@ export const VideoResolutions: VideoResolutions = {
   qhd: { width: { ideal: 2560 }, height: { ideal: 1440 } },
 };
 
-export interface StreamOptions extends MediaStreamConstraints {
+type Layer = 'none' | 'low' | 'medium' | 'high';
+
+export interface Encoding {
+  layer: Layer;
+  maxBitrate: number;
+  maxFramerate: number;
+}
+
+export interface Constraints extends MediaStreamConstraints {
   resolution: string;
-  bandwidth?: number;
   codec: string;
-  description?: string;
+  simulcast: boolean;
+  encodings?: Encoding[];
 }
 
-export class Stream extends MediaStream {
-  static dispatch: Peer;
-  static setDispatch(dispatch: Peer) {
-    Stream.dispatch = dispatch;
-  }
+const defaults = {
+  codec: 'VP8',
+  resolution: 'hd',
+  audio: true,
+  video: true,
+  simulcast: false,
+};
 
-  mid?: string;
-  rid?: string;
-  transport?: WebRTCTransport;
+export class LocalStream extends MediaStream {
+  pc?: RTCPeerConnection;
 
-  get dispatch(): Peer {
-    if (!Stream.dispatch) {
-      throw new Error('Dispatch not set.');
-    }
-
-    return Stream.dispatch;
-  }
-}
-
-export class LocalStream extends Stream {
-  static async getUserMedia(
-    options: StreamOptions = {
-      codec: 'VP8',
-      resolution: 'hd',
-      audio: false,
-      video: false,
-    },
-  ) {
+  static async getUserMedia(contraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: options.audio,
+      audio: contraints.audio ? contraints.audio : defaults.audio,
       video:
-        options.video instanceof Object
+        contraints.video instanceof Object
           ? {
-              ...VideoResolutions[options.resolution],
-              ...options.video,
+              ...VideoResolutions[contraints.resolution],
+              ...contraints.video,
             }
-          : options.video
-          ? VideoResolutions[options.resolution]
-          : false,
+          : contraints.video
+          ? VideoResolutions[contraints.resolution]
+          : defaults.video,
     });
-
-    return new LocalStream(stream, options);
+    return new LocalStream(stream, contraints);
   }
 
   static async getDisplayMedia(
-    options: StreamOptions = {
+    constraints: Constraints = {
       codec: 'VP8',
       resolution: 'hd',
       audio: false,
       video: true,
+      simulcast: false,
     },
   ) {
     // @ts-ignore
@@ -80,37 +67,114 @@ export class LocalStream extends Stream {
       video: true,
     });
 
-    return new LocalStream(stream, options);
+    return new LocalStream(stream, constraints);
   }
 
-  options: StreamOptions;
-  constructor(stream: MediaStream, options: StreamOptions) {
+  constraints: Constraints;
+  constructor(stream: MediaStream, constraints: Constraints) {
     super(stream);
-    this.options = options;
+    this.constraints = constraints;
     Object.setPrototypeOf(this, LocalStream.prototype);
   }
 
+  private getAudioConstraints() {
+    return this.constraints.audio;
+  }
+
   private getVideoConstraints() {
-    return this.options.video instanceof Object
-      ? { ...VideoResolutions[this.options.resolution], ...(this.options.video as object) }
-      : { video: this.options.video };
+    return this.constraints.video instanceof Object
+      ? { ...VideoResolutions[this.constraints.resolution], ...(this.constraints.video as object) }
+      : { video: this.constraints.video };
+  }
+
+  private async getTrack(kind: 'audio' | 'video') {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      [kind]: kind === 'video' ? this.getVideoConstraints() : this.getAudioConstraints(),
+    });
+    return stream.getTracks()[0];
+  }
+
+  publishTrack(track: MediaStreamTrack) {
+    if (this.pc) {
+      if (track.kind === 'video' && this.constraints.simulcast) {
+        const encodings: RTCRtpEncodingParameters[] = [
+          {
+            rid: 'f',
+          },
+          {
+            rid: 'h',
+            scaleResolutionDownBy: 2.0,
+            maxBitrate: 150000,
+          },
+          {
+            rid: 'q',
+            scaleResolutionDownBy: 4.0,
+            maxBitrate: 100000,
+          },
+        ];
+
+        if (this.constraints.encodings) {
+          this.constraints.encodings.forEach((encoding) => {
+            switch (encoding.layer) {
+              case 'high':
+                if (encoding.maxBitrate) {
+                  encodings[0].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[0].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'medium':
+                if (encoding.maxBitrate) {
+                  encodings[1].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[1].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'low':
+                if (encoding.maxBitrate) {
+                  encodings[2].maxBitrate = encoding.maxBitrate;
+                }
+
+                if (encoding.maxFramerate) {
+                  encodings[2].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+            }
+          });
+        }
+
+        this.pc.addTransceiver(track, {
+          streams: [this],
+          direction: 'sendrecv',
+          sendEncodings: encodings,
+        });
+      } else {
+        this.pc.addTrack(track, this);
+      }
+    }
+  }
+
+  publish(pc: RTCPeerConnection) {
+    this.pc = pc;
+    this.getTracks().forEach(this.publishTrack.bind(this));
   }
 
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
-    this.options = {
-      ...this.options,
+    this.constraints = {
+      ...this.constraints,
       [kind]:
-        this.options[kind] instanceof Object
+        this.constraints[kind] instanceof Object
           ? {
-              ...(this.options[kind] as object),
+              ...(this.constraints[kind] as object),
               deviceId,
             }
           : { deviceId },
     };
-    const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: kind === 'video' ? { ...this.getVideoConstraints(), deviceId } : { deviceId },
-    });
-    const track = stream.getTracks()[0];
+    const track = await this.getTrack(kind);
 
     let prev: MediaStreamTrack;
     if (kind === 'audio') {
@@ -123,8 +187,8 @@ export class LocalStream extends Stream {
     prev!.stop();
 
     // If published, replace published track with track from new device
-    if (this.transport) {
-      this.transport.getSenders().forEach(async (sender: RTCRtpSender) => {
+    if (this.pc) {
+      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
         if (sender?.track?.kind === track.kind) {
           sender.track?.stop();
           sender.replaceTrack(track);
@@ -134,161 +198,81 @@ export class LocalStream extends Stream {
   }
 
   mute(kind: 'audio' | 'video') {
-    if (kind === 'audio') {
-      this.getAudioTracks()[0].enabled = false;
-    } else if (kind === 'video') {
-      this.getVideoTracks()[0].enabled = false;
+    let track = this.getAudioTracks()[0];
+    if (kind === 'video') {
+      track = this.getVideoTracks()[0];
+    }
+
+    this.removeTrack(track);
+
+    // If published, remove the track from the peer connection
+    if (this.pc) {
+      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
+        if (sender?.track === track) {
+          this.pc!.removeTrack(sender);
+        }
+      });
     }
   }
 
   async unmute(kind: 'audio' | 'video') {
-    if (kind === 'audio') {
-      this.getAudioTracks()[0].enabled = true;
-    } else if (kind === 'video') {
-      this.getVideoTracks()[0].enabled = true;
+    const track = await this.getTrack(kind);
+    this.addTrack(track);
+    if (this.pc) {
+      this.publishTrack(track);
     }
-  }
-
-  async publish(rid: string) {
-    const { bandwidth, codec, description } = this.options!;
-    let sendOffer = true;
-    this.transport = new WebRTCTransport(codec as Codec);
-    this.getTracks().map((track) => this.transport!.addTrack(track, this));
-    const offer = await this.transport.createOffer({
-      offerToReceiveVideo: false,
-      offerToReceiveAudio: false,
-    });
-    log.debug('Created offer => %o', offer);
-    this.transport.setLocalDescription(offer);
-    this.transport.onicecandidate = async () => {
-      if (sendOffer) {
-        sendOffer = false;
-        const jsep = this.transport!.localDescription;
-        log.debug(`Sending offer ${jsep}`);
-        const result = await this.dispatch.request('publish', {
-          rid,
-          jsep,
-          options: {
-            codec,
-            bandwidth: Number(bandwidth),
-            description,
-          },
-        });
-        this.mid = result.mid;
-        log.debug('Got answer => %o', result?.jsep);
-        await this.transport!.setRemoteDescription(result?.jsep);
-        this.rid = rid;
-      }
-    };
-    this.transport.onnegotiationneeded = async () => {
-      log.info('negotiation needed');
-    };
-  }
-
-  async unpublish() {
-    if (!this.rid || !this.mid) {
-      throw new Error('Stream is not published.');
-    }
-    log.info('unpublish rid => %s, mid => %s', this.rid, this.mid);
-
-    if (this.transport) {
-      this.transport.close();
-      delete this.transport;
-    }
-
-    return await this.dispatch
-      .request('unpublish', {
-        rid: this.rid,
-        mid: this.mid,
-      })
-      .then(() => {
-        delete this.rid;
-        delete this.mid;
-      });
   }
 }
 
-export class RemoteStream extends Stream {
-  constructor(stream: MediaStream) {
-    super(stream);
-    Object.setPrototypeOf(this, RemoteStream.prototype);
-  }
-  static async getRemoteMedia(rid: string, mid: string, tracks: Map<string, TrackInfo[]>) {
-    const allTracks = Array.from(tracks.values()).flat();
-    const audio = allTracks.map((t) => t.type.toLowerCase() === 'audio').includes(true);
-    const video = allTracks.map((t) => t.type.toLowerCase() === 'video').includes(true);
-    let sendOffer = true;
-    log.debug('Creating receiver => %s', mid);
-    const transport = new WebRTCTransport();
-    if (audio) {
-      transport.addTransceiver('audio');
-    }
-    if (video) {
-      transport.addTransceiver('video');
-    }
-    const desc = await transport.createOffer();
-    log.debug('Created offer => %o', desc);
-    transport.setLocalDescription(desc);
-    transport.onnegotiationneeded = () => {
-      log.debug('negotiation needed');
+export interface RemoteStream extends MediaStream {
+  api: RTCDataChannel;
+  audio: Boolean;
+  video: Layer;
+  _videoPreMute: Layer;
+
+  preferLayer(layer: Layer): void;
+  mute(kind: 'audio' | 'video'): void;
+  unmute(kind: 'audio' | 'video'): void;
+}
+
+export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
+  const remote = stream as RemoteStream;
+  remote.audio = true;
+  remote.video = 'high';
+  remote._videoPreMute = 'none';
+
+  const select = () => {
+    const call = {
+      streamId: remote.id,
+      video: remote.video,
+      audio: remote.audio,
     };
-    transport.onicecandidate = async (e: RTCPeerConnectionIceEvent) => {
-      if (sendOffer) {
-        log.debug('Send offer');
-        sendOffer = false;
-        const jsep = transport.localDescription;
-        const result = await this.dispatch.request('subscribe', {
-          rid,
-          jsep,
-          mid,
-        });
-        log.info(`subscribe success => result(mid: ${result!.mid})`);
-        log.debug('Got answer => %o', result?.jsep);
-        await transport.setRemoteDescription(result?.jsep);
-      }
-    };
-    const stream: MediaStream = await new Promise(async (resolve, reject) => {
-      try {
-        transport.ontrack = ({ track, streams }: RTCTrackEvent) => {
-          log.debug('on track called');
-          // once media for a remote track arrives, show it in the remote video element
-          track.onunmute = () => {
-            if (streams.length > 0) {
-              resolve(streams[0]);
-            } else {
-              reject(new Error('Not enough streams'));
-            }
-          };
-        };
-      } catch (error) {
-        log.error('subscribe request error  => ' + error);
-        reject(error);
-      }
-    });
+    api.send(JSON.stringify(call));
+  };
 
-    const remote = new RemoteStream(stream);
-    remote.transport = transport;
-    remote.mid = mid;
-    remote.rid = rid;
-    return remote;
-  }
+  remote.preferLayer = (layer: Layer) => {
+    remote.video = layer;
+    select();
+  };
 
-  close() {
-    if (!this.transport) {
-      throw new Error('Stream is not open.');
+  remote.mute = (kind: 'audio' | 'video') => {
+    if (kind === 'audio') {
+      remote.audio = false;
+    } else if (kind === 'video') {
+      remote._videoPreMute = remote.video;
+      remote.video = 'none';
     }
-    if (this.transport) {
-      this.transport.close();
-      delete this.transport;
-    }
-  }
+    select();
+  };
 
-  async unsubscribe() {
-    if (!this.transport) {
-      throw new Error('Stream is not subscribed.');
+  remote.unmute = (kind: 'audio' | 'video') => {
+    if (kind === 'audio') {
+      remote.audio = true;
+    } else if (kind === 'video') {
+      remote.video = remote._videoPreMute;
     }
-    log.info('unsubscribe mid => %s', this.mid);
-    this.close();
-    return await this.dispatch.request('unsubscribe', { mid: this.mid });
-  }
+    select();
+  };
+
+  return remote;
 }

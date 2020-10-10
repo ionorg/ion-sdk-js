@@ -10,45 +10,37 @@ Frontend sdk for the Ion backend.
 
 ```ts
 import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
-const client = new Client({ url: 'wss://endpoint/ws' });
+const signal = new IonSFUJSONRPCSignal("wss://ion-sfu:7000");
+const client = new Client("test session", signal);
 
 // Setup handlers
-client.on('peer-join', (uid: string, info: any) => {});
-client.on('peer-leave', (uid: string) => {});
-client.on('transport-open', () => {}));
-client.on('transport-closed', () => {});
-client.on('stream-add', (uid: string, info: any) => {});
-client.on('stream-remove', (stream: RemoteStream) => {});
-client.on('broadcast', (uid: string, info: any) => {});
+client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
+    // mute a remote stream
+    stream.mute()
+    // unmute a remote stream
+    stream.unmute()
 
-// Join a room
-client.join(rid, {
-    name: "name"
+    if (track.kind === "video") {
+         // prefer a layer
+         stream.preferLayer("low" | "medium" | "high")
+    }
 });
-
-// Leave current room
-client.leave();
 
 // Get a local stream
 const local = await LocalStream.getUserMedia({
     audio: true,
-    video: true
+    video: true,
+    simulcast: true, // enable simulcast
 });
 
 // Publish local stream
 client.publish(local);
 
-// Unpublish local stream
-local.unpublish();
+// mute local straem
+local.mute()
 
-// Subscribe to a remote stream
-const remote = client.subscribe(mid);
-
-// Unsubscribe from a stream
-remote.unsubscribe();
-
-// Broadcast a payload to the room
-client.broadcast(payload);
+// unmute local stream
+local.unmute()
 
 // Close client connection
 client.close();
@@ -57,9 +49,9 @@ client.close();
 import { LocalStream } from 'ion-sdk-js';
 (...)
 var streamOptions = {
-        codec: 'VP8',
-        resolution: 'hd'
-    }
+    codec: 'VP8',
+    resolution: 'hd'
+}
 var myLocalStream = new LocalStream (yourStreamHere, streamOptions)
 
 ```
