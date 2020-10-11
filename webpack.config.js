@@ -2,7 +2,7 @@ const path = require('path');
 module.exports = {
   entry: './src/index.ts',
   output: {
-    filename: 'bundle.js',
+    filename: 'ion-sdk.min.js',
     library: 'IonSDK',
     path: path.resolve(__dirname, 'dist'),
   },
