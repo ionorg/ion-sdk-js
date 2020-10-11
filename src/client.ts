@@ -53,7 +53,7 @@ export default class Client {
   }
 
   publish(stream: MediaStream) {
-    if (stream.hasOwnProperty('options')) {
+    if (stream.hasOwnProperty('constraints')) {
       const localStream = stream as LocalStream;
       localStream.publish(this.pc);
     } else {

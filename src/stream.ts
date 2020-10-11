@@ -37,20 +37,12 @@ const defaults = {
 export class LocalStream extends MediaStream {
   pc?: RTCPeerConnection;
 
-  static async getUserMedia(contraints: Constraints = defaults) {
+  static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: contraints.audio ? contraints.audio : defaults.audio,
-      video:
-        contraints.video instanceof Object
-          ? {
-              ...VideoResolutions[contraints.resolution],
-              ...contraints.video,
-            }
-          : contraints.video
-          ? VideoResolutions[contraints.resolution]
-          : defaults.video,
+      audio: LocalStream.computeAudioConstraints(constraints),
+      video: LocalStream.computeVideoConstraints(constraints),
     });
-    return new LocalStream(stream, contraints);
+    return new LocalStream(stream, constraints);
   }
 
   static async getDisplayMedia(
@@ -77,19 +69,27 @@ export class LocalStream extends MediaStream {
     Object.setPrototypeOf(this, LocalStream.prototype);
   }
 
-  private getAudioConstraints() {
-    return this.constraints.audio;
+  private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
+    return !!constraints.audio as MediaTrackConstraints;
   }
 
-  private getVideoConstraints() {
-    return this.constraints.video instanceof Object
-      ? { ...VideoResolutions[this.constraints.resolution], ...(this.constraints.video as object) }
-      : { video: this.constraints.video };
+  private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
+    if (constraints.video instanceof Object) {
+      return constraints.video;
+    } else if (constraints.resolution) {
+      return {
+        ...VideoResolutions[constraints.resolution],
+      };
+    }
+    return !!constraints.video as MediaTrackConstraints;
   }
 
   private async getTrack(kind: 'audio' | 'video') {
     const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: kind === 'video' ? this.getVideoConstraints() : this.getAudioConstraints(),
+      [kind]:
+        kind === 'video'
+          ? LocalStream.computeVideoConstraints(this.constraints)
+          : LocalStream.computeAudioConstraints(this.constraints),
     });
     return stream.getTracks()[0];
   }
