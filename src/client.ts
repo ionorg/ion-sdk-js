@@ -45,6 +45,8 @@ export default class Client {
       }
     };
 
+    signal.onnegotiate = this.negotiate.bind(this);
+    signal.ontrickle = this.trickle.bind(this);
     signal.onready = () => this.join(sid);
   }
 
@@ -73,9 +75,6 @@ export default class Client {
     await this.pc.setRemoteDescription(answer);
     this.candidates.forEach(this.pc.addIceCandidate.bind(this));
     this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
-
-    this.signal.onnegotiate = this.negotiate.bind(this);
-    this.signal.ontrickle = this.trickle.bind(this);
   }
 
   private trickle(candidate: RTCIceCandidateInit) {
