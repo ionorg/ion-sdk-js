@@ -41,11 +41,11 @@ export class LocalStream extends MediaStream {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: LocalStream.computeAudioConstraints({
         ...defaults,
-        ...constraints
+        ...constraints,
       }),
       video: LocalStream.computeVideoConstraints({
         ...defaults,
-        ...constraints
+        ...constraints,
       }),
     });
     return new LocalStream(stream, constraints);
