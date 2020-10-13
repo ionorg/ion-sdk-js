@@ -20,9 +20,9 @@ export interface Encoding {
 }
 
 export interface Constraints extends MediaStreamConstraints {
-  resolution: string;
-  codec: string;
-  simulcast: boolean;
+  resolution?: string;
+  codec?: string;
+  simulcast?: boolean;
   encodings?: Encoding[];
 }
 
@@ -39,8 +39,14 @@ export class LocalStream extends MediaStream {
 
   static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: LocalStream.computeAudioConstraints(constraints),
-      video: LocalStream.computeVideoConstraints(constraints),
+      audio: LocalStream.computeAudioConstraints({
+        ...defaults,
+        ...constraints
+      }),
+      video: LocalStream.computeVideoConstraints({
+        ...defaults,
+        ...constraints
+      }),
     });
     return new LocalStream(stream, constraints);
   }
