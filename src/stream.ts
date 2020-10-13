@@ -94,7 +94,7 @@ export class LocalStream extends MediaStream {
     return stream.getTracks()[0];
   }
 
-  publishTrack(track: MediaStreamTrack) {
+  private publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
@@ -222,6 +222,12 @@ export class LocalStream extends MediaStream {
       this.publishTrack(track);
     }
   }
+
+  close() {
+    if (this.pc) {
+      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => this.pc!.removeTrack(sender));
+    }
+  }
 }
 
 export interface RemoteStream extends MediaStream {
@@ -238,8 +244,8 @@ export interface RemoteStream extends MediaStream {
 export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
   const remote = stream as RemoteStream;
   remote.audio = true;
-  remote.video = 'high';
-  remote._videoPreMute = 'none';
+  remote.video = 'none';
+  remote._videoPreMute = 'high';
 
   const select = () => {
     const call = {
