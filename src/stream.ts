@@ -90,7 +90,18 @@ export class LocalStream extends MediaStream {
     return !!constraints.video as MediaTrackConstraints;
   }
 
-  private async getTrack(kind: 'audio' | 'video') {
+  private getTrack(kind: 'audio' | 'video') {
+    let tracks;
+    if (kind === 'video') {
+      tracks = this.getVideoTracks();
+      return tracks.length > 0 ? this.getVideoTracks()[0] : undefined;
+    }
+
+    tracks = this.getAudioTracks();
+    return tracks.length > 0 ? this.getAudioTracks()[0] : undefined;
+  }
+
+  private async getNewTrack(kind: 'audio' | 'video') {
     const stream = await navigator.mediaDevices.getUserMedia({
       [kind]:
         kind === 'video'
@@ -164,6 +175,31 @@ export class LocalStream extends MediaStream {
     }
   }
 
+  private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack) {
+    this.addTrack(next);
+
+    // If published, replace published track with track from new device
+    if (prev && prev.enabled) {
+      this.removeTrack(prev);
+      prev.stop();
+
+      if (this.pc) {
+        this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
+          if (sender?.track?.kind === next.kind) {
+            sender.track?.stop();
+            sender.replaceTrack(next);
+          }
+        });
+      }
+    } else {
+      this.addTrack(next);
+
+      if (this.pc) {
+        this.publishTrack(next);
+      }
+    }
+  }
+
   publish(pc: RTCPeerConnection) {
     this.pc = pc;
     this.getTracks().forEach(this.publishTrack.bind(this));
@@ -180,53 +216,24 @@ export class LocalStream extends MediaStream {
             }
           : { deviceId },
     };
-    const track = await this.getTrack(kind);
 
-    let prev: MediaStreamTrack;
-    if (kind === 'audio') {
-      prev = this.getAudioTracks()[0];
-    } else if (kind === 'video') {
-      prev = this.getVideoTracks()[0];
-    }
-    this.addTrack(track);
-    this.removeTrack(prev!);
-    prev!.stop();
+    const prev = this.getTrack(kind);
+    const next = await this.getNewTrack(kind);
 
-    // If published, replace published track with track from new device
-    if (this.pc) {
-      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
-        if (sender?.track?.kind === track.kind) {
-          sender.track?.stop();
-          sender.replaceTrack(track);
-        }
-      });
-    }
+    this.updateTrack(next, prev);
   }
 
   mute(kind: 'audio' | 'video') {
-    let track = this.getAudioTracks()[0];
-    if (kind === 'video') {
-      track = this.getVideoTracks()[0];
-    }
-
-    this.removeTrack(track);
-
-    // If published, remove the track from the peer connection
-    if (this.pc) {
-      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
-        if (sender?.track === track) {
-          this.pc!.removeTrack(sender);
-        }
-      });
+    const track = this.getTrack(kind);
+    if (track) {
+      track.stop();
     }
   }
 
   async unmute(kind: 'audio' | 'video') {
-    const track = await this.getTrack(kind);
-    this.addTrack(track);
-    if (this.pc) {
-      this.publishTrack(track);
-    }
+    const prev = this.getTrack(kind);
+    const track = await this.getNewTrack(kind);
+    this.updateTrack(track, prev);
   }
 
   close() {
