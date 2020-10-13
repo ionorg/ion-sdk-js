@@ -14,6 +14,13 @@ export default class PeerConnection extends RTCPeerConnection {
   constructor(config: RTCConfiguration, codec?: Codec) {
     super(config);
 
+    super.addTransceiver('video', {
+      direction: 'sendrecv',
+    });
+    super.addTransceiver('audio', {
+      direction: 'sendrecv',
+    });
+
     // This is required for Safari support
     Object.setPrototypeOf(this, PeerConnection.prototype);
 
