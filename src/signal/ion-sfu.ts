@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Signal } from './';
 
 export default class IonSFUJSONRPCSignal implements Signal {
-  private socket: WebSocket;
+  protected socket: WebSocket;
   private _onready?: () => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
   ontrickle?: (candidate: RTCIceCandidateInit) => void;
