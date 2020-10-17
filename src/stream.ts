@@ -205,6 +205,12 @@ export class LocalStream extends MediaStream {
     this.getTracks().forEach(this.publishTrack.bind(this));
   }
 
+  unpublish() {
+    if (this.pc) {
+      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => this.pc!.removeTrack(sender));
+    }
+  }
+
   async switchDevice(kind: 'audio' | 'video', deviceId: string) {
     this.constraints = {
       ...this.constraints,
@@ -234,12 +240,6 @@ export class LocalStream extends MediaStream {
     const prev = this.getTrack(kind);
     const track = await this.getNewTrack(kind);
     this.updateTrack(track, prev);
-  }
-
-  close() {
-    if (this.pc) {
-      this.pc.getSenders().forEach(async (sender: RTCRtpSender) => this.pc!.removeTrack(sender));
-    }
   }
 }
 
