@@ -16,8 +16,8 @@ export default class IonSFUJSONRPCSignal implements Signal {
     });
 
     this.socket.addEventListener('error', (e) => {
-      if (this._onerror) this._onerror(e)
-    })
+      if (this._onerror) this._onerror(e);
+    });
 
     this.socket.addEventListener('message', async (event) => {
       const resp = JSON.parse(event.data);
@@ -103,7 +103,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
     }
     this._onready = onready;
   }
-   set onerror(onerror: (error: Event) => void) {
-     this._onerror = onerror
-   }
+  set onerror(onerror: (error: Event) => void) {
+    this._onerror = onerror;
+  }
 }
