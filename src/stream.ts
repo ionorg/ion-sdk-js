@@ -34,9 +34,7 @@ const defaults = {
   simulcast: false,
 };
 
-export class LocalStream extends MediaStream {
-  pc?: RTCPeerConnection;
-
+export class LocalStream {
   static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: LocalStream.computeAudioConstraints({
@@ -69,9 +67,12 @@ export class LocalStream extends MediaStream {
   }
 
   constraints: Constraints;
+  pc?: RTCPeerConnection;
+  stream: MediaStream;
+
   constructor(stream: MediaStream, constraints: Constraints) {
-    super(stream);
     this.constraints = constraints;
+    this.stream = stream;
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
@@ -92,12 +93,12 @@ export class LocalStream extends MediaStream {
   private getTrack(kind: 'audio' | 'video') {
     let tracks;
     if (kind === 'video') {
-      tracks = this.getVideoTracks();
-      return tracks.length > 0 ? this.getVideoTracks()[0] : undefined;
+      tracks = this.stream.getVideoTracks();
+      return tracks.length > 0 ? this.stream.getVideoTracks()[0] : undefined;
     }
 
-    tracks = this.getAudioTracks();
-    return tracks.length > 0 ? this.getAudioTracks()[0] : undefined;
+    tracks = this.stream.getAudioTracks();
+    return tracks.length > 0 ? this.stream.getAudioTracks()[0] : undefined;
   }
 
   private async getNewTrack(kind: 'audio' | 'video') {
@@ -164,22 +165,22 @@ export class LocalStream extends MediaStream {
         }
 
         this.pc.addTransceiver(track, {
-          streams: [this],
+          streams: [this.stream],
           direction: 'sendrecv',
           sendEncodings: encodings,
         });
       } else {
-        this.pc.addTrack(track, this);
+        this.pc.addTrack(track, this.stream);
       }
     }
   }
 
   private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack) {
-    this.addTrack(next);
+    this.stream.addTrack(next);
 
     // If published, replace published track with track from new device
     if (prev && prev.enabled) {
-      this.removeTrack(prev);
+      this.stream.removeTrack(prev);
       prev.stop();
 
       if (this.pc) {
@@ -191,7 +192,7 @@ export class LocalStream extends MediaStream {
         });
       }
     } else {
-      this.addTrack(next);
+      this.stream.addTrack(next);
 
       if (this.pc) {
         this.publishTrack(next);
@@ -201,7 +202,7 @@ export class LocalStream extends MediaStream {
 
   publish(pc: RTCPeerConnection) {
     this.pc = pc;
-    this.getTracks().forEach(this.publishTrack.bind(this));
+    this.stream.getTracks().forEach(this.publishTrack.bind(this));
   }
 
   unpublish() {
