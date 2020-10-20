@@ -54,13 +54,8 @@ export default class Client {
     return this.pc.getStats(selector);
   }
 
-  publish(stream: MediaStream) {
-    if (stream.hasOwnProperty('constraints')) {
-      const localStream = stream as LocalStream;
-      localStream.publish(this.pc);
-    } else {
-      stream.getTracks().forEach((track) => this.pc.addTrack(track, stream));
-    }
+  publish(stream: LocalStream) {
+    stream.publish(this.pc);
   }
 
   close() {
