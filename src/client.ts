@@ -1,6 +1,5 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
-import PeerConnection from './peerconnection';
 
 export default class Client {
   private api: RTCDataChannel;
@@ -23,7 +22,7 @@ export default class Client {
     this.remotes = new Map();
 
     this.signal = signal;
-    this.pc = new PeerConnection(config);
+    this.pc = new RTCPeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
         signal.trickle(candidate);
