@@ -14,9 +14,6 @@ export default class PeerConnection extends RTCPeerConnection {
   constructor(config: RTCConfiguration, codec?: Codec) {
     super(config);
 
-    // This is required for Safari support
-    Object.setPrototypeOf(this, PeerConnection.prototype);
-
     this.codec = codec;
   }
 

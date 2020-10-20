@@ -72,7 +72,6 @@ export class LocalStream extends MediaStream {
   constructor(stream: MediaStream, constraints: Constraints) {
     super(stream);
     this.constraints = constraints;
-    Object.setPrototypeOf(this, LocalStream.prototype);
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {

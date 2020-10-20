@@ -73,7 +73,7 @@ export default class Client {
     const answer = await this.signal.join(sid, offer);
 
     await this.pc.setRemoteDescription(answer);
-    this.candidates.forEach(this.pc.addIceCandidate.bind(this));
+    this.candidates.forEach((c) => this.pc.addIceCandidate(c));
     this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
   }
 
