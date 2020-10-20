@@ -4,7 +4,7 @@ import { Signal } from './';
 export default class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
   private _onready?: () => void;
-  private _onerror?: (error: any) => void;
+  private _onerror?: (error: Event) => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
   ontrickle?: (candidate: RTCIceCandidateInit) => void;
 
@@ -103,7 +103,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
     }
     this._onready = onready;
   }
-   set onerror(onerror: (error: any) => void) {
+   set onerror(onerror: (error: Event) => void) {
      this._onerror = onerror
    }
 }
