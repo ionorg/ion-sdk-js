@@ -46,7 +46,10 @@ export class LocalStream {
         ...constraints,
       }),
     });
-    return new LocalStream(stream, constraints);
+    return new LocalStream(stream, {
+      ...defaults,
+      ...constraints,
+    });
   }
 
   static async getDisplayMedia(
@@ -63,7 +66,10 @@ export class LocalStream {
       video: true,
     });
 
-    return new LocalStream(stream, constraints);
+    return new LocalStream(stream, {
+      ...defaults,
+      ...constraints,
+    });
   }
 
   constraints: Constraints;
