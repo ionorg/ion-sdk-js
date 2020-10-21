@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { EventEmitter } 'events';
+import { EventEmitter } from 'events';
 import { Signal } from './';
 import { grpc } from "@improbable-eng/grpc-web";
 import { SFUClient, Status, BidirectionalStream } from "./_proto/library/sfu_pb_service";
