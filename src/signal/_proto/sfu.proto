@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option go_package = "github.com/pion/ion-sfu/cmd/signal/grpc/proto";
+
+package sfu;
+
+service SFU {
+    rpc Signal(stream SignalRequest) returns (stream SignalReply) {}
+}
+
+message SignalRequest {
+    oneof payload {
+        JoinRequest join = 1;
+        SessionDescription negotiate = 2;
+        Trickle trickle = 3;
+    }
+}
+
+message SignalReply {
+    oneof payload {
+        JoinReply join = 1;
+        SessionDescription negotiate = 2;
+        Trickle trickle = 3;
+    }
+}
+
+message JoinRequest {
+    string sid = 1;
+    SessionDescription offer = 2;
+}
+
+message JoinReply {
+    string pid = 1;
+    SessionDescription answer = 2;
+}
+
+message Trickle {
+    string init = 1;
+}
+
+message SessionDescription {
+    string type = 1; // "answer" | "offer" | "pranswer" | "rollback"
+    bytes sdp = 2;
+}
