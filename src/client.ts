@@ -82,11 +82,12 @@ export default class Client {
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
       await this.pc.setRemoteDescription(description); // SRD rolls back as needed
-      if (description.type == 'offer') {
+      if (description.type === 'offer') {
         await this.pc.setLocalDescription();
         this.signal.answer(this.pc.localDescription!);
       }
     } catch (err) {
+      /* tslint:disable-next-line:no-console */
       console.error(err);
     }
   }
@@ -97,6 +98,7 @@ export default class Client {
       const answer = await this.signal.offer(this.pc.localDescription!);
       this.pc.setRemoteDescription(answer);
     } catch (err) {
+      /* tslint:disable-next-line:no-console */
       console.error(err);
     }
   }
