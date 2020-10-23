@@ -79,21 +79,25 @@ export default class Client {
     }
   }
 
-  private async negotiate(jsep: RTCSessionDescriptionInit) {
-    if (jsep.type === 'offer') {
-      await this.pc.setRemoteDescription(jsep);
-      const answer = await this.pc.createAnswer();
-      await this.pc.setLocalDescription(answer);
-      this.signal.answer(answer);
-    } else if (jsep.type === 'answer') {
-      this.pc.setRemoteDescription(jsep);
+  private async negotiate(description: RTCSessionDescriptionInit) {
+    try {
+      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
+      if (description.type == 'offer') {
+        await this.pc.setLocalDescription();
+        this.signal.answer(this.pc.localDescription!);
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 
   private async onNegotiationNeeded() {
-    const offer = await this.pc!.createOffer();
-    await this.pc.setLocalDescription(offer);
-    const answer = await this.signal.offer(offer);
-    this.pc.setRemoteDescription(answer);
+    try {
+      await this.pc.setLocalDescription();
+      const answer = await this.signal.offer(this.pc.localDescription!);
+      this.pc.setRemoteDescription(answer);
+    } catch (err) {
+      console.error(err);
+    }
   }
 }
