@@ -9,8 +9,6 @@ export default class Client {
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
-  remotes: Map<string, RemoteStream>;
-
   constructor(
     sid: string,
     signal: Signal,
@@ -19,7 +17,6 @@ export default class Client {
     },
   ) {
     this.candidates = [];
-    this.remotes = new Map();
 
     this.signal = signal;
     this.pc = new RTCPeerConnection(config);
@@ -32,12 +29,7 @@ export default class Client {
 
     this.pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-
-      let remote = this.remotes.get(stream.id);
-      if (!remote) {
-        remote = makeRemote(stream, this.api);
-        this.remotes.set(stream.id, remote);
-      }
+      const remote = makeRemote(stream, this.api);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
