@@ -1,6 +1,6 @@
 {
   "name": "ion-sdk-js",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "A js sdk for ion sfu",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
