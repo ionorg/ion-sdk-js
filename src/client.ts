@@ -54,7 +54,7 @@ export default class Client {
   }
 
   private async join(sid: string) {
-    const offer = await this.pc.createOffer();
+    const offer = await this.pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
     await this.pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, offer);
 
