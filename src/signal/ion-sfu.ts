@@ -21,7 +21,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
 
     this.socket.addEventListener('message', async (event) => {
       const resp = JSON.parse(event.data);
-      if (resp.method === 'offer' || resp.method === 'answer') {
+      if (resp.method === 'offer') {
         if (this.onnegotiate) this.onnegotiate(resp.params);
       } else if (resp.method === 'trickle') {
         if (this.ontrickle) this.ontrickle(resp.params);
