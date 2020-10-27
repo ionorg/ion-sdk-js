@@ -54,7 +54,7 @@ export default class Client {
   }
 
   private async join(sid: string) {
-    const offer = await this.pc.createOffer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
+    const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, offer);
 
@@ -74,10 +74,8 @@ export default class Client {
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
       await this.pc.setRemoteDescription(description); // SRD rolls back as needed
-      if (description.type === 'offer') {
-        await this.pc.setLocalDescription();
-        this.signal.answer(this.pc.localDescription!);
-      }
+      await this.pc.setLocalDescription();
+      this.signal.answer(this.pc.localDescription!);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
