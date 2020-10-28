@@ -21,7 +21,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 150000,
+      maxBitrate: 150_000,
       maxFramerate: 15.0,
     },
   },
@@ -35,7 +35,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 500000,
+      maxBitrate: 500_000,
       maxFramerate: 30.0,
     },
   },
@@ -49,7 +49,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 1200000,
+      maxBitrate: 1_200_000,
       maxFramerate: 30.0,
     },
   },
@@ -63,7 +63,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 2500000,
+      maxBitrate: 2_500_000,
       maxFramerate: 30.0,
     },
   },
@@ -77,7 +77,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 4000000,
+      maxBitrate: 4_000_000,
       maxFramerate: 30.0,
     },
   },
@@ -91,7 +91,7 @@ export const VideoConstraints: VideoConstraints = {
       },
     },
     encodings: {
-      maxBitrate: 8000000,
+      maxBitrate: 8_000_000,
       maxFramerate: 30.0,
     },
   },
