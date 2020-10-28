@@ -1,14 +1,100 @@
-interface VideoResolutions {
-  [name: string]: { width: { ideal: number }; height: { ideal: number } };
+interface VideoResolution {
+  width: { ideal: number };
+  height: { ideal: number };
 }
 
-export const VideoResolutions: VideoResolutions = {
-  qvga: { width: { ideal: 320 }, height: { ideal: 180 } },
-  vga: { width: { ideal: 640 }, height: { ideal: 360 } },
-  shd: { width: { ideal: 960 }, height: { ideal: 540 } },
-  hd: { width: { ideal: 1280 }, height: { ideal: 720 } },
-  fhd: { width: { ideal: 1920 }, height: { ideal: 1080 } },
-  qhd: { width: { ideal: 2560 }, height: { ideal: 1440 } },
+interface VideoConstraints {
+  [name: string]: {
+    resolution: MediaTrackConstraints;
+    encodings: RTCRtpEncodingParameters;
+  };
+}
+
+export const VideoConstraints: VideoConstraints = {
+  qvga: {
+    resolution: {
+      width: { ideal: 320 },
+      height: { ideal: 180 },
+      frameRate: {
+        ideal: 15,
+        max: 30,
+      },
+    },
+    encodings: {
+      maxBitrate: 200000,
+      maxFramerate: 15.0,
+    },
+  },
+  vga: {
+    resolution: {
+      width: { ideal: 640 },
+      height: { ideal: 360 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 700000,
+      maxFramerate: 30.0,
+    },
+  },
+  shd: {
+    resolution: {
+      width: { ideal: 960 },
+      height: { ideal: 540 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 1200000,
+      maxFramerate: 30.0,
+    },
+  },
+  hd: {
+    resolution: {
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 2500000,
+      maxFramerate: 30.0,
+    },
+  },
+  fhd: {
+    resolution: {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 5000000,
+      maxFramerate: 30.0,
+    },
+  },
+  qhd: {
+    resolution: {
+      width: { ideal: 2560 },
+      height: { ideal: 1440 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 10000000,
+      maxFramerate: 30.0,
+    },
+  },
 };
 
 type Layer = 'none' | 'low' | 'medium' | 'high';
@@ -20,7 +106,7 @@ export interface Encoding {
 }
 
 export interface Constraints extends MediaStreamConstraints {
-  resolution?: string;
+  resolution: string;
   codec?: string;
   simulcast?: boolean;
   encodings?: Encoding[];
@@ -90,7 +176,7 @@ export class LocalStream {
       return constraints.video;
     } else if (constraints.resolution) {
       return {
-        ...VideoResolutions[constraints.resolution],
+        ...VideoConstraints[constraints.resolution].resolution,
       };
     }
     return !!constraints.video as MediaTrackConstraints;
@@ -176,7 +262,11 @@ export class LocalStream {
           sendEncodings: encodings,
         });
       } else {
-        this.pc.addTrack(track, this.stream);
+        this.pc.addTransceiver(track, {
+          streams: [this.stream],
+          direction: 'sendrecv',
+          sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
+        });
       }
     }
   }

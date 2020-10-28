@@ -130,8 +130,9 @@ interface RTCRtpEncodingParameters {
   dtx?: RTCDtxStatus;
   //active: boolean;
   //priority: RTCPriorityType;
-  //maxBitrate: number;
-  rid: string;
+  maxBitrate?: number;
+  maxFramerate?: number;
+  rid?: string;
   scaleResolutionDownBy?: number; // default = 1
 }
 
