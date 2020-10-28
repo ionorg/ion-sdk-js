@@ -6,6 +6,7 @@ export default class Client {
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
+  private makingOffer: boolean
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -17,7 +18,7 @@ export default class Client {
     },
   ) {
     this.candidates = [];
-
+    this.makingOffer = false;
     this.signal = signal;
     this.pc = new RTCPeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
@@ -73,7 +74,7 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      if (description.type === "offer" && this.pc.signalingState !== "stable") {
+      if (description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable")) {
         await Promise.all([
           this.pc.setLocalDescription({ type: "rollback" }),
           this.pc.setRemoteDescription(description), // SRD rolls back as needed
@@ -93,6 +94,7 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
+      this.makingOffer = true;
       const offer = await this.pc.createOffer();
       if (this.pc.signalingState != "stable") return;
       await this.pc.setLocalDescription(offer);
@@ -101,6 +103,8 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
+    } finally {
+      this.makingOffer = false;
     }
   }
 }
