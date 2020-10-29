@@ -1,8 +1,3 @@
-interface VideoResolution {
-  width: { ideal: number };
-  height: { ideal: number };
-}
-
 interface VideoConstraints {
   [name: string]: {
     resolution: MediaTrackConstraints;
@@ -258,13 +253,13 @@ export class LocalStream {
 
         this.pc.addTransceiver(track, {
           streams: [this.stream],
-          direction: 'sendrecv',
+          direction: 'sendonly',
           sendEncodings: encodings,
         });
       } else {
         this.pc.addTransceiver(track, {
           streams: [this.stream],
-          direction: 'sendrecv',
+          direction: 'sendonly',
           sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
         });
       }
