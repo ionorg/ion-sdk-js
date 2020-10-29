@@ -6,6 +6,7 @@ export default class Client {
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
+  private makingOffer: boolean
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -17,7 +18,7 @@ export default class Client {
     },
   ) {
     this.candidates = [];
-
+    this.makingOffer = false;
     this.signal = signal;
     this.pc = new RTCPeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
@@ -73,9 +74,18 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
-      await this.pc.setLocalDescription();
-      this.signal.answer(this.pc.localDescription!);
+      if (description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable")) {
+        await Promise.all([
+          this.pc.setLocalDescription({ type: "rollback" }),
+          this.pc.setRemoteDescription(description), // SRD rolls back as needed
+        ])
+      } else {
+        await this.pc.setRemoteDescription(description);
+      }
+      if (description.type === "offer") {
+        await this.pc.setLocalDescription(await this.pc.createAnswer());
+        this.signal.answer(this.pc.localDescription!);
+      }
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
@@ -84,12 +94,17 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
-      await this.pc.setLocalDescription();
+      this.makingOffer = true;
+      const offer = await this.pc.createOffer();
+      if (this.pc.signalingState != "stable") return;
+      await this.pc.setLocalDescription(offer);
       const answer = await this.signal.offer(this.pc.localDescription!);
-      this.pc.setRemoteDescription(answer);
+      await this.pc.setRemoteDescription(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
+    } finally {
+      this.makingOffer = false;
     }
   }
 }
