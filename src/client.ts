@@ -96,7 +96,7 @@ export default class Client {
     try {
       this.makingOffer = true;
       const offer = await this.pc.createOffer();
-      if (this.pc.signalingState != "stable") return;
+      if (this.pc.signalingState !== "stable") return;
       await this.pc.setLocalDescription(offer);
       const answer = await this.signal.offer(this.pc.localDescription!);
       await this.pc.setRemoteDescription(answer);
