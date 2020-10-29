@@ -4,6 +4,7 @@ import { Signal } from './';
 export default class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
   private _onready?: () => void;
+  private _onclose?: (ev: Event) => void;
   private _onerror?: (error: Event) => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
   ontrickle?: (candidate: RTCIceCandidateInit) => void;
@@ -17,6 +18,10 @@ export default class IonSFUJSONRPCSignal implements Signal {
 
     this.socket.addEventListener('error', (e) => {
       if (this._onerror) this._onerror(e);
+    });
+
+    this.socket.addEventListener('close', (e) => {
+      if (this._onclose) this._onclose(e);
     });
 
     this.socket.addEventListener('message', async (event) => {
@@ -106,4 +111,8 @@ export default class IonSFUJSONRPCSignal implements Signal {
   set onerror(onerror: (error: Event) => void) {
     this._onerror = onerror;
   }
+  set onclose(onclose: (ev: Event) => void) {
+    this._onclose = onclose;
+  }
+
 }
