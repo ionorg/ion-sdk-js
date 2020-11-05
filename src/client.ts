@@ -75,11 +75,15 @@ export default class Client {
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
       if (description.type === 'offer' && (this.makingOffer || this.pc.signalingState !== 'stable')) {
+        /* tslint:disable-next-line:no-console */
+        console.log('negotation got offer, rolling back');
         await Promise.all([
           this.pc.setLocalDescription({ type: 'rollback' }),
           this.pc.setRemoteDescription(description), // SRD rolls back as needed
         ]);
       } else {
+        /* tslint:disable-next-line:no-console */
+        console.log('negotation remote description', description);
         await this.pc.setRemoteDescription(description);
       }
       if (description.type === 'offer') {
@@ -94,6 +98,8 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
+      /* tslint:disable-next-line:no-console */
+      console.log('negotiation needed');
       this.makingOffer = true;
       const offer = await this.pc.createOffer();
       if (this.pc.signalingState !== 'stable') return;
