@@ -169,12 +169,12 @@ export class LocalStream {
   private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
     if (constraints.video instanceof Object) {
       return constraints.video;
-    } else if (constraints.resolution) {
+    } else if (constraints.video && constraints.resolution) {
       return {
         ...VideoConstraints[constraints.resolution].resolution,
       };
     }
-    return !!constraints.video as MediaTrackConstraints;
+    return constraints.video as MediaTrackConstraints;
   }
 
   private getTrack(kind: 'audio' | 'video') {
