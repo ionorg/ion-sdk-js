@@ -44,8 +44,8 @@ export default class IonSFUJSONRPCSignal implements Signal {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
           resolve(resp.result);
+          this.socket.removeEventListener('message', handler);
         }
-        this.socket.removeEventListener('message', handler);
       };
       this.socket.addEventListener('message', handler);
     });
