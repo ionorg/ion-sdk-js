@@ -260,7 +260,7 @@ export class LocalStream {
         this.pc.addTransceiver(track, {
           streams: [this.stream],
           direction: 'sendonly',
-          sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
+          sendEncodings: track.kind === 'video' ? [VideoConstraints[this.constraints.resolution].encodings] : undefined,
         });
       }
     }
