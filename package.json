@@ -42,8 +42,8 @@
     "webpack-cli": "4.1.0"
   },
   "dependencies": {
+    "@jitsi/sdp-interop": "^1.0.3",
     "events": "^3.0.0",
-    "sdp-interop": "^0.1.13",
     "sdp-transform": "^2.13.0",
     "uuid": "^8.0.0"
   },

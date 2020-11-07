@@ -1,6 +1,6 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
-import { Interop } from 'sdp-interop';
+import { Interop } from '@jitsi/sdp-interop';
 
 export default class Client {
   private api: RTCDataChannel;
@@ -9,6 +9,7 @@ export default class Client {
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
   private makingOffer: boolean;
+  private currentSdp?: RTCSessionDescriptionInit
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -61,9 +62,10 @@ export default class Client {
   private async join(sid: string) {
     const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
-    const unified = this.interop.toUnifiedPlan(offer)
+    const unified = this.interop.toUnifiedPlan(offer);
+    this.currentSdp = unified
     const answer = await this.signal.join(sid, unified);
-    const planb = this.interop.toPlanB(answer, offer)
+    const planb = this.interop.toPlanB(answer);
     await this.pc.setRemoteDescription(planb);
     this.candidates.forEach((c) => this.pc.addIceCandidate(c));
     this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
@@ -93,7 +95,8 @@ export default class Client {
       }
       if (description.type === 'offer') {
         await this.pc.setLocalDescription(await this.pc.createAnswer());
-        this.signal.answer(this.pc.localDescription!);
+        const unified = this.interop.toUnifiedPlan(this.pc.localDescription!);
+        this.signal.answer(unified);
       }
     } catch (err) {
       /* tslint:disable-next-line:no-console */
@@ -109,8 +112,11 @@ export default class Client {
       const offer = await this.pc.createOffer();
       if (this.pc.signalingState !== 'stable') return;
       await this.pc.setLocalDescription(offer);
-      const answer = await this.signal.offer(this.pc.localDescription!);
-      await this.pc.setRemoteDescription(answer);
+      const unified = this.interop.toUnifiedPlan(offer, this.currentSdp);
+      this.currentSdp = unified
+      const answer = await this.signal.offer(unified);
+      const planb = this.interop.toPlanB(answer);
+      await this.pc.setRemoteDescription(planb);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);

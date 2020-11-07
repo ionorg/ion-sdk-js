@@ -257,11 +257,12 @@ export class LocalStream {
           sendEncodings: encodings,
         });
       } else {
-        this.pc.addTransceiver(track, {
-          streams: [this.stream],
-          direction: 'sendonly',
-          sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
-        });
+        this.pc.addTrack(track)
+        // this.pc.addTransceiver(track, {
+        //   streams: [this.stream],
+        //   direction: 'sendonly',
+        //   sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
+        // });
       }
     }
   }

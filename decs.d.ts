@@ -45,10 +45,10 @@ declare module 'protoo-client' {
   }
 }
 
-declare module 'sdp-interop' {
+declare module '@jitsi/sdp-interop' {
   export class Interop {
-    toUnifiedPlan(sdp: RTCSessionDescriptionInit): RTCSessionDescriptionInit
-    toPlanB(sdp: RTCSessionDescriptionInit, current?: RTCSessionDescriptionInit): RTCSessionDescriptionInit
+    toUnifiedPlan(sdp: RTCSessionDescriptionInit, current?: RTCSessionDescriptionInit): RTCSessionDescriptionInit
+    toPlanB(sdp: RTCSessionDescriptionInit): RTCSessionDescriptionInit
   }
 }
 
