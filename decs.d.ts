@@ -45,6 +45,13 @@ declare module 'protoo-client' {
   }
 }
 
+declare module 'sdp-interop' {
+  export class Interop {
+    toUnifiedPlan(sdp: RTCSessionDescriptionInit): RTCSessionDescriptionInit
+    toPlanB(sdp: RTCSessionDescriptionInit, current?: RTCSessionDescriptionInit): RTCSessionDescriptionInit
+  }
+}
+
 // https://www.w3.org/TR/webrtc/#idl-def-rtcofferansweroptions
 interface RTCOfferAnswerOptions {
   voiceActivityDetection?: boolean; // default = true
@@ -235,6 +242,7 @@ interface RTCConfiguration {
   peerIdentity?: string; // default = null
   certificates?: RTCCertificate[];
   iceCandidatePoolSize?: number; // default = 0
+  sdpSemantics?: 'plan-b' | 'unified-plan';
 }
 
 // Compatibility for older definitions on DefinitelyTyped.

@@ -1,9 +1,11 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
+import { Interop } from 'sdp-interop';
 
 export default class Client {
   private api: RTCDataChannel;
   pc: RTCPeerConnection;
+  private interop: Interop;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
   private makingOffer: boolean;
@@ -14,9 +16,11 @@ export default class Client {
     sid: string,
     signal: Signal,
     config: RTCConfiguration = {
+      sdpSemantics: 'plan-b',
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
+    this.interop = new Interop();
     this.candidates = [];
     this.makingOffer = false;
     this.signal = signal;
@@ -57,9 +61,10 @@ export default class Client {
   private async join(sid: string) {
     const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
-    const answer = await this.signal.join(sid, offer);
-
-    await this.pc.setRemoteDescription(answer);
+    const unified = this.interop.toUnifiedPlan(offer)
+    const answer = await this.signal.join(sid, unified);
+    const planb = this.interop.toPlanB(answer, offer)
+    await this.pc.setRemoteDescription(planb);
     this.candidates.forEach((c) => this.pc.addIceCandidate(c));
     this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
   }
