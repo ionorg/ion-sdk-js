@@ -95,7 +95,7 @@ export default class Client {
       }
       if (description.type === 'offer') {
         await this.pc.setLocalDescription(await this.pc.createAnswer());
-        const unified = this.interop.toUnifiedPlan(this.pc.localDescription!);
+        const unified = this.interop.toUnifiedPlan(this.pc.localDescription!, this.currentSdp);
         this.signal.answer(unified);
       }
     } catch (err) {
