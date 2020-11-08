@@ -63,6 +63,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
   }
 
   offer(offer: RTCSessionDescriptionInit) {
+      console.log("call offer offer=", offer)
     const id = uuidv4();
     this.socket.send(
       JSON.stringify({
