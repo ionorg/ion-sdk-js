@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "events": "^3.0.0",
-    "sdp-transform": "^2.13.0",
+    "sdp-transform": "^2.14.0",
     "uuid": "^8.0.0"
   },
   "keywords": [
