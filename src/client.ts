@@ -1,12 +1,15 @@
 import { Signal } from './signal';
-import { LocalStream, makeRemote, RemoteStream } from './stream';
+import { LocalStream, makeRemote, RemoteStream, LocalTransceivers } from './stream';
 
 export default class Client {
   private api: RTCDataChannel;
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
-  private makingOffer: boolean
+  private makingOffer: boolean;
+  private localTransceivers: { [kind in LocalTransceivers]: RTCRtpTransceiver };
+  private screenStream = new MediaStream();
+  private mediaStream = new MediaStream();
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -27,6 +30,12 @@ export default class Client {
       }
     };
     this.api = this.pc.createDataChannel('ion-sfu');
+    this.localTransceivers = {
+      audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [this.mediaStream] }),
+      video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [this.mediaStream] }),
+      screenaudio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [this.screenStream] }),
+      screenvideo: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [this.screenStream] }),
+    };
 
     this.pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
@@ -47,7 +56,7 @@ export default class Client {
   }
 
   publish(stream: LocalStream) {
-    stream.publish(this.pc);
+    stream.publish(this.pc, this.localTransceivers, stream.isScreen ? this.screenStream : this.mediaStream);
   }
 
   close() {
@@ -74,15 +83,15 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      if (description.type === "offer" && (this.makingOffer || this.pc.signalingState !== "stable")) {
+      if (description.type === 'offer' && (this.makingOffer || this.pc.signalingState !== 'stable')) {
         await Promise.all([
-          this.pc.setLocalDescription({ type: "rollback" }),
+          this.pc.setLocalDescription({ type: 'rollback' }),
           this.pc.setRemoteDescription(description), // SRD rolls back as needed
-        ])
+        ]);
       } else {
         await this.pc.setRemoteDescription(description);
       }
-      if (description.type === "offer") {
+      if (description.type === 'offer') {
         await this.pc.setLocalDescription(await this.pc.createAnswer());
         this.signal.answer(this.pc.localDescription!);
       }
@@ -96,7 +105,7 @@ export default class Client {
     try {
       this.makingOffer = true;
       const offer = await this.pc.createOffer();
-      if (this.pc.signalingState != "stable") return;
+      if (this.pc.signalingState !== 'stable') return;
       await this.pc.setLocalDescription(offer);
       const answer = await this.signal.offer(this.pc.localDescription!);
       await this.pc.setRemoteDescription(answer);

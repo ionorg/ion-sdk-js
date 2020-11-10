@@ -98,6 +98,7 @@ export const VideoConstraints: VideoConstraints = {
 };
 
 type Layer = 'none' | 'low' | 'medium' | 'high';
+export type LocalTransceivers = 'video' | 'audio' | 'screenaudio' | 'screenvideo';
 
 export interface Encoding {
   layer: Layer;
@@ -152,19 +153,25 @@ export class LocalStream {
       video: true,
     });
 
-    return new LocalStream(stream, {
-      ...defaults,
-      ...constraints,
-    });
+    return new LocalStream(
+      stream,
+      {
+        ...defaults,
+        ...constraints,
+      },
+      true,
+    );
   }
 
   constraints: Constraints;
   pc?: RTCPeerConnection;
   stream: MediaStream;
+  isScreen: boolean;
 
-  constructor(stream: MediaStream, constraints: Constraints) {
+  constructor(stream: MediaStream, constraints: Constraints, isScreen = false) {
     this.constraints = constraints;
     this.stream = stream;
+    this.isScreen = isScreen;
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
@@ -203,7 +210,7 @@ export class LocalStream {
     return stream.getTracks()[0];
   }
 
-  private publishTrack(track: MediaStreamTrack) {
+  private async publishTrack(track: MediaStreamTrack, transceiver: RTCRtpTransceiver) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
@@ -255,23 +262,21 @@ export class LocalStream {
             }
           });
         }
-
-        this.pc.addTransceiver(track, {
-          streams: [this.stream],
-          direction: 'sendrecv',
-          sendEncodings: encodings,
-        });
+        const params = transceiver.sender.getParameters();
+        await transceiver.sender.setParameters({ ...params, encodings });
+        await transceiver.sender.replaceTrack(track);
       } else {
-        this.pc.addTransceiver(track, {
-          streams: [this.stream],
-          direction: 'sendrecv',
-          sendEncodings: [VideoConstraints[this.constraints.resolution].encodings],
+        const params = transceiver.sender.getParameters();
+        await transceiver.sender.setParameters({
+          ...params,
+          encodings: [VideoConstraints[this.constraints.resolution].encodings],
         });
+        await transceiver.sender.replaceTrack(track);
       }
     }
   }
 
-  private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack) {
+  private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack, transceiver?: RTCRtpTransceiver) {
     this.stream.addTrack(next);
 
     // If published, replace published track with track from new device
@@ -279,26 +284,31 @@ export class LocalStream {
       this.stream.removeTrack(prev);
       prev.stop();
 
-      if (this.pc) {
-        this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
-          if (sender?.track?.kind === next.kind) {
-            sender.track?.stop();
-            sender.replaceTrack(next);
-          }
-        });
+      if (transceiver) {
+        transceiver.sender.track?.stop();
+        transceiver.sender.replaceTrack(next);
       }
     } else {
       this.stream.addTrack(next);
 
-      if (this.pc) {
-        this.publishTrack(next);
+      if (transceiver) {
+        this.publishTrack(next, transceiver);
       }
     }
   }
 
-  publish(pc: RTCPeerConnection) {
+  publish(
+    pc: RTCPeerConnection,
+    transceivers: { [kind in LocalTransceivers]: RTCRtpTransceiver },
+    stream: MediaStream,
+  ) {
     this.pc = pc;
-    this.stream.getTracks().forEach(this.publishTrack.bind(this));
+    this.stream.getTracks().forEach((t) => stream.addTrack(t));
+    this.stream = stream;
+
+    this.stream.getTracks().forEach((t) => {
+      this.publishTrack(t, transceivers[(!this.isScreen ? t.kind : `screen${t.kind}`) as LocalTransceivers]);
+    });
   }
 
   unpublish() {
@@ -339,6 +349,14 @@ export class LocalStream {
   async unmute(kind: 'audio' | 'video') {
     const prev = this.getTrack(kind);
     const track = await this.getNewTrack(kind);
+    if (this.pc) {
+      this.pc.getTransceivers().forEach((t) => {
+        if (t.sender.track === prev) {
+          this.updateTrack(track, prev, t);
+          return;
+        }
+      });
+    }
     this.updateTrack(track, prev);
   }
 }
