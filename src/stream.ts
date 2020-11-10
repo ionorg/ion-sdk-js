@@ -130,7 +130,7 @@ export class LocalStream {
       }),
     });
 
-    const sender = client.getSender();
+    const sender = client.getAvailableSender();
 
     if (!sender) {
       return null;
@@ -159,7 +159,7 @@ export class LocalStream {
       video: true,
     });
 
-    const sender = client.getSender();
+    const sender = client.getAvailableSender();
 
     if (!sender) {
       return null;

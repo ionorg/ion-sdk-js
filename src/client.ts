@@ -65,7 +65,7 @@ export default class Client {
     return this.pc.getStats(selector);
   }
 
-  getSender() {
+  getAvailableSender() {
     return this.senders.find((s) => s.stream.getTracks().length === 0);
   }
 
