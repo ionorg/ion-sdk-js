@@ -7,7 +7,6 @@ export default class Client {
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
-  private makingOffer: boolean;
   private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
@@ -20,7 +19,6 @@ export default class Client {
     },
   ) {
     this.candidates = [];
-    this.makingOffer = false;
     this.signal = signal;
     this.codec = 'vp8';
     this.pc = new RTCPeerConnection(config);
@@ -81,20 +79,9 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      if (description.type === 'offer' && (this.makingOffer || this.pc.signalingState !== 'stable')) {
-        /* tslint:disable-next-line:no-console */
-        console.log('negotation got offer, rolling back');
-        await Promise.all([
-          this.pc.setLocalDescription({ type: 'rollback' }),
-          this.pc.setRemoteDescription(description), // SRD rolls back as needed
-        ]);
-      } else {
-        /* tslint:disable-next-line:no-console */
-        console.log('negotation remote description', description);
-        await this.pc.setRemoteDescription(description);
-      }
+      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
       if (description.type === 'offer') {
-        await this.pc.setLocalDescription(await this.pc.createAnswer());
+        await this.pc.setLocalDescription();
         this.signal.answer(this.pc.localDescription!);
       }
     } catch (err) {
@@ -107,18 +94,13 @@ export default class Client {
     try {
       /* tslint:disable-next-line:no-console */
       console.log('negotiation needed');
-      this.makingOffer = true;
-      let offer = await this.pc.createOffer();
-      if (this.pc.signalingState !== 'stable') return;
-      offer = simplifySDP(offer, this.codec);
-      await this.pc.setLocalDescription(offer);
-      const answer = await this.signal.offer(this.pc.localDescription!);
-      await this.pc.setRemoteDescription(answer);
+      await this.pc.setLocalDescription();
+      const offer = simplifySDP(this.pc.localDescription!, this.codec);
+      const answer = await this.signal.offer(offer);
+      await this.negotiate(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-    } finally {
-      this.makingOffer = false;
     }
   }
 }
