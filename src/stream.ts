@@ -299,7 +299,7 @@ export class LocalStream {
   unpublish() {
     if (this.pc) {
       this.pc.getSenders().forEach((s: RTCRtpSender) => {
-        if (s.track !== undefined) {
+        if (s.track && this.stream.getTracks().includes(s.track)) {
           this.pc!.removeTrack(s);
         }
       });
