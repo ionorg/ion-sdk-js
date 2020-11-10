@@ -7,6 +7,10 @@ export default class Client {
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
+  private localStreams: {
+    stream: MediaStream;
+    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
+  }[];
   private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
@@ -18,6 +22,7 @@ export default class Client {
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
+    const initialStreams = 2;
     this.candidates = [];
     this.signal = signal;
     this.codec = 'vp8';
@@ -28,6 +33,17 @@ export default class Client {
       }
     };
     this.api = this.pc.createDataChannel('ion-sfu');
+    this.localStreams = [];
+    for (let i = 0; i < initialStreams; i++) {
+      const stream = new MediaStream();
+      this.localStreams.push({
+        stream,
+        transceivers: {
+          audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] }),
+          video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] }),
+        },
+      });
+    }
 
     this.pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
@@ -48,7 +64,8 @@ export default class Client {
   }
 
   publish(stream: LocalStream) {
-    stream.publish(this.pc);
+    const st = this.localStreams.find((s) => s.stream.getTracks().length === 0);
+    if (st) stream.publish(this.pc, st.transceivers, st.stream);
   }
 
   setcodec(codec: string) {

@@ -161,7 +161,7 @@ interface RTCRtpCodecParameters {
 // https://www.w3.org/TR/webrtc/#idl-def-rtcrtpparameters
 interface RTCRtpParameters {
   transactionId: string;
-  //encodings: RTCRtpEncodingParameters[];
+  encodings: RTCRtpEncodingParameters[];
   //headerExtensions: RTCRtpHeaderExtensionParameters[];
   //rtcp: RTCRtcpParameters;
   //codecs: RTCRtpCodecParameters[];
