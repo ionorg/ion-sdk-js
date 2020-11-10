@@ -1,5 +1,5 @@
 import { Signal } from './signal';
-import { LocalStream, makeRemote, RemoteStream, LocalTransceivers } from './stream';
+import { LocalStream, makeRemote, RemoteStream } from './stream';
 
 export default class Client {
   private api: RTCDataChannel;
@@ -7,9 +7,10 @@ export default class Client {
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
   private makingOffer: boolean;
-  private localTransceivers: { [kind in LocalTransceivers]: RTCRtpTransceiver };
-  private screenStream = new MediaStream();
-  private mediaStream = new MediaStream();
+  private localStreams: {
+    stream: MediaStream;
+    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
+  }[];
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -20,6 +21,7 @@ export default class Client {
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
+    const initialStreams = 2;
     this.candidates = [];
     this.makingOffer = false;
     this.signal = signal;
@@ -30,12 +32,17 @@ export default class Client {
       }
     };
     this.api = this.pc.createDataChannel('ion-sfu');
-    this.localTransceivers = {
-      audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [this.mediaStream] }),
-      video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [this.mediaStream] }),
-      screenaudio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [this.screenStream] }),
-      screenvideo: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [this.screenStream] }),
-    };
+    this.localStreams = [];
+    for (let i = 0; i < initialStreams; i++) {
+      const stream = new MediaStream();
+      this.localStreams.push({
+        stream,
+        transceivers: {
+          audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] }),
+          video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] }),
+        },
+      });
+    }
 
     this.pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
@@ -56,7 +63,8 @@ export default class Client {
   }
 
   publish(stream: LocalStream) {
-    stream.publish(this.pc, this.localTransceivers, stream.isScreen ? this.screenStream : this.mediaStream);
+    const st = this.localStreams.find((s) => s.stream.getTracks().length === 0);
+    if (st) stream.publish(this.pc, st.transceivers, st.stream);
   }
 
   close() {

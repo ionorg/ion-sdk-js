@@ -98,7 +98,6 @@ export const VideoConstraints: VideoConstraints = {
 };
 
 type Layer = 'none' | 'low' | 'medium' | 'high';
-export type LocalTransceivers = 'video' | 'audio' | 'screenaudio' | 'screenvideo';
 
 export interface Encoding {
   layer: Layer;
@@ -299,7 +298,7 @@ export class LocalStream {
 
   publish(
     pc: RTCPeerConnection,
-    transceivers: { [kind in LocalTransceivers]: RTCRtpTransceiver },
+    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver },
     stream: MediaStream,
   ) {
     this.pc = pc;
@@ -307,7 +306,7 @@ export class LocalStream {
     this.stream = stream;
 
     this.stream.getTracks().forEach((t) => {
-      this.publishTrack(t, transceivers[(!this.isScreen ? t.kind : `screen${t.kind}`) as LocalTransceivers]);
+      this.publishTrack(t, transceivers[t.kind as 'video' | 'audio']);
     });
   }
 
