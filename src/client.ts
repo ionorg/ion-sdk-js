@@ -7,7 +7,6 @@ export default class Client {
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
-  private makingOffer: boolean;
   private localStreams: {
     stream: MediaStream;
     transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
@@ -119,8 +118,6 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-    } finally {
-      this.makingOffer = false;
     }
   }
 }

@@ -203,7 +203,7 @@ export class LocalStream {
     return stream.getTracks()[0];
   }
 
-  private publishTrack(track: MediaStreamTrack) {
+  private async publishTrack(track: MediaStreamTrack, transceiver: RTCRtpTransceiver) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
