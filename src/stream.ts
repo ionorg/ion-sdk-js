@@ -1,7 +1,4 @@
-interface VideoResolution {
-  width: { ideal: number };
-  height: { ideal: number };
-}
+import Client, { Sender } from './client';
 
 interface VideoConstraints {
   [name: string]: {
@@ -121,7 +118,7 @@ const defaults = {
 };
 
 export class LocalStream {
-  static async getUserMedia(constraints: Constraints = defaults) {
+  static async getUserMedia(client: Client, constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: LocalStream.computeAudioConstraints({
         ...defaults,
@@ -132,13 +129,23 @@ export class LocalStream {
         ...constraints,
       }),
     });
-    return new LocalStream(stream, {
+
+    const sender = client.getSender();
+
+    if (!sender) {
+      return null;
+    }
+
+    stream.getTracks().forEach((t) => sender.stream.addTrack(t));
+
+    return new LocalStream(client.pc, sender, {
       ...defaults,
       ...constraints,
     });
   }
 
   static async getDisplayMedia(
+    client: Client,
     constraints: Constraints = {
       codec: 'VP8',
       resolution: 'hd',
@@ -152,19 +159,30 @@ export class LocalStream {
       video: true,
     });
 
-    return new LocalStream(stream, {
+    const sender = client.getSender();
+
+    if (!sender) {
+      return null;
+    }
+
+    stream.getTracks().forEach((t: MediaStreamTrack) => sender.stream.addTrack(t));
+
+    return new LocalStream(client.pc, sender, {
       ...defaults,
       ...constraints,
     });
   }
 
   constraints: Constraints;
-  pc?: RTCPeerConnection;
+  pc: RTCPeerConnection;
   stream: MediaStream;
+  sender: Sender;
 
-  constructor(stream: MediaStream, constraints: Constraints) {
+  constructor(pc: RTCPeerConnection, sender: Sender, constraints: Constraints) {
     this.constraints = constraints;
-    this.stream = stream;
+    this.pc = pc;
+    this.sender = sender;
+    this.stream = sender.stream;
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
@@ -290,17 +308,9 @@ export class LocalStream {
     }
   }
 
-  publish(
-    pc: RTCPeerConnection,
-    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver },
-    stream: MediaStream,
-  ) {
-    this.pc = pc;
-    this.stream.getTracks().forEach((t) => stream.addTrack(t));
-    this.stream = stream;
-
+  publish() {
     this.stream.getTracks().forEach((t) => {
-      this.publishTrack(t, transceivers[t.kind as 'video' | 'audio']);
+      this.publishTrack(t, this.sender.transceivers[t.kind as 'video' | 'audio']);
     });
   }
 

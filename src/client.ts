@@ -2,15 +2,17 @@ import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
 import * as sdpTransform from 'sdp-transform';
 
+export interface Sender {
+  stream: MediaStream;
+  transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
+}
+
 export default class Client {
   private api: RTCDataChannel;
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
-  private localStreams: {
-    stream: MediaStream;
-    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
-  }[];
+  private senders: Sender[];
   private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
@@ -33,10 +35,10 @@ export default class Client {
       }
     };
     this.api = this.pc.createDataChannel('ion-sfu');
-    this.localStreams = [];
+    this.senders = [];
     for (let i = 0; i < initialStreams; i++) {
       const stream = new MediaStream();
-      this.localStreams.push({
+      this.senders.push({
         stream,
         transceivers: {
           audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] }),
@@ -63,9 +65,8 @@ export default class Client {
     return this.pc.getStats(selector);
   }
 
-  publish(stream: LocalStream) {
-    const st = this.localStreams.find((s) => s.stream.getTracks().length === 0);
-    if (st) stream.publish(this.pc, st.transceivers, st.stream);
+  getSender() {
+    return this.senders.find((s) => s.stream.getTracks().length === 0);
   }
 
   setcodec(codec: string) {
