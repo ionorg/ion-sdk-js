@@ -79,7 +79,7 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      await pc.setRemoteDescription(description); // SRD rolls back as needed
+      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
       if (description.type === 'offer') {
         await this.pc.setLocalDescription();
         this.signal.answer(this.pc.localDescription!);
@@ -97,12 +97,10 @@ export default class Client {
       await this.pc.setLocalDescription();
       const offer = simplifySDP(this.pc.localDescription!, this.codec);
       const answer = await this.signal.offer(offer);
-      await this.pc.setRemoteDescription(answer);
+      await this.negotiate(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-    } finally {
-      this.makingOffer = false;
     }
   }
 }
