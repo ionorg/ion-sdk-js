@@ -1,11 +1,19 @@
 import { Signal } from './signal';
-import { LocalStream, makeRemote, RemoteStream } from './stream';
+import { Constraints, LocalStream, makeRemote, RemoteStream } from './stream';
 import * as sdpTransform from 'sdp-transform';
 
 export interface Sender {
   stream: MediaStream;
   transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
 }
+
+const defaults = {
+  codec: 'VP8',
+  resolution: 'hd',
+  audio: true,
+  video: true,
+  simulcast: false,
+};
 
 export default class Client {
   private api: RTCDataChannel;
@@ -65,8 +73,58 @@ export default class Client {
     return this.pc.getStats(selector);
   }
 
-  getAvailableSender() {
-    return this.senders.find((s) => s.stream.getTracks().length === 0);
+  async getUserMedia(constraints: Constraints = defaults) {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: LocalStream.computeAudioConstraints({
+        ...defaults,
+        ...constraints,
+      }),
+      video: LocalStream.computeVideoConstraints({
+        ...defaults,
+        ...constraints,
+      }),
+    });
+
+    const sender = this.senders.find((s) => s.stream.getTracks().length === 0);
+
+    if (!sender) {
+      return null;
+    }
+
+    stream.getTracks().forEach((t) => sender.stream.addTrack(t));
+
+    return new LocalStream(this.pc, sender, {
+      ...defaults,
+      ...constraints,
+    });
+  }
+
+  async getDisplayMedia(
+    constraints: Constraints = {
+      codec: 'VP8',
+      resolution: 'hd',
+      audio: false,
+      video: true,
+      simulcast: false,
+    },
+  ) {
+    // @ts-ignore
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+    });
+
+    const sender = this.senders.find((s) => s.stream.getTracks().length === 0);
+
+    if (!sender) {
+      return null;
+    }
+
+    stream.getTracks().forEach((t: MediaStreamTrack) => sender.stream.addTrack(t));
+
+    return new LocalStream(this.pc, sender, {
+      ...defaults,
+      ...constraints,
+    });
   }
 
   setcodec(codec: string) {

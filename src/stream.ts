@@ -109,70 +109,7 @@ export interface Constraints extends MediaStreamConstraints {
   encodings?: Encoding[];
 }
 
-const defaults = {
-  codec: 'VP8',
-  resolution: 'hd',
-  audio: true,
-  video: true,
-  simulcast: false,
-};
-
 export class LocalStream {
-  static async getUserMedia(client: Client, constraints: Constraints = defaults) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: LocalStream.computeAudioConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-      video: LocalStream.computeVideoConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-    });
-
-    const sender = client.getAvailableSender();
-
-    if (!sender) {
-      return null;
-    }
-
-    stream.getTracks().forEach((t) => sender.stream.addTrack(t));
-
-    return new LocalStream(client.pc, sender, {
-      ...defaults,
-      ...constraints,
-    });
-  }
-
-  static async getDisplayMedia(
-    client: Client,
-    constraints: Constraints = {
-      codec: 'VP8',
-      resolution: 'hd',
-      audio: false,
-      video: true,
-      simulcast: false,
-    },
-  ) {
-    // @ts-ignore
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
-
-    const sender = client.getAvailableSender();
-
-    if (!sender) {
-      return null;
-    }
-
-    stream.getTracks().forEach((t: MediaStreamTrack) => sender.stream.addTrack(t));
-
-    return new LocalStream(client.pc, sender, {
-      ...defaults,
-      ...constraints,
-    });
-  }
-
   constraints: Constraints;
   pc: RTCPeerConnection;
   stream: MediaStream;
@@ -185,11 +122,11 @@ export class LocalStream {
     this.stream = sender.stream;
   }
 
-  private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
+  static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
     return !!constraints.audio as MediaTrackConstraints;
   }
 
-  private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
+  static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
     if (constraints.video instanceof Object) {
       return constraints.video;
     } else if (constraints.video && constraints.resolution) {
