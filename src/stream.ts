@@ -320,15 +320,23 @@ export class LocalStream {
       [kind]:
         this.constraints[kind] instanceof Object
           ? {
-              ...(this.constraints[kind] as object),
-              deviceId,
-            }
+            ...(this.constraints[kind] as object),
+            deviceId,
+          }
           : { deviceId },
     };
 
     const prev = this.getTrack(kind);
     const next = await this.getNewTrack(kind);
 
+    if (this.pc) {
+      this.pc.getTransceivers().forEach((t) => {
+        if (t.sender.track === prev) {
+          this.updateTrack(next, prev, t);
+          return;
+        }
+      });
+    }
     this.updateTrack(next, prev);
   }
 
