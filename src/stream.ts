@@ -152,25 +152,19 @@ export class LocalStream {
       video: true,
     });
 
-    return new LocalStream(
-      stream,
-      {
-        ...defaults,
-        ...constraints,
-      },
-      true,
-    );
+    return new LocalStream(stream, {
+      ...defaults,
+      ...constraints,
+    });
   }
 
   constraints: Constraints;
   pc?: RTCPeerConnection;
   stream: MediaStream;
-  isScreen: boolean;
 
-  constructor(stream: MediaStream, constraints: Constraints, isScreen = false) {
+  constructor(stream: MediaStream, constraints: Constraints) {
     this.constraints = constraints;
     this.stream = stream;
-    this.isScreen = isScreen;
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
@@ -180,12 +174,12 @@ export class LocalStream {
   private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
     if (constraints.video instanceof Object) {
       return constraints.video;
-    } else if (constraints.resolution) {
+    } else if (constraints.video && constraints.resolution) {
       return {
         ...VideoConstraints[constraints.resolution].resolution,
       };
     }
-    return !!constraints.video as MediaTrackConstraints;
+    return constraints.video as MediaTrackConstraints;
   }
 
   private getTrack(kind: 'audio' | 'video') {
@@ -209,7 +203,7 @@ export class LocalStream {
     return stream.getTracks()[0];
   }
 
-  private async publishTrack(track: MediaStreamTrack, transceiver: RTCRtpTransceiver) {
+  private publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
         const encodings: RTCRtpEncodingParameters[] = [
@@ -313,7 +307,7 @@ export class LocalStream {
   unpublish() {
     if (this.pc) {
       this.pc.getSenders().forEach((s: RTCRtpSender) => {
-        if (s.track !== undefined) {
+        if (s.track && this.stream.getTracks().includes(s.track)) {
           this.pc!.removeTrack(s);
         }
       });

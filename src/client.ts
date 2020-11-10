@@ -1,5 +1,6 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
+import * as sdpTransform from 'sdp-transform';
 
 export default class Client {
   private api: RTCDataChannel;
@@ -11,6 +12,7 @@ export default class Client {
     stream: MediaStream;
     transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
   }[];
+  private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -23,8 +25,8 @@ export default class Client {
   ) {
     const initialStreams = 2;
     this.candidates = [];
-    this.makingOffer = false;
     this.signal = signal;
+    this.codec = 'vp8';
     this.pc = new RTCPeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
@@ -67,6 +69,10 @@ export default class Client {
     if (st) stream.publish(this.pc, st.transceivers, st.stream);
   }
 
+  setcodec(codec: string) {
+    this.codec = codec;
+  }
+
   close() {
     this.signal.close();
   }
@@ -91,16 +97,9 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      if (description.type === 'offer' && (this.makingOffer || this.pc.signalingState !== 'stable')) {
-        await Promise.all([
-          this.pc.setLocalDescription({ type: 'rollback' }),
-          this.pc.setRemoteDescription(description), // SRD rolls back as needed
-        ]);
-      } else {
-        await this.pc.setRemoteDescription(description);
-      }
+      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
       if (description.type === 'offer') {
-        await this.pc.setLocalDescription(await this.pc.createAnswer());
+        await this.pc.setLocalDescription();
         this.signal.answer(this.pc.localDescription!);
       }
     } catch (err) {
@@ -111,12 +110,12 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
-      this.makingOffer = true;
-      const offer = await this.pc.createOffer();
-      if (this.pc.signalingState !== 'stable') return;
-      await this.pc.setLocalDescription(offer);
-      const answer = await this.signal.offer(this.pc.localDescription!);
-      await this.pc.setRemoteDescription(answer);
+      /* tslint:disable-next-line:no-console */
+      console.log('negotiation needed');
+      await this.pc.setLocalDescription();
+      const offer = simplifySDP(this.pc.localDescription!, this.codec);
+      const answer = await this.signal.offer(offer);
+      await this.negotiate(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
@@ -124,4 +123,90 @@ export default class Client {
       this.makingOffer = false;
     }
   }
+}
+
+export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
+  if (codec === undefined) return desc;
+
+  const DefaultPayloadTypeOpus = 111;
+  let payload = 0;
+  let rtxpayload = 0;
+  let redpayload = 0;
+  let redrtxpayload = 0;
+  const session = sdpTransform.parse(desc.sdp as string);
+  /* tslint:disable-next-line:no-console */
+  console.log('before simplifySDP session=', session);
+  // return desc
+
+  session.media.map((m: any, i: any) => {
+    // simplfiy audio, only keep opus
+    if (m.type === 'audio') {
+      m.payloads = DefaultPayloadTypeOpus;
+      m.rtp.map((rtpmap: any, index: any) => {
+        if (rtpmap.payload !== DefaultPayloadTypeOpus) {
+          delete m.rtp[index];
+        }
+      });
+    }
+
+    // simplfiy video, only keep as we need
+    if (m.type === 'video') {
+      m.rtp.map((rtpmap: any, index: any) => {
+        // find payload by codec
+        if (rtpmap.codec.toLowerCase() === codec.toLowerCase()) {
+          payload = rtpmap.payload;
+        }
+
+        // find red payload by codec
+        if (rtpmap.codec.toLowerCase() === 'red') {
+          redpayload = rtpmap.payload;
+        }
+      });
+
+      // delete unused rtcpfb
+      if (m.rtcpFb !== undefined) {
+        m.rtcpFb.map((rtcpfb: any, index: any) => {
+          if (rtcpfb.payload !== payload) {
+            delete m.rtcpFb[index];
+          }
+        });
+      }
+
+      // find rtx payload by apt
+      m.fmtp.map((fmtp: any, index: any) => {
+        if (fmtp.config === 'apt=' + payload) {
+          rtxpayload = fmtp.payload;
+        }
+      });
+
+      m.fmtp.map((fmtp: any, index: any) => {
+        if (fmtp.config === 'apt=' + redpayload) {
+          redrtxpayload = fmtp.payload;
+        }
+      });
+
+      // delete unused rtpmap
+      m.rtp.map((rtpmap: any, index: any) => {
+        if (rtpmap.codec.toLowerCase() === 'red' || rtpmap.codec.toLowerCase() === 'ulpfec') {
+          // skip red and ulpfec
+        } else if (rtpmap.payload !== payload && rtpmap.payload !== rtxpayload && rtpmap.payload !== redrtxpayload) {
+          delete m.rtp[index];
+        }
+      });
+
+      // delete unused fmtp
+      m.fmtp.map((fmtp: any, index: any) => {
+        if (fmtp.payload !== payload && fmtp.payload !== rtxpayload) {
+          delete m.fmtp[index];
+        }
+      });
+      m.payloads = payload + ' ' + rtxpayload;
+    }
+  });
+  desc.sdp = sdpTransform.write(session);
+  /* tslint:disable-next-line:no-console */
+  console.log('after simplifySDP session=', desc);
+  return desc;
+
+  // return tmp;
 }
