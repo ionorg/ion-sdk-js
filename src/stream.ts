@@ -320,9 +320,9 @@ export class LocalStream {
       [kind]:
         this.constraints[kind] instanceof Object
           ? {
-            ...(this.constraints[kind] as object),
-            deviceId,
-          }
+              ...(this.constraints[kind] as object),
+              deviceId,
+            }
           : { deviceId },
     };
 
