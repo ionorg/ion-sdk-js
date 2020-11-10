@@ -1,7 +1,4 @@
-interface VideoResolution {
-  width: { ideal: number };
-  height: { ideal: number };
-}
+import Client, { Sender } from './client';
 
 interface VideoConstraints {
   [name: string]: {
@@ -112,66 +109,24 @@ export interface Constraints extends MediaStreamConstraints {
   encodings?: Encoding[];
 }
 
-const defaults = {
-  codec: 'VP8',
-  resolution: 'hd',
-  audio: true,
-  video: true,
-  simulcast: false,
-};
-
 export class LocalStream {
-  static async getUserMedia(constraints: Constraints = defaults) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: LocalStream.computeAudioConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-      video: LocalStream.computeVideoConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-    });
-    return new LocalStream(stream, {
-      ...defaults,
-      ...constraints,
-    });
-  }
-
-  static async getDisplayMedia(
-    constraints: Constraints = {
-      codec: 'VP8',
-      resolution: 'hd',
-      audio: false,
-      video: true,
-      simulcast: false,
-    },
-  ) {
-    // @ts-ignore
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
-
-    return new LocalStream(stream, {
-      ...defaults,
-      ...constraints,
-    });
-  }
-
   constraints: Constraints;
-  pc?: RTCPeerConnection;
+  pc: RTCPeerConnection;
   stream: MediaStream;
+  sender: Sender;
 
-  constructor(stream: MediaStream, constraints: Constraints) {
+  constructor(pc: RTCPeerConnection, sender: Sender, constraints: Constraints) {
     this.constraints = constraints;
-    this.stream = stream;
+    this.pc = pc;
+    this.sender = sender;
+    this.stream = sender.stream;
   }
 
-  private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
+  static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
     return !!constraints.audio as MediaTrackConstraints;
   }
 
-  private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
+  static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
     if (constraints.video instanceof Object) {
       return constraints.video;
     } else if (constraints.video && constraints.resolution) {
@@ -290,17 +245,9 @@ export class LocalStream {
     }
   }
 
-  publish(
-    pc: RTCPeerConnection,
-    transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver },
-    stream: MediaStream,
-  ) {
-    this.pc = pc;
-    this.stream.getTracks().forEach((t) => stream.addTrack(t));
-    this.stream = stream;
-
+  publish() {
     this.stream.getTracks().forEach((t) => {
-      this.publishTrack(t, transceivers[t.kind as 'video' | 'audio']);
+      this.publishTrack(t, this.sender.transceivers[t.kind as 'video' | 'audio']);
     });
   }
 
