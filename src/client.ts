@@ -1,5 +1,13 @@
 import { Signal } from './signal';
-import { Constraints, LocalStream, makeRemote, RemoteStream } from './stream';
+import {
+  computeAudioConstraints,
+  computeVideoConstraints,
+  Constraints,
+  LocalStream,
+  makeLocal,
+  makeRemote,
+  RemoteStream,
+} from './stream';
 import * as sdpTransform from 'sdp-transform';
 
 export interface Sender {
@@ -79,11 +87,11 @@ export default class Client {
 
   async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: LocalStream.computeAudioConstraints({
+      audio: computeAudioConstraints({
         ...defaults,
         ...constraints,
       }),
-      video: LocalStream.computeVideoConstraints({
+      video: computeVideoConstraints({
         ...defaults,
         ...constraints,
       }),
@@ -97,7 +105,7 @@ export default class Client {
 
     stream.getTracks().forEach((t) => sender.stream.addTrack(t));
 
-    return new LocalStream(this.pc, sender, {
+    return makeLocal(this.pc, sender, {
       ...defaults,
       ...constraints,
     });
@@ -124,7 +132,7 @@ export default class Client {
 
     stream.getTracks().forEach((t: MediaStreamTrack) => sender.stream.addTrack(t));
 
-    return new LocalStream(this.pc, sender, {
+    return makeLocal(this.pc, sender, {
       ...defaults,
       ...constraints,
     });
