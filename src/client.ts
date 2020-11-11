@@ -32,7 +32,7 @@ export default class Client {
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
-    const initialStreams = 2;
+    const initialStreams = 1;
     this.candidates = [];
     this.signal = signal;
     this.codec = 'vp8';
