@@ -104,22 +104,20 @@ export interface Encoding {
 
 export interface Constraints extends MediaStreamConstraints {
   resolution: string;
-  codec?: string;
   simulcast?: boolean;
   encodings?: Encoding[];
 }
 
-export class LocalStream {
+export class LocalStream extends MediaStream {
   constraints: Constraints;
   pc: RTCPeerConnection;
-  stream: MediaStream;
   sender: Sender;
 
   constructor(pc: RTCPeerConnection, sender: Sender, constraints: Constraints) {
+    super(sender.stream);
     this.constraints = constraints;
     this.pc = pc;
     this.sender = sender;
-    this.stream = sender.stream;
   }
 
   static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
@@ -140,12 +138,12 @@ export class LocalStream {
   private getTrack(kind: 'audio' | 'video') {
     let tracks;
     if (kind === 'video') {
-      tracks = this.stream.getVideoTracks();
-      return tracks.length > 0 ? this.stream.getVideoTracks()[0] : undefined;
+      tracks = this.getVideoTracks();
+      return tracks.length > 0 ? this.getVideoTracks()[0] : undefined;
     }
 
-    tracks = this.stream.getAudioTracks();
-    return tracks.length > 0 ? this.stream.getAudioTracks()[0] : undefined;
+    tracks = this.getAudioTracks();
+    return tracks.length > 0 ? this.getAudioTracks()[0] : undefined;
   }
 
   private async getNewTrack(kind: 'audio' | 'video') {
@@ -225,11 +223,11 @@ export class LocalStream {
   }
 
   private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack, transceiver?: RTCRtpTransceiver) {
-    this.stream.addTrack(next);
+    this.addTrack(next);
 
     // If published, replace published track with track from new device
     if (prev && prev.enabled) {
-      this.stream.removeTrack(prev);
+      this.removeTrack(prev);
       prev.stop();
 
       if (transceiver) {
@@ -237,7 +235,7 @@ export class LocalStream {
         transceiver.sender.replaceTrack(next);
       }
     } else {
-      this.stream.addTrack(next);
+      this.addTrack(next);
 
       if (transceiver) {
         this.publishTrack(next, transceiver);
@@ -246,7 +244,7 @@ export class LocalStream {
   }
 
   publish() {
-    this.stream.getTracks().forEach((t) => {
+    this.getTracks().forEach((t) => {
       this.publishTrack(t, this.sender.transceivers[t.kind as 'video' | 'audio']);
     });
   }
@@ -254,7 +252,7 @@ export class LocalStream {
   unpublish() {
     if (this.pc) {
       this.pc.getSenders().forEach((s: RTCRtpSender) => {
-        if (s.track && this.stream.getTracks().includes(s.track)) {
+        if (s.track && this.getTracks().includes(s.track)) {
           this.pc!.removeTrack(s);
         }
       });

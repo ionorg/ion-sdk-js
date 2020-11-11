@@ -27,14 +27,14 @@ client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
 });
 
 // Get a local stream
-const local = await LocalStream.getUserMedia({
+const local = await client.getUserMedia({
     audio: true,
     video: true,
     simulcast: true, // enable simulcast
 });
 
-// Publish local stream
-client.publish(local);
+// Publish stream
+local.publish();
 
 // mute local straem
 local.mute()
@@ -44,14 +44,4 @@ local.unmute()
 
 // Close client connection
 client.close();
-
-// To add your custom stream
-import { LocalStream } from 'ion-sdk-js';
-(...)
-var streamOptions = {
-    codec: 'VP8',
-    resolution: 'hd'
-}
-var myLocalStream = new LocalStream (yourStreamHere, streamOptions)
-
 ```

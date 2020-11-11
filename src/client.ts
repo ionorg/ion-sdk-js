@@ -7,8 +7,11 @@ export interface Sender {
   transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
 }
 
+export interface Configuration extends RTCConfiguration {
+  codec: 'vp8' | 'vp9' | 'h264';
+}
+
 const defaults = {
-  codec: 'VP8',
   resolution: 'hd',
   audio: true,
   video: true,
@@ -28,14 +31,15 @@ export default class Client {
   constructor(
     sid: string,
     signal: Signal,
-    config: RTCConfiguration = {
+    config: Configuration = {
+      codec: 'vp8',
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
-    const initialStreams = 1;
+    const initialStreams = 2;
     this.candidates = [];
     this.signal = signal;
-    this.codec = 'vp8';
+    this.codec = config.codec;
     this.pc = new RTCPeerConnection(config);
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
@@ -101,7 +105,6 @@ export default class Client {
 
   async getDisplayMedia(
     constraints: Constraints = {
-      codec: 'VP8',
       resolution: 'hd',
       audio: false,
       video: true,
@@ -125,10 +128,6 @@ export default class Client {
       ...defaults,
       ...constraints,
     });
-  }
-
-  setcodec(codec: string) {
-    this.codec = codec;
   }
 
   close() {
@@ -168,8 +167,6 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
-      /* tslint:disable-next-line:no-console */
-      console.log('negotiation needed');
       await this.pc.setLocalDescription();
       const offer = simplifySDP(this.pc.localDescription!, this.codec);
       const answer = await this.signal.offer(offer);
@@ -190,9 +187,6 @@ export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
   let redpayload = 0;
   let redrtxpayload = 0;
   const session = sdpTransform.parse(desc.sdp as string);
-  /* tslint:disable-next-line:no-console */
-  console.log('before simplifySDP session=', session);
-  // return desc
 
   session.media.map((m: any, i: any) => {
     // simplfiy audio, only keep opus
@@ -229,13 +223,13 @@ export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
       }
 
       // find rtx payload by apt
-      m.fmtp.map((fmtp: any, index: any) => {
+      m.fmtp.map((fmtp: any) => {
         if (fmtp.config === 'apt=' + payload) {
           rtxpayload = fmtp.payload;
         }
       });
 
-      m.fmtp.map((fmtp: any, index: any) => {
+      m.fmtp.map((fmtp: any) => {
         if (fmtp.config === 'apt=' + redpayload) {
           redrtxpayload = fmtp.payload;
         }
@@ -260,9 +254,5 @@ export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
     }
   });
   desc.sdp = sdpTransform.write(session);
-  /* tslint:disable-next-line:no-console */
-  console.log('after simplifySDP session=', desc);
   return desc;
-
-  // return tmp;
 }
