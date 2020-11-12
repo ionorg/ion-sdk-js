@@ -208,10 +208,12 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
       await transceiver.sender.replaceTrack(track);
     } else {
       const params = transceiver.sender.getParameters();
-      await transceiver.sender.setParameters({
-        ...params,
-        encodings: [VideoConstraints[constraints.resolution].encodings],
-      });
+      if (track.kind === 'video') {
+        await transceiver.sender.setParameters({
+          ...params,
+          encodings: [VideoConstraints[constraints.resolution].encodings],
+        });
+      }
       await transceiver.sender.replaceTrack(track);
     }
   }

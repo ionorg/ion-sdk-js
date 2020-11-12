@@ -3,7 +3,6 @@ import {
   computeAudioConstraints,
   computeVideoConstraints,
   Constraints,
-  LocalStream,
   makeLocal,
   makeRemote,
   RemoteStream,
@@ -196,7 +195,7 @@ export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
   let redrtxpayload = 0;
   const session = sdpTransform.parse(desc.sdp as string);
 
-  session.media.map((m: any, i: any) => {
+  session.media.map((m: any) => {
     // simplfiy audio, only keep opus
     if (m.type === 'audio') {
       m.payloads = DefaultPayloadTypeOpus;
