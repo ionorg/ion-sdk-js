@@ -246,10 +246,9 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
   };
 
   local.unpublish = () => {
-    pc.getSenders().forEach((s: RTCRtpSender) => {
-      if (s.track && local.getTracks().includes(s.track)) {
-        pc.removeTrack(s);
-      }
+    local.getTracks().forEach((t) => {
+      sender.stream.removeTrack(t);
+      sender.transceivers[t.kind as 'video' | 'audio'].sender.replaceTrack(null);
     });
   };
 
