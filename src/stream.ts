@@ -247,8 +247,8 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
 
   local.unpublish = () => {
     local.getTracks().forEach((t) => {
-      sender.stream.removeTrack(t)
-      sender.transceivers[t.kind as 'video' | 'audio'].sender.replaceTrack(null)
+      sender.stream.removeTrack(t);
+      sender.transceivers[t.kind as 'video' | 'audio'].sender.replaceTrack(null);
     });
   };
 

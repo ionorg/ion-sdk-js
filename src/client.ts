@@ -27,6 +27,7 @@ const defaults = {
 
 export default class Client {
   private api: RTCDataChannel;
+  private initialized: boolean;
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
@@ -77,7 +78,12 @@ export default class Client {
 
     signal.onnegotiate = this.negotiate.bind(this);
     signal.ontrickle = this.trickle.bind(this);
-    signal.onready = () => this.join(sid);
+    signal.onready = () => {
+      if (!this.initialized) {
+        this.join(sid);
+        this.initialized = true;
+      }
+    };
   }
 
   getStats(selector?: MediaStreamTrack) {
@@ -138,7 +144,7 @@ export default class Client {
   }
 
   close() {
-    this.pc.close()
+    this.pc.close();
     this.signal.close();
   }
 
