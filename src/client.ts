@@ -138,6 +138,7 @@ export default class Client {
   }
 
   close() {
+    this.pc.close()
     this.signal.close();
   }
 
