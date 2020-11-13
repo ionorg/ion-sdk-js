@@ -57,11 +57,15 @@ export default class Client {
     this.senders = [];
     for (let i = 0; i < initialStreams; i++) {
       const stream = new MediaStream();
+      const audio = this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] });
+      this.setPreferredCodec(audio, 'audio');
+      const video = this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] });
+      this.setPreferredCodec(video, 'video');
       this.senders.push({
         stream,
         transceivers: {
-          audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] }),
-          video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] }),
+          audio,
+          video,
         },
       });
     }
@@ -181,6 +185,19 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
+    }
+  }
+
+  private setPreferredCodec(transceiver: RTCRtpTransceiver, kind: 'audio' | 'video') {
+    if ('setCodecPreferences' in transceiver) {
+      const cap = RTCRtpSender.getCapabilities(kind);
+      if (!cap) return;
+      const selCodec = cap.codecs.find(
+        (c) => c.mimeType === `video/${this.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
+      );
+      if (selCodec) {
+        transceiver.setCodecPreferences([selCodec]);
+      }
     }
   }
 }
