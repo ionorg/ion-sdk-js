@@ -26,7 +26,7 @@ const defaults = {
 
 export default class Client {
   private api: RTCDataChannel;
-  private initialized: boolean;
+  private initialized: boolean = false;
   pc: RTCPeerConnection;
   private signal: Signal;
   private candidates: RTCIceCandidateInit[];
