@@ -7,7 +7,6 @@ import {
   makeRemote,
   RemoteStream,
 } from './stream';
-import * as sdpTransform from 'sdp-transform';
 
 export interface Sender {
   stream: MediaStream;
@@ -57,11 +56,15 @@ export default class Client {
     this.senders = [];
     for (let i = 0; i < initialStreams; i++) {
       const stream = new MediaStream();
+      const audio = this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] });
+      this.setPreferredCodec(audio, 'audio');
+      const video = this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] });
+      this.setPreferredCodec(video, 'video');
       this.senders.push({
         stream,
         transceivers: {
-          audio: this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] }),
-          video: this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] }),
+          audio,
+          video,
         },
       });
     }
@@ -175,7 +178,7 @@ export default class Client {
   private async onNegotiationNeeded() {
     try {
       await this.pc.setLocalDescription();
-      const offer = simplifySDP(this.pc.localDescription!, this.codec);
+      const offer = this.pc.localDescription!;
       const answer = await this.signal.offer(offer);
       await this.negotiate(answer);
     } catch (err) {
@@ -183,83 +186,17 @@ export default class Client {
       console.error(err);
     }
   }
-}
 
-export function simplifySDP(desc: RTCSessionDescriptionInit, codec: string) {
-  if (codec === undefined) return desc;
-
-  const DefaultPayloadTypeOpus = 111;
-  let payload = 0;
-  let rtxpayload = 0;
-  let redpayload = 0;
-  let redrtxpayload = 0;
-  const session = sdpTransform.parse(desc.sdp as string);
-
-  session.media.map((m: any) => {
-    // simplfiy audio, only keep opus
-    if (m.type === 'audio') {
-      m.payloads = DefaultPayloadTypeOpus;
-      m.rtp.map((rtpmap: any, index: any) => {
-        if (rtpmap.payload !== DefaultPayloadTypeOpus) {
-          delete m.rtp[index];
-        }
-      });
-    }
-
-    // simplfiy video, only keep as we need
-    if (m.type === 'video') {
-      m.rtp.map((rtpmap: any, index: any) => {
-        // find payload by codec
-        if (rtpmap.codec.toLowerCase() === codec.toLowerCase()) {
-          payload = rtpmap.payload;
-        }
-
-        // find red payload by codec
-        if (rtpmap.codec.toLowerCase() === 'red') {
-          redpayload = rtpmap.payload;
-        }
-      });
-
-      // delete unused rtcpfb
-      if (m.rtcpFb !== undefined) {
-        m.rtcpFb.map((rtcpfb: any, index: any) => {
-          if (rtcpfb.payload !== payload) {
-            delete m.rtcpFb[index];
-          }
-        });
+  private setPreferredCodec(transceiver: RTCRtpTransceiver, kind: 'audio' | 'video') {
+    if ('setCodecPreferences' in transceiver) {
+      const cap = RTCRtpSender.getCapabilities(kind);
+      if (!cap) return;
+      const selCodec = cap.codecs.find(
+        (c) => c.mimeType === `video/${this.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
+      );
+      if (selCodec) {
+        transceiver.setCodecPreferences([selCodec]);
       }
-
-      // find rtx payload by apt
-      m.fmtp.map((fmtp: any) => {
-        if (fmtp.config === 'apt=' + payload) {
-          rtxpayload = fmtp.payload;
-        }
-      });
-
-      m.fmtp.map((fmtp: any) => {
-        if (fmtp.config === 'apt=' + redpayload) {
-          redrtxpayload = fmtp.payload;
-        }
-      });
-
-      // delete unused rtpmap
-      m.rtp.map((rtpmap: any, index: any) => {
-        if (rtpmap.codec.toLowerCase() === 'red' || rtpmap.codec.toLowerCase() === 'ulpfec') {
-          // skip red and ulpfec
-        } else if (rtpmap.payload !== payload && rtpmap.payload !== rtxpayload && rtpmap.payload !== redrtxpayload) {
-          delete m.rtp[index];
-        }
-      });
-
-      // delete unused fmtp
-      m.fmtp.map((fmtp: any, index: any) => {
-        if (fmtp.payload !== payload && fmtp.payload !== rtxpayload) {
-          delete m.fmtp[index];
-        }
-      });
-      m.payloads = payload + ' ' + rtxpayload;
     }
-  });
-  desc.sdp = sdpTransform.write(session);
-  return desc;
+  }
 }
