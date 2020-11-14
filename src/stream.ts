@@ -1,4 +1,3 @@
-import { send } from 'process';
 import Client, { Sender } from './client';
 
 interface VideoConstraints {

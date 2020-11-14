@@ -114,5 +114,4 @@ export default class IonSFUJSONRPCSignal implements Signal {
   set onclose(onclose: (ev: Event) => void) {
     this._onclose = onclose;
   }
-
 }
