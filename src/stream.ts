@@ -135,14 +135,7 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
   const local = sender.stream as LocalStream;
 
   function getTrack(kind: 'audio' | 'video') {
-    let tracks;
-    if (kind === 'video') {
-      tracks = local.getVideoTracks();
-      return tracks.length > 0 ? local.getVideoTracks()[0] : undefined;
-    }
-
-    tracks = local.getAudioTracks();
-    return tracks.length > 0 ? local.getAudioTracks()[0] : undefined;
+    return sender.transceivers[kind].sender.track;
   }
 
   async function getNewTrack(kind: 'audio' | 'video') {
@@ -206,6 +199,7 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
       const params = transceiver.sender.getParameters();
       await transceiver.sender.setParameters({ ...params, encodings });
       await transceiver.sender.replaceTrack(track);
+      if (transceiver.currentDirection === 'inactive') transceiver.direction = 'sendonly';
     } else {
       const params = transceiver.sender.getParameters();
       if (track.kind === 'video') {
@@ -215,10 +209,11 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
         });
       }
       await transceiver.sender.replaceTrack(track);
+      if (transceiver.currentDirection === 'inactive') transceiver.direction = 'sendonly';
     }
   }
 
-  function updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack, transceiver?: RTCRtpTransceiver) {
+  function updateTrack(next: MediaStreamTrack, prev: MediaStreamTrack | null, transceiver?: RTCRtpTransceiver) {
     local.addTrack(next);
 
     // If published, replace published track with track from new device
@@ -231,8 +226,6 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
         transceiver.sender.replaceTrack(next);
       }
     } else {
-      local.addTrack(next);
-
       if (transceiver) {
         publishTrack(next, transceiver);
       }
@@ -246,10 +239,10 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
   };
 
   local.unpublish = () => {
-    local.getTracks().forEach((t) => {
-      sender.stream.removeTrack(t);
-      sender.transceivers[t.kind as 'video' | 'audio'].sender.replaceTrack(null);
-    });
+    sender.stream.removeTrack(sender.transceivers.audio.sender.track!);
+    sender.stream.removeTrack(sender.transceivers.video.sender.track!);
+    pc.removeTrack(sender.transceivers.audio.sender);
+    pc.removeTrack(sender.transceivers.video.sender);
   };
 
   local.switchDevice = async (kind: 'audio' | 'video', deviceId: string) => {
@@ -286,12 +279,12 @@ export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Co
   local.unmute = async (kind: 'audio' | 'video') => {
     const prev = getTrack(kind);
     const track = await getNewTrack(kind);
-    pc.getTransceivers().forEach((t) => {
-      if (t.sender.track === prev) {
-        updateTrack(track, prev, t);
-        return;
-      }
-    });
+    const transceiver = sender.transceivers[kind];
+
+    if (transceiver.sender.track === prev) {
+      updateTrack(track, prev, transceiver);
+      return;
+    }
     updateTrack(track, prev);
   };
 
