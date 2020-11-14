@@ -27,9 +27,11 @@ const defaults = {
 export default class Client {
   private api: RTCDataChannel;
   private initialized: boolean = false;
-  pc: RTCPeerConnection;
+  pub: RTCPeerConnection;
+  sub: RTCPeerConnection;
   private signal: Signal;
-  private candidates: RTCIceCandidateInit[];
+  private pubCandidates: RTCIceCandidateInit[];
+  private subCandidates: RTCIceCandidateInit[];
   private senders: Sender[];
   private codec: string;
 
@@ -43,34 +45,26 @@ export default class Client {
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
-    const initialStreams = 2;
-    this.candidates = [];
+    this.pubCandidates = [];
+    this.subCandidates = [];
     this.signal = signal;
     this.codec = config.codec;
-    this.pc = new RTCPeerConnection(config);
-    this.pc.onicecandidate = ({ candidate }) => {
+    this.pub = new RTCPeerConnection(config);
+    this.pub.onicecandidate = ({ candidate }) => {
       if (candidate) {
-        signal.trickle(candidate);
+        signal.trickle({ target: "pub", candidate });
       }
     };
-    this.api = this.pc.createDataChannel('ion-sfu');
+    this.sub = new RTCPeerConnection(config);
+    this.sub.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        signal.trickle({ target: "sub", candidate });
+      }
+    };
+    this.api = this.sub.createDataChannel('ion-sfu');
     this.senders = [];
-    for (let i = 0; i < initialStreams; i++) {
-      const stream = new MediaStream();
-      const audio = this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] });
-      this.setPreferredCodec(audio, 'audio');
-      const video = this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] });
-      this.setPreferredCodec(video, 'video');
-      this.senders.push({
-        stream,
-        transceivers: {
-          audio,
-          video,
-        },
-      });
-    }
 
-    this.pc.ontrack = (ev: RTCTrackEvent) => {
+    this.sub.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
       const remote = makeRemote(stream, this.api);
 
@@ -89,8 +83,12 @@ export default class Client {
     };
   }
 
-  getStats(selector?: MediaStreamTrack) {
-    return this.pc.getStats(selector);
+  getPubStats(selector?: MediaStreamTrack) {
+    return this.pub.getStats(selector);
+  }
+
+  getSubStats(selector?: MediaStreamTrack) {
+    return this.sub.getStats(selector);
   }
 
   async getUserMedia(constraints: Constraints = defaults) {
@@ -105,15 +103,7 @@ export default class Client {
       }),
     });
 
-    const sender = this.senders.find((s) => s.stream.getTracks().length === 0);
-
-    if (!sender) {
-      return null;
-    }
-
-    stream.getTracks().forEach((t) => sender.stream.addTrack(t));
-
-    return makeLocal(this.pc, sender, {
+    return makeLocal(this.pub, {
       ...defaults,
       ...constraints,
     });
@@ -147,23 +137,24 @@ export default class Client {
   }
 
   close() {
-    this.pc.close();
+    this.pub.close();
+    this.sub.close();
     this.signal.close();
   }
 
   private async join(sid: string) {
-    const offer = await this.pc.createOffer();
-    await this.pc.setLocalDescription(offer);
+    const offer = await this.pub.createOffer();
+    await this.pub.setLocalDescription(offer);
     const answer = await this.signal.join(sid, offer);
 
-    await this.pc.setRemoteDescription(answer);
-    this.candidates.forEach((c) => this.pc.addIceCandidate(c));
-    this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
+    await this.pub.setRemoteDescription(answer);
+    this.candidates.forEach((c) => this.pub.addIceCandidate(c));
+    this.pub.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
   }
 
   private trickle(candidate: RTCIceCandidateInit) {
-    if (this.pc.remoteDescription) {
-      this.pc.addIceCandidate(candidate);
+    if (this.pub.remoteDescription) {
+      this.pub.addIceCandidate(candidate);
     } else {
       this.candidates.push(candidate);
     }

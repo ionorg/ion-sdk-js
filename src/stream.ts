@@ -131,8 +131,8 @@ export function computeVideoConstraints(constraints: Constraints): MediaTrackCon
   return constraints.video as MediaTrackConstraints;
 }
 
-export function makeLocal(pc: RTCPeerConnection, sender: Sender, constraints: Constraints): LocalStream {
-  const local = sender.stream as LocalStream;
+export function makeLocal(pc: RTCPeerConnection, stream: MediaStream, constraints: Constraints): LocalStream {
+  const local = stream as LocalStream;
 
   function getTrack(kind: 'audio' | 'video') {
     return sender.transceivers[kind].sender.track;
