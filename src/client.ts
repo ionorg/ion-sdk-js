@@ -1,12 +1,5 @@
 import { Signal } from './signal';
-import {
-  computeAudioConstraints,
-  computeVideoConstraints,
-  Constraints,
-  makeLocal,
-  makeRemote,
-  RemoteStream,
-} from './stream';
+import { LocalStream, makeRemote, RemoteStream } from './stream';
 
 export interface Sender {
   stream: MediaStream;
@@ -17,20 +10,51 @@ export interface Configuration extends RTCConfiguration {
   codec: 'vp8' | 'vp9' | 'h264';
 }
 
-const defaults = {
-  resolution: 'hd',
-  audio: true,
-  video: true,
-  simulcast: false,
+export interface Trickle {
+  candidate: RTCIceCandidateInit;
+  target: Role;
+}
+
+enum Role {
+  pub = 0,
+  sub = 1,
+}
+
+type Transports<T extends string | symbol | number, U> = {
+  [K in T]: U;
 };
 
-export default class Client {
-  private api: RTCDataChannel;
-  private initialized: boolean = false;
+export class Transport {
+  api?: RTCDataChannel;
+  signal: Signal;
   pc: RTCPeerConnection;
+  candidates: RTCIceCandidateInit[];
+
+  constructor(role: Role, signal: Signal, config: RTCConfiguration) {
+    this.signal = signal;
+    this.pc = new RTCPeerConnection(config);
+    this.candidates = [];
+
+    if (role === Role.pub) {
+      this.pc.createDataChannel('ion-sfu');
+    }
+
+    this.pc.ondatachannel = ({ channel }) => {
+      this.api = channel;
+    };
+
+    this.pc.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        this.signal.trickle({ target: role, candidate });
+      }
+    };
+  }
+}
+
+export default class Client {
+  private initialized: boolean = false;
+  transports: Transports<Role, Transport>;
   private signal: Signal;
-  private candidates: RTCIceCandidateInit[];
-  private senders: Sender[];
   private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
@@ -43,36 +67,16 @@ export default class Client {
       iceServers: [{ urls: 'stun:stun.stunprotocol.org:3478' }],
     },
   ) {
-    const initialStreams = 2;
-    this.candidates = [];
     this.signal = signal;
     this.codec = config.codec;
-    this.pc = new RTCPeerConnection(config);
-    this.pc.onicecandidate = ({ candidate }) => {
-      if (candidate) {
-        signal.trickle(candidate);
-      }
+    this.transports = {
+      [Role.pub]: new Transport(Role.pub, signal, config),
+      [Role.sub]: new Transport(Role.sub, signal, config),
     };
-    this.api = this.pc.createDataChannel('ion-sfu');
-    this.senders = [];
-    for (let i = 0; i < initialStreams; i++) {
-      const stream = new MediaStream();
-      const audio = this.pc.addTransceiver('audio', { direction: 'sendonly', streams: [stream] });
-      this.setPreferredCodec(audio, 'audio');
-      const video = this.pc.addTransceiver('video', { direction: 'sendonly', streams: [stream] });
-      this.setPreferredCodec(video, 'video');
-      this.senders.push({
-        stream,
-        transceivers: {
-          audio,
-          video,
-        },
-      });
-    }
 
-    this.pc.ontrack = (ev: RTCTrackEvent) => {
+    this.transports[Role.sub].pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      const remote = makeRemote(stream, this.api);
+      const remote = makeRemote(stream, this.transports[Role.sub]);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
@@ -89,93 +93,47 @@ export default class Client {
     };
   }
 
-  getStats(selector?: MediaStreamTrack) {
-    return this.pc.getStats(selector);
+  getPubStats(selector?: MediaStreamTrack) {
+    return this.transports[Role.pub].pc.getStats(selector);
   }
 
-  async getUserMedia(constraints: Constraints = defaults) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: computeAudioConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-      video: computeVideoConstraints({
-        ...defaults,
-        ...constraints,
-      }),
-    });
-
-    const sender = this.senders.find((s) => s.stream.getTracks().length === 0);
-
-    if (!sender) {
-      return null;
-    }
-
-    stream.getTracks().forEach((t) => sender.stream.addTrack(t));
-
-    return makeLocal(this.pc, sender, {
-      ...defaults,
-      ...constraints,
-    });
+  getSubStats(selector?: MediaStreamTrack) {
+    return this.transports[Role.sub].pc.getStats(selector);
   }
 
-  async getDisplayMedia(
-    constraints: Constraints = {
-      resolution: 'hd',
-      audio: false,
-      video: true,
-      simulcast: false,
-    },
-  ) {
-    // @ts-ignore
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
-
-    const sender = this.senders.find((s) => s.stream.getTracks().length === 0);
-
-    if (!sender) {
-      return null;
-    }
-
-    stream.getTracks().forEach((t: MediaStreamTrack) => sender.stream.addTrack(t));
-
-    return makeLocal(this.pc, sender, {
-      ...defaults,
-      ...constraints,
-    });
+  publish(stream: LocalStream) {
+    stream.publish(this.transports[Role.pub].pc);
   }
 
   close() {
-    this.pc.close();
+    Object.values(this.transports).forEach((t) => t.pc.close());
     this.signal.close();
   }
 
   private async join(sid: string) {
-    const offer = await this.pc.createOffer();
-    await this.pc.setLocalDescription(offer);
+    const offer = await this.transports[Role.pub].pc.createOffer();
+    await this.transports[Role.pub].pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, offer);
 
-    await this.pc.setRemoteDescription(answer);
-    this.candidates.forEach((c) => this.pc.addIceCandidate(c));
-    this.pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
+    await this.transports[Role.pub].pc.setRemoteDescription(answer);
+    this.transports[Role.pub].candidates.forEach((c) => this.transports[Role.pub].pc.addIceCandidate(c));
+    this.transports[Role.pub].pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
   }
 
-  private trickle(candidate: RTCIceCandidateInit) {
-    if (this.pc.remoteDescription) {
-      this.pc.addIceCandidate(candidate);
+  private trickle({ candidate, target }: Trickle) {
+    if (this.transports[target].pc.remoteDescription) {
+      this.transports[target].pc.addIceCandidate(candidate);
     } else {
-      this.candidates.push(candidate);
+      this.transports[target].candidates.push(candidate);
     }
   }
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      await this.pc.setRemoteDescription(description); // SRD rolls back as needed
-      if (description.type === 'offer') {
-        await this.pc.setLocalDescription();
-        this.signal.answer(this.pc.localDescription!);
-      }
+      await this.transports[Role.sub].pc.setRemoteDescription(description);
+      const answer = await this.transports[Role.sub].pc.createAnswer();
+      await this.transports[Role.sub].pc.setLocalDescription(answer);
+      this.signal.answer(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
@@ -184,26 +142,13 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     try {
-      await this.pc.setLocalDescription();
-      const offer = this.pc.localDescription!;
+      const offer = await this.transports[Role.pub].pc.createOffer();
+      await this.transports[Role.pub].pc.setLocalDescription(offer);
       const answer = await this.signal.offer(offer);
-      await this.negotiate(answer);
+      await this.transports[Role.pub].pc.setRemoteDescription(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-    }
-  }
-
-  private setPreferredCodec(transceiver: RTCRtpTransceiver, kind: 'audio' | 'video') {
-    if ('setCodecPreferences' in transceiver) {
-      const cap = RTCRtpSender.getCapabilities(kind);
-      if (!cap) return;
-      const selCodec = cap.codecs.find(
-        (c) => c.mimeType === `video/${this.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
-      );
-      if (selCodec) {
-        transceiver.setCodecPreferences([selCodec]);
-      }
     }
   }
 }
