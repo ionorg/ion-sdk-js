@@ -382,6 +382,7 @@ export function makeRemote(stream: MediaStream, transport: Transport): RemoteStr
       audio: remote.audio,
     };
     if (!transport.api) {
+      /* tslint:disable-next-line:no-console */
       console.warn('api datachannel not ready yet');
     }
     transport.api?.send(JSON.stringify(call));
