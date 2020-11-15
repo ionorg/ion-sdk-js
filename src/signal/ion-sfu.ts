@@ -62,7 +62,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
       JSON.stringify({
         method: 'trickle',
         params: {
-          trickle,
+          ...trickle,
         },
       }),
     );

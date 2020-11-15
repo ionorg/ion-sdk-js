@@ -25,6 +25,7 @@ type Transports<T extends string | symbol | number, U> = {
 };
 
 class Transport {
+  api: RTCDataChannel;
   signal: Signal;
   pc: RTCPeerConnection;
   candidates: RTCIceCandidateInit[];
@@ -33,6 +34,7 @@ class Transport {
     this.signal = signal;
     this.pc = new RTCPeerConnection(config);
     this.candidates = [];
+    this.api = this.pc.createDataChannel('ion-sfu');
 
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
@@ -43,7 +45,6 @@ class Transport {
 }
 
 export default class Client {
-  private api: RTCDataChannel;
   private initialized: boolean = false;
   transports: Transports<Role, Transport>;
   private signal: Signal;
@@ -66,11 +67,9 @@ export default class Client {
       [Role.sub]: new Transport(Role.sub, signal, config),
     };
 
-    this.api = this.transports[Role.sub].pc.createDataChannel('ion-sfu');
-
     this.transports[Role.sub].pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      const remote = makeRemote(stream, this.api);
+      const remote = makeRemote(stream, this.transports[Role.sub].api);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
@@ -139,7 +138,7 @@ export default class Client {
       const offer = await this.transports[Role.pub].pc.createOffer();
       await this.transports[Role.pub].pc.setLocalDescription(offer);
       const answer = await this.signal.offer(offer);
-      await this.negotiate(answer);
+      await this.transports[Role.pub].pc.setRemoteDescription(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
