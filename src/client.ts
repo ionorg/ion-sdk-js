@@ -123,7 +123,7 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
-      await this.transports[Role.sub].pc.setRemoteDescription(description); // SRD rolls back as needed
+      await this.transports[Role.sub].pc.setRemoteDescription(description);
       const answer = await this.transports[Role.sub].pc.createAnswer();
       await this.transports[Role.sub].pc.setLocalDescription(answer);
       this.signal.answer(answer);
@@ -142,19 +142,6 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-    }
-  }
-
-  private setPreferredCodec(transceiver: RTCRtpTransceiver, kind: 'audio' | 'video') {
-    if ('setCodecPreferences' in transceiver) {
-      const cap = RTCRtpSender.getCapabilities(kind);
-      if (!cap) return;
-      const selCodec = cap.codecs.find(
-        (c) => c.mimeType === `video/${this.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
-      );
-      if (selCodec) {
-        transceiver.setCodecPreferences([selCodec]);
-      }
     }
   }
 }

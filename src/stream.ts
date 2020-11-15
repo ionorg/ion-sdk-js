@@ -104,12 +104,14 @@ export interface Encoding {
 
 export interface Constraints extends MediaStreamConstraints {
   resolution: string;
+  codec: string;
   simulcast?: boolean;
   encodings?: Encoding[];
 }
 
 const defaults = {
   resolution: 'hd',
+  codec: 'vp8',
   audio: true,
   video: true,
   simulcast: false,
@@ -135,7 +137,7 @@ export class LocalStream {
 
   static async getDisplayMedia(
     constraints: Constraints = {
-      // codec: 'VP8',
+      codec: 'vp8',
       resolution: 'hd',
       audio: false,
       video: true,
@@ -251,17 +253,35 @@ export class LocalStream {
           });
         }
 
-        this.pc.addTransceiver(track, {
+        const transceiver = this.pc.addTransceiver(track, {
           streams: [this.stream],
           direction: 'sendonly',
           sendEncodings: encodings,
         });
+        this.setPreferredCodec(transceiver);
       } else {
-        this.pc.addTransceiver(track, {
+        const transceiver = this.pc.addTransceiver(track, {
           streams: [this.stream],
           direction: 'sendonly',
           sendEncodings: track.kind === 'video' ? [VideoConstraints[this.constraints.resolution].encodings] : undefined,
         });
+
+        if (track.kind === 'video') {
+          this.setPreferredCodec(transceiver);
+        }
+      }
+    }
+  }
+
+  private setPreferredCodec(transceiver: RTCRtpTransceiver) {
+    if ('setCodecPreferences' in transceiver) {
+      const cap = RTCRtpSender.getCapabilities('video');
+      if (!cap) return;
+      const selCodec = cap.codecs.find(
+        (c) => c.mimeType === `video/${this.constraints.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
+      );
+      if (selCodec) {
+        transceiver.setCodecPreferences([selCodec]);
       }
     }
   }
