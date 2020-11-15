@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Signal } from './';
+import { Trickle } from '../client';
 
 export default class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
@@ -7,7 +8,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
   private _onclose?: (ev: Event) => void;
   private _onerror?: (error: Event) => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
-  ontrickle?: (candidate: RTCIceCandidateInit) => void;
+  ontrickle?: (trickle: Trickle) => void;
 
   constructor(uri: string) {
     this.socket = new WebSocket(uri);
@@ -56,12 +57,12 @@ export default class IonSFUJSONRPCSignal implements Signal {
     });
   }
 
-  trickle(candidate: RTCIceCandidateInit) {
+  trickle(trickle: Trickle) {
     this.socket.send(
       JSON.stringify({
         method: 'trickle',
         params: {
-          candidate,
+          trickle,
         },
       }),
     );

@@ -108,187 +108,234 @@ export interface Constraints extends MediaStreamConstraints {
   encodings?: Encoding[];
 }
 
-export interface LocalStream extends MediaStream {
-  mute(kind: 'audio' | 'video'): void;
-  unmute(kind: 'audio' | 'video'): void;
-  publish(): void;
-  unpublish(): void;
-  switchDevice(kind: 'audio' | 'video', deviceId: string): void;
-}
+const defaults = {
+  resolution: 'hd',
+  audio: true,
+  video: true,
+  simulcast: false,
+};
 
-export function computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
-  return !!constraints.audio as MediaTrackConstraints;
-}
-
-export function computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
-  if (constraints.video instanceof Object) {
-    return constraints.video;
-  } else if (constraints.video && constraints.resolution) {
-    return {
-      ...VideoConstraints[constraints.resolution].resolution,
-    };
-  }
-  return constraints.video as MediaTrackConstraints;
-}
-
-export function makeLocal(pc: RTCPeerConnection, stream: MediaStream, constraints: Constraints): LocalStream {
-  const local = stream as LocalStream;
-
-  function getTrack(kind: 'audio' | 'video') {
-    return sender.transceivers[kind].sender.track;
-  }
-
-  async function getNewTrack(kind: 'audio' | 'video') {
+export class LocalStream {
+  static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      [kind]: kind === 'video' ? computeVideoConstraints(constraints) : computeAudioConstraints(constraints),
+      audio: LocalStream.computeAudioConstraints({
+        ...defaults,
+        ...constraints,
+      }),
+      video: LocalStream.computeVideoConstraints({
+        ...defaults,
+        ...constraints,
+      }),
+    });
+    return new LocalStream(stream, {
+      ...defaults,
+      ...constraints,
+    });
+  }
+
+  static async getDisplayMedia(
+    constraints: Constraints = {
+      // codec: 'VP8',
+      resolution: 'hd',
+      audio: false,
+      video: true,
+      simulcast: false,
+    },
+  ) {
+    // @ts-ignore
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+    });
+
+    return new LocalStream(stream, {
+      ...defaults,
+      ...constraints,
+    });
+  }
+
+  constraints: Constraints;
+  pc?: RTCPeerConnection;
+  stream: MediaStream;
+
+  constructor(stream: MediaStream, constraints: Constraints) {
+    this.constraints = constraints;
+    this.stream = stream;
+  }
+
+  private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
+    return !!constraints.audio as MediaTrackConstraints;
+  }
+
+  private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
+    if (constraints.video instanceof Object) {
+      return constraints.video;
+    } else if (constraints.video && constraints.resolution) {
+      return {
+        ...VideoConstraints[constraints.resolution].resolution,
+      };
+    }
+    return constraints.video as MediaTrackConstraints;
+  }
+
+  private getTrack(kind: 'audio' | 'video') {
+    let tracks;
+    if (kind === 'video') {
+      tracks = this.stream.getVideoTracks();
+      return tracks.length > 0 ? this.stream.getVideoTracks()[0] : undefined;
+    }
+
+    tracks = this.stream.getAudioTracks();
+    return tracks.length > 0 ? this.stream.getAudioTracks()[0] : undefined;
+  }
+
+  private async getNewTrack(kind: 'audio' | 'video') {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      [kind]:
+        kind === 'video'
+          ? LocalStream.computeVideoConstraints(this.constraints)
+          : LocalStream.computeAudioConstraints(this.constraints),
     });
     return stream.getTracks()[0];
   }
 
-  async function publishTrack(track: MediaStreamTrack, transceiver: RTCRtpTransceiver) {
-    if (track.kind === 'video' && constraints.simulcast) {
-      const encodings: RTCRtpEncodingParameters[] = [
-        {
-          rid: 'f',
-        },
-        {
-          rid: 'h',
-          scaleResolutionDownBy: 2.0,
-          maxBitrate: 150000,
-        },
-        {
-          rid: 'q',
-          scaleResolutionDownBy: 4.0,
-          maxBitrate: 100000,
-        },
-      ];
+  private publishTrack(track: MediaStreamTrack) {
+    if (this.pc) {
+      if (track.kind === 'video' && this.constraints.simulcast) {
+        const encodings: RTCRtpEncodingParameters[] = [
+          {
+            rid: 'f',
+          },
+          {
+            rid: 'h',
+            scaleResolutionDownBy: 2.0,
+            maxBitrate: 150000,
+          },
+          {
+            rid: 'q',
+            scaleResolutionDownBy: 4.0,
+            maxBitrate: 100000,
+          },
+        ];
 
-      if (constraints.encodings) {
-        constraints.encodings.forEach((encoding) => {
-          switch (encoding.layer) {
-            case 'high':
-              if (encoding.maxBitrate) {
-                encodings[0].maxBitrate = encoding.maxBitrate;
-              }
+        if (this.constraints.encodings) {
+          this.constraints.encodings.forEach((encoding) => {
+            switch (encoding.layer) {
+              case 'high':
+                if (encoding.maxBitrate) {
+                  encodings[0].maxBitrate = encoding.maxBitrate;
+                }
 
-              if (encoding.maxFramerate) {
-                encodings[0].maxFramerate = encoding.maxFramerate;
-              }
-              break;
-            case 'medium':
-              if (encoding.maxBitrate) {
-                encodings[1].maxBitrate = encoding.maxBitrate;
-              }
+                if (encoding.maxFramerate) {
+                  encodings[0].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'medium':
+                if (encoding.maxBitrate) {
+                  encodings[1].maxBitrate = encoding.maxBitrate;
+                }
 
-              if (encoding.maxFramerate) {
-                encodings[1].maxFramerate = encoding.maxFramerate;
-              }
-              break;
-            case 'low':
-              if (encoding.maxBitrate) {
-                encodings[2].maxBitrate = encoding.maxBitrate;
-              }
+                if (encoding.maxFramerate) {
+                  encodings[1].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+              case 'low':
+                if (encoding.maxBitrate) {
+                  encodings[2].maxBitrate = encoding.maxBitrate;
+                }
 
-              if (encoding.maxFramerate) {
-                encodings[2].maxFramerate = encoding.maxFramerate;
-              }
-              break;
-          }
+                if (encoding.maxFramerate) {
+                  encodings[2].maxFramerate = encoding.maxFramerate;
+                }
+                break;
+            }
+          });
+        }
+
+        this.pc.addTransceiver(track, {
+          streams: [this.stream],
+          direction: 'sendonly',
+          sendEncodings: encodings,
+        });
+      } else {
+        this.pc.addTransceiver(track, {
+          streams: [this.stream],
+          direction: 'sendonly',
+          sendEncodings: track.kind === 'video' ? [VideoConstraints[this.constraints.resolution].encodings] : undefined,
         });
       }
-      const params = transceiver.sender.getParameters();
-      await transceiver.sender.setParameters({ ...params, encodings });
-      await transceiver.sender.replaceTrack(track);
-      if (transceiver.currentDirection === 'inactive') transceiver.direction = 'sendonly';
-    } else {
-      const params = transceiver.sender.getParameters();
-      if (track.kind === 'video') {
-        await transceiver.sender.setParameters({
-          ...params,
-          encodings: [VideoConstraints[constraints.resolution].encodings],
-        });
-      }
-      await transceiver.sender.replaceTrack(track);
-      if (transceiver.currentDirection === 'inactive') transceiver.direction = 'sendonly';
     }
   }
 
-  function updateTrack(next: MediaStreamTrack, prev: MediaStreamTrack | null, transceiver?: RTCRtpTransceiver) {
-    local.addTrack(next);
+  private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack) {
+    this.stream.addTrack(next);
 
     // If published, replace published track with track from new device
     if (prev && prev.enabled) {
-      local.removeTrack(prev);
+      this.stream.removeTrack(prev);
       prev.stop();
 
-      if (transceiver) {
-        transceiver.sender.track?.stop();
-        transceiver.sender.replaceTrack(next);
+      if (this.pc) {
+        this.pc.getSenders().forEach(async (sender: RTCRtpSender) => {
+          if (sender?.track?.kind === next.kind) {
+            sender.track?.stop();
+            sender.replaceTrack(next);
+          }
+        });
       }
     } else {
-      if (transceiver) {
-        publishTrack(next, transceiver);
+      this.stream.addTrack(next);
+
+      if (this.pc) {
+        this.publishTrack(next);
       }
     }
   }
 
-  local.publish = () => {
-    local.getTracks().forEach((t) => {
-      publishTrack(t, sender.transceivers[t.kind as 'video' | 'audio']);
-    });
-  };
+  publish(pc: RTCPeerConnection) {
+    this.pc = pc;
+    this.stream.getTracks().forEach(this.publishTrack.bind(this));
+  }
 
-  local.unpublish = () => {
-    sender.stream.removeTrack(sender.transceivers.audio.sender.track!);
-    sender.stream.removeTrack(sender.transceivers.video.sender.track!);
-    pc.removeTrack(sender.transceivers.audio.sender);
-    pc.removeTrack(sender.transceivers.video.sender);
-  };
+  unpublish() {
+    if (this.pc) {
+      this.pc.getSenders().forEach((s: RTCRtpSender) => {
+        if (s.track !== undefined) {
+          this.pc!.removeTrack(s);
+        }
+      });
+    }
+  }
 
-  local.switchDevice = async (kind: 'audio' | 'video', deviceId: string) => {
-    constraints = {
-      ...constraints,
+  async switchDevice(kind: 'audio' | 'video', deviceId: string) {
+    this.constraints = {
+      ...this.constraints,
       [kind]:
-        constraints[kind] instanceof Object
+        this.constraints[kind] instanceof Object
           ? {
-              ...(constraints[kind] as object),
+              ...(this.constraints[kind] as object),
               deviceId,
             }
           : { deviceId },
     };
 
-    const prev = getTrack(kind);
-    const next = await getNewTrack(kind);
+    const prev = this.getTrack(kind);
+    const next = await this.getNewTrack(kind);
 
-    pc.getTransceivers().forEach((t) => {
-      if (t.sender.track === prev) {
-        updateTrack(next, prev, t);
-        return;
-      }
-    });
-    updateTrack(next, prev);
-  };
+    this.updateTrack(next, prev);
+  }
 
-  local.mute = (kind: 'audio' | 'video') => {
-    const track = getTrack(kind);
+  mute(kind: 'audio' | 'video') {
+    const track = this.getTrack(kind);
     if (track) {
       track.stop();
     }
-  };
+  }
 
-  local.unmute = async (kind: 'audio' | 'video') => {
-    const prev = getTrack(kind);
-    const track = await getNewTrack(kind);
-    const transceiver = sender.transceivers[kind];
-
-    if (transceiver.sender.track === prev) {
-      updateTrack(track, prev, transceiver);
-      return;
-    }
-    updateTrack(track, prev);
-  };
-
-  return local;
+  async unmute(kind: 'audio' | 'video') {
+    const prev = this.getTrack(kind);
+    const track = await this.getNewTrack(kind);
+    this.updateTrack(track, prev);
+  }
 }
 
 export interface RemoteStream extends MediaStream {
