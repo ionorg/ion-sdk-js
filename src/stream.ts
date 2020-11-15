@@ -1,4 +1,4 @@
-import Client, { Sender } from './client';
+import { Transport } from './client';
 
 interface VideoConstraints {
   [name: string]: {
@@ -369,7 +369,7 @@ export interface RemoteStream extends MediaStream {
   unmute(kind: 'audio' | 'video'): void;
 }
 
-export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStream {
+export function makeRemote(stream: MediaStream, transport: Transport): RemoteStream {
   const remote = stream as RemoteStream;
   remote.audio = true;
   remote.video = 'none';
@@ -381,7 +381,10 @@ export function makeRemote(stream: MediaStream, api: RTCDataChannel): RemoteStre
       video: remote.video,
       audio: remote.audio,
     };
-    api.send(JSON.stringify(call));
+    if (!transport.api) {
+      console.warn('api datachannel not ready yet');
+    }
+    transport.api?.send(JSON.stringify(call));
   };
 
   remote.preferLayer = (layer: Layer) => {

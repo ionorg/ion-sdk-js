@@ -24,8 +24,8 @@ type Transports<T extends string | symbol | number, U> = {
   [K in T]: U;
 };
 
-class Transport {
-  api: RTCDataChannel;
+export class Transport {
+  api?: RTCDataChannel;
   signal: Signal;
   pc: RTCPeerConnection;
   candidates: RTCIceCandidateInit[];
@@ -34,7 +34,14 @@ class Transport {
     this.signal = signal;
     this.pc = new RTCPeerConnection(config);
     this.candidates = [];
-    this.api = this.pc.createDataChannel('ion-sfu');
+
+    if (role === Role.pub) {
+      this.pc.createDataChannel('ion-sfu');
+    }
+
+    this.pc.ondatachannel = ({ channel }) => {
+      this.api = channel;
+    };
 
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
@@ -69,7 +76,7 @@ export default class Client {
 
     this.transports[Role.sub].pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      const remote = makeRemote(stream, this.transports[Role.sub].api);
+      const remote = makeRemote(stream, this.transports[Role.sub]);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
