@@ -7,7 +7,7 @@ interface VideoConstraints {
   };
 }
 
-const resolutions = ['qhd', 'fhd', 'hd', 'shd', 'vga', 'qvga'];
+const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd'];
 
 export const VideoConstraints: VideoConstraints = {
   qvga: {
