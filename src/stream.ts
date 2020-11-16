@@ -115,6 +115,23 @@ const defaults = {
   audio: true,
   video: true,
   simulcast: false,
+  encodings: [
+    {
+      layer: 'high' as Layer,
+      maxBitrate: VideoConstraints['hd'].encodings.maxBitrate!,
+      maxFramerate: 30,
+    },
+    {
+      layer: 'medium' as Layer,
+      maxBitrate: VideoConstraints['vga'].encodings.maxBitrate!,
+      maxFramerate: 30,
+    },
+    {
+      layer: 'low' as Layer,
+      maxBitrate: VideoConstraints['qvga'].encodings.maxBitrate!,
+      maxFramerate: 20,
+    },
+  ],
 };
 
 export class LocalStream {
@@ -206,6 +223,7 @@ export class LocalStream {
         const encodings: RTCRtpEncodingParameters[] = [
           {
             rid: 'f',
+            maxBitrate: VideoConstraints[this.constraints.resolution].encodings.maxBitrate,
           },
           {
             rid: 'h',
