@@ -108,7 +108,6 @@ export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
   simulcast?: boolean;
-  encodings?: Encoding[];
 }
 
 const defaults = {
@@ -229,40 +228,6 @@ export class LocalStream {
             scaleResolutionDownBy: 4.0,
             maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
             maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
-          });
-        }
-
-        if (this.constraints.encodings) {
-          this.constraints.encodings.forEach((encoding) => {
-            switch (encoding.layer) {
-              case 'high':
-                if (encoding.maxBitrate) {
-                  encodings[0].maxBitrate = encoding.maxBitrate;
-                }
-
-                if (encoding.maxFramerate) {
-                  encodings[0].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-              case 'medium':
-                if (encoding.maxBitrate) {
-                  encodings[1].maxBitrate = encoding.maxBitrate;
-                }
-
-                if (encoding.maxFramerate) {
-                  encodings[1].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-              case 'low':
-                if (encoding.maxBitrate) {
-                  encodings[2].maxBitrate = encoding.maxBitrate;
-                }
-
-                if (encoding.maxFramerate) {
-                  encodings[2].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-            }
           });
         }
 
