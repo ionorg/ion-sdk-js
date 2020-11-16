@@ -7,6 +7,8 @@ interface VideoConstraints {
   };
 }
 
+const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd'];
+
 export const VideoConstraints: VideoConstraints = {
   qvga: {
     resolution: {
@@ -106,7 +108,6 @@ export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
   simulcast?: boolean;
-  encodings?: Encoding[];
 }
 
 const defaults = {
@@ -203,53 +204,30 @@ export class LocalStream {
   private publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
+        const idx = resolutions.indexOf(this.constraints.resolution);
         const encodings: RTCRtpEncodingParameters[] = [
           {
             rid: 'f',
-          },
-          {
-            rid: 'h',
-            scaleResolutionDownBy: 2.0,
-            maxBitrate: 150000,
-          },
-          {
-            rid: 'q',
-            scaleResolutionDownBy: 4.0,
-            maxBitrate: 100000,
+            maxBitrate: VideoConstraints[resolutions[idx]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx]].encodings.maxFramerate,
           },
         ];
 
-        if (this.constraints.encodings) {
-          this.constraints.encodings.forEach((encoding) => {
-            switch (encoding.layer) {
-              case 'high':
-                if (encoding.maxBitrate) {
-                  encodings[0].maxBitrate = encoding.maxBitrate;
-                }
+        if (idx - 1 >= 0) {
+          encodings.push({
+            rid: 'h',
+            scaleResolutionDownBy: 2.0,
+            maxBitrate: VideoConstraints[resolutions[idx - 1]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx - 1]].encodings.maxFramerate,
+          });
+        }
 
-                if (encoding.maxFramerate) {
-                  encodings[0].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-              case 'medium':
-                if (encoding.maxBitrate) {
-                  encodings[1].maxBitrate = encoding.maxBitrate;
-                }
-
-                if (encoding.maxFramerate) {
-                  encodings[1].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-              case 'low':
-                if (encoding.maxBitrate) {
-                  encodings[2].maxBitrate = encoding.maxBitrate;
-                }
-
-                if (encoding.maxFramerate) {
-                  encodings[2].maxFramerate = encoding.maxFramerate;
-                }
-                break;
-            }
+        if (idx - 2 >= 0) {
+          encodings.push({
+            rid: 'q',
+            scaleResolutionDownBy: 4.0,
+            maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
           });
         }
 
