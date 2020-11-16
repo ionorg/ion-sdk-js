@@ -161,7 +161,7 @@ export class LocalStream extends MediaStream {
   stream: MediaStream;
 
   constructor(stream: MediaStream, constraints: Constraints) {
-    super(stream)
+    super(stream);
     this.constraints = constraints;
     this.stream = stream;
   }
