@@ -210,6 +210,7 @@ export class LocalStream {
           {
             rid: 'f',
             maxBitrate: VideoConstraints[resolutions[idx]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx]].encodings.maxFramerate,
           },
         ];
 
@@ -218,6 +219,7 @@ export class LocalStream {
             rid: 'h',
             scaleResolutionDownBy: 2.0,
             maxBitrate: VideoConstraints[resolutions[idx - 1]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx - 1]].encodings.maxFramerate,
           });
         }
 
@@ -226,6 +228,7 @@ export class LocalStream {
             rid: 'q',
             scaleResolutionDownBy: 4.0,
             maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
+            maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
           });
         }
 
