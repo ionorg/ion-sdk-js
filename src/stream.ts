@@ -7,6 +7,8 @@ interface VideoConstraints {
   };
 }
 
+const resolutions = ['qhd', 'fhd', 'hd', 'shd', 'vga', 'qvga'];
+
 export const VideoConstraints: VideoConstraints = {
   qvga: {
     resolution: {
@@ -115,23 +117,6 @@ const defaults = {
   audio: true,
   video: true,
   simulcast: false,
-  encodings: [
-    {
-      layer: 'high' as Layer,
-      maxBitrate: VideoConstraints['hd'].encodings.maxBitrate!,
-      maxFramerate: 30,
-    },
-    {
-      layer: 'medium' as Layer,
-      maxBitrate: VideoConstraints['vga'].encodings.maxBitrate!,
-      maxFramerate: 30,
-    },
-    {
-      layer: 'low' as Layer,
-      maxBitrate: VideoConstraints['qvga'].encodings.maxBitrate!,
-      maxFramerate: 20,
-    },
-  ],
 };
 
 export class LocalStream {
@@ -220,22 +205,29 @@ export class LocalStream {
   private publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
       if (track.kind === 'video' && this.constraints.simulcast) {
+        const idx = resolutions.indexOf(this.constraints.resolution);
         const encodings: RTCRtpEncodingParameters[] = [
           {
             rid: 'f',
-            maxBitrate: VideoConstraints[this.constraints.resolution].encodings.maxBitrate,
-          },
-          {
-            rid: 'h',
-            scaleResolutionDownBy: 2.0,
-            maxBitrate: 150000,
-          },
-          {
-            rid: 'q',
-            scaleResolutionDownBy: 4.0,
-            maxBitrate: 100000,
+            maxBitrate: VideoConstraints[resolutions[idx]].encodings.maxBitrate,
           },
         ];
+
+        if (idx - 1 >= 0) {
+          encodings.push({
+            rid: 'h',
+            scaleResolutionDownBy: 2.0,
+            maxBitrate: VideoConstraints[resolutions[idx - 1]].encodings.maxBitrate,
+          });
+        }
+
+        if (idx - 2 >= 0) {
+          encodings.push({
+            rid: 'q',
+            scaleResolutionDownBy: 4.0,
+            maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
+          });
+        }
 
         if (this.constraints.encodings) {
           this.constraints.encodings.forEach((encoding) => {
