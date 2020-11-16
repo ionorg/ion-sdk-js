@@ -118,7 +118,7 @@ const defaults = {
   simulcast: false,
 };
 
-export class LocalStream {
+export class LocalStream extends MediaStream {
   static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: LocalStream.computeAudioConstraints({
