@@ -13,4 +13,4 @@ export interface Signal {
   close(): void;
 }
 
-export { IonSFUJSONRPCSignal };
+export { IonSFUJSONRPCSignal, Trickle };
