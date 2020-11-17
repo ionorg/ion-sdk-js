@@ -295,8 +295,9 @@ export class LocalStream extends MediaStream {
 
   unpublish() {
     if (this.pc) {
+      const tracks = this.getTracks()
       this.pc.getSenders().forEach((s: RTCRtpSender) => {
-        if (s.track !== undefined) {
+        if (s.track && tracks.includes(s.track)) {
           this.pc!.removeTrack(s);
         }
       });
