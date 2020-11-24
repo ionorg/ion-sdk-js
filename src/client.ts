@@ -141,6 +141,8 @@ export default class Client {
   private async negotiate(description: RTCSessionDescriptionInit) {
     try {
       await this.transports[Role.sub].pc.setRemoteDescription(description);
+      this.transports[Role.sub].candidates.forEach((c) => this.transports[Role.sub].pc.addIceCandidate(c));
+      this.transports[Role.sub].candidates = [];
       const answer = await this.transports[Role.sub].pc.createAnswer();
       await this.transports[Role.sub].pc.setLocalDescription(answer);
       this.signal.answer(answer);
