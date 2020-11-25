@@ -55,9 +55,9 @@ export default class Client {
   private initialized: boolean = false;
   transports: Transports<Role, Transport>;
   private signal: Signal;
-  private codec: string;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
+  ondatachannel?: (ev: RTCDataChannelEvent) => void;
 
   constructor(
     sid: string,
@@ -78,7 +78,6 @@ export default class Client {
     },
   ) {
     this.signal = signal;
-    this.codec = config.codec;
     this.transports = {
       [Role.pub]: new Transport(Role.pub, signal, config),
       [Role.sub]: new Transport(Role.sub, signal, config),
@@ -90,6 +89,16 @@ export default class Client {
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
+      }
+    };
+
+    this.transports[Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
+      if (ev.channel.label === 'ion-sfu') {
+        return;
+      }
+
+      if (this.ondatachannel) {
+        this.ondatachannel(ev);
       }
     };
 
@@ -113,6 +122,10 @@ export default class Client {
 
   publish(stream: LocalStream) {
     stream.publish(this.transports[Role.pub].pc);
+  }
+
+  createDataChannel(label: string) {
+    return this.transports[Role.pub].pc.createDataChannel(label);
   }
 
   close() {

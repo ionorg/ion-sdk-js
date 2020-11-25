@@ -359,17 +359,15 @@ export function makeRemote(stream: MediaStream, transport: Transport): RemoteStr
       video: remote.video,
       audio: remote.audio,
     };
-    if (!transport.api) {
-      /* tslint:disable-next-line:no-console */
-      console.warn('api datachannel not ready yet');
-    }
 
-    if (transport.api && transport.api.readyState !== 'open') {
-      // queue call if we aren't open yet
-      transport.api.onopen = () => transport.api?.send(JSON.stringify(call));
+    if (transport.api) {
+      if (transport.api.readyState !== 'open') {
+        // queue call if we aren't open yet
+        transport.api.onopen = () => transport.api?.send(JSON.stringify(call));
+      } else {
+        transport.api.send(JSON.stringify(call));
+      }
     }
-
-    transport.api?.send(JSON.stringify(call));
   };
 
   remote.preferLayer = (layer: Layer) => {
