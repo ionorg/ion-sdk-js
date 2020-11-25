@@ -27,20 +27,24 @@ client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
 });
 
 // Get a local stream
-const local = await client.getUserMedia({
+const local = await LocalStream.getUserMedia({
     audio: true,
     video: true,
     simulcast: true, // enable simulcast
 });
 
 // Publish stream
-local.publish();
+client.publish(local);
 
 // mute local straem
 local.mute()
 
 // unmute local stream
 local.unmute()
+
+// create a datachannel
+const dc = client.createDataChannel("data")
+dc.onopen = () => dc.send("hello world")
 
 // Close client connection
 client.close();
