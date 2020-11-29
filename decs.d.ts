@@ -18,8 +18,6 @@ declare module 'protoo-client' {
     on(event: 'disconnected', cb: () => void): void;
     on(event: 'close', cb: () => void): void;
     on(event: any, cb: (any: any) => any): void;
-    // on(event: "request", cb: (request: Request) => void): void;
-    // on(event: "notification", cb: (notification: Notification) => void): void;
   }
 
   export interface Notification {
@@ -132,8 +130,9 @@ interface RTCRtpEncodingParameters {
   dtx?: RTCDtxStatus;
   //active: boolean;
   //priority: RTCPriorityType;
-  //maxBitrate: number;
-  rid: string;
+  maxBitrate?: number;
+  maxFramerate?: number;
+  rid?: string;
   scaleResolutionDownBy?: number; // default = 1
 }
 
@@ -162,7 +161,7 @@ interface RTCRtpCodecParameters {
 // https://www.w3.org/TR/webrtc/#idl-def-rtcrtpparameters
 interface RTCRtpParameters {
   transactionId: string;
-  //encodings: RTCRtpEncodingParameters[];
+  encodings: RTCRtpEncodingParameters[];
   //headerExtensions: RTCRtpHeaderExtensionParameters[];
   //rtcp: RTCRtcpParameters;
   //codecs: RTCRtpCodecParameters[];
@@ -314,7 +313,7 @@ interface RTCPeerConnection extends EventTarget {
   createOffer(options?: RTCOfferOptions): Promise<RTCSessionDescriptionInit>;
   createAnswer(options?: RTCAnswerOptions): Promise<RTCSessionDescriptionInit>;
 
-  setLocalDescription(description: RTCSessionDescriptionInit): Promise<void>;
+  setLocalDescription(description?: RTCSessionDescriptionInit): Promise<void>;
   readonly localDescription: RTCSessionDescription | null;
   readonly currentLocalDescription: RTCSessionDescription | null;
   readonly pendingLocalDescription: RTCSessionDescription | null;

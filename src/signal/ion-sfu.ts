@@ -1,12 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Signal } from './';
+import { Trickle } from '../client';
 
 export default class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
   private _onready?: () => void;
+  private _onclose?: (ev: Event) => void;
   private _onerror?: (error: Event) => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
-  ontrickle?: (candidate: RTCIceCandidateInit) => void;
+  ontrickle?: (trickle: Trickle) => void;
 
   constructor(uri: string) {
     this.socket = new WebSocket(uri);
@@ -19,9 +21,13 @@ export default class IonSFUJSONRPCSignal implements Signal {
       if (this._onerror) this._onerror(e);
     });
 
+    this.socket.addEventListener('close', (e) => {
+      if (this._onclose) this._onclose(e);
+    });
+
     this.socket.addEventListener('message', async (event) => {
       const resp = JSON.parse(event.data);
-      if (resp.method === 'offer' || resp.method === 'answer') {
+      if (resp.method === 'offer') {
         if (this.onnegotiate) this.onnegotiate(resp.params);
       } else if (resp.method === 'trickle') {
         if (this.ontrickle) this.ontrickle(resp.params);
@@ -44,20 +50,18 @@ export default class IonSFUJSONRPCSignal implements Signal {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
           resolve(resp.result);
+          this.socket.removeEventListener('message', handler);
         }
-        this.socket.removeEventListener('message', handler);
       };
       this.socket.addEventListener('message', handler);
     });
   }
 
-  trickle(candidate: RTCIceCandidateInit) {
+  trickle(trickle: Trickle) {
     this.socket.send(
       JSON.stringify({
         method: 'trickle',
-        params: {
-          candidate,
-        },
+        params: trickle,
       }),
     );
   }
@@ -105,5 +109,8 @@ export default class IonSFUJSONRPCSignal implements Signal {
   }
   set onerror(onerror: (error: Event) => void) {
     this._onerror = onerror;
+  }
+  set onclose(onclose: (ev: Event) => void) {
+    this._onclose = onclose;
   }
 }

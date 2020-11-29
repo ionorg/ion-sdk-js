@@ -4,15 +4,20 @@
 import * as jspb from "google-protobuf";
 
 export class SignalRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   hasJoin(): boolean;
   clearJoin(): void;
   getJoin(): JoinRequest | undefined;
   setJoin(value?: JoinRequest): void;
 
-  hasNegotiate(): boolean;
-  clearNegotiate(): void;
-  getNegotiate(): SessionDescription | undefined;
-  setNegotiate(value?: SessionDescription): void;
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): Uint8Array | string;
+  getDescription_asU8(): Uint8Array;
+  getDescription_asB64(): string;
+  setDescription(value: Uint8Array | string): void;
 
   hasTrickle(): boolean;
   clearTrickle(): void;
@@ -32,34 +37,50 @@ export class SignalRequest extends jspb.Message {
 
 export namespace SignalRequest {
   export type AsObject = {
+    id: string,
     join?: JoinRequest.AsObject,
-    negotiate?: SessionDescription.AsObject,
+    description: Uint8Array | string,
     trickle?: Trickle.AsObject,
   }
 
   export enum PayloadCase {
     PAYLOAD_NOT_SET = 0,
-    JOIN = 1,
-    NEGOTIATE = 2,
-    TRICKLE = 3,
+    JOIN = 2,
+    DESCRIPTION = 3,
+    TRICKLE = 4,
   }
 }
 
 export class SignalReply extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
   hasJoin(): boolean;
   clearJoin(): void;
   getJoin(): JoinReply | undefined;
   setJoin(value?: JoinReply): void;
 
-  hasNegotiate(): boolean;
-  clearNegotiate(): void;
-  getNegotiate(): SessionDescription | undefined;
-  setNegotiate(value?: SessionDescription): void;
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): Uint8Array | string;
+  getDescription_asU8(): Uint8Array;
+  getDescription_asB64(): string;
+  setDescription(value: Uint8Array | string): void;
 
   hasTrickle(): boolean;
   clearTrickle(): void;
   getTrickle(): Trickle | undefined;
   setTrickle(value?: Trickle): void;
+
+  hasIceconnectionstate(): boolean;
+  clearIceconnectionstate(): void;
+  getIceconnectionstate(): string;
+  setIceconnectionstate(value: string): void;
+
+  hasError(): boolean;
+  clearError(): void;
+  getError(): string;
+  setError(value: string): void;
 
   getPayloadCase(): SignalReply.PayloadCase;
   serializeBinary(): Uint8Array;
@@ -74,16 +95,21 @@ export class SignalReply extends jspb.Message {
 
 export namespace SignalReply {
   export type AsObject = {
+    id: string,
     join?: JoinReply.AsObject,
-    negotiate?: SessionDescription.AsObject,
+    description: Uint8Array | string,
     trickle?: Trickle.AsObject,
+    iceconnectionstate: string,
+    error: string,
   }
 
   export enum PayloadCase {
     PAYLOAD_NOT_SET = 0,
-    JOIN = 1,
-    NEGOTIATE = 2,
-    TRICKLE = 3,
+    JOIN = 2,
+    DESCRIPTION = 3,
+    TRICKLE = 4,
+    ICECONNECTIONSTATE = 5,
+    ERROR = 6,
   }
 }
 
@@ -91,10 +117,10 @@ export class JoinRequest extends jspb.Message {
   getSid(): string;
   setSid(value: string): void;
 
-  hasOffer(): boolean;
-  clearOffer(): void;
-  getOffer(): SessionDescription | undefined;
-  setOffer(value?: SessionDescription): void;
+  getDescription(): Uint8Array | string;
+  getDescription_asU8(): Uint8Array;
+  getDescription_asB64(): string;
+  setDescription(value: Uint8Array | string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinRequest.AsObject;
@@ -109,18 +135,15 @@ export class JoinRequest extends jspb.Message {
 export namespace JoinRequest {
   export type AsObject = {
     sid: string,
-    offer?: SessionDescription.AsObject,
+    description: Uint8Array | string,
   }
 }
 
 export class JoinReply extends jspb.Message {
-  getPid(): string;
-  setPid(value: string): void;
-
-  hasAnswer(): boolean;
-  clearAnswer(): void;
-  getAnswer(): SessionDescription | undefined;
-  setAnswer(value?: SessionDescription): void;
+  getDescription(): Uint8Array | string;
+  getDescription_asU8(): Uint8Array;
+  getDescription_asB64(): string;
+  setDescription(value: Uint8Array | string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinReply.AsObject;
@@ -134,12 +157,14 @@ export class JoinReply extends jspb.Message {
 
 export namespace JoinReply {
   export type AsObject = {
-    pid: string,
-    answer?: SessionDescription.AsObject,
+    description: Uint8Array | string,
   }
 }
 
 export class Trickle extends jspb.Message {
+  getTarget(): Trickle.TargetMap[keyof Trickle.TargetMap];
+  setTarget(value: Trickle.TargetMap[keyof Trickle.TargetMap]): void;
+
   getInit(): string;
   setInit(value: string): void;
 
@@ -155,33 +180,15 @@ export class Trickle extends jspb.Message {
 
 export namespace Trickle {
   export type AsObject = {
+    target: Trickle.TargetMap[keyof Trickle.TargetMap],
     init: string,
   }
-}
 
-export class SessionDescription extends jspb.Message {
-  getType(): string;
-  setType(value: string): void;
-
-  getSdp(): Uint8Array | string;
-  getSdp_asU8(): Uint8Array;
-  getSdp_asB64(): string;
-  setSdp(value: Uint8Array | string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SessionDescription.AsObject;
-  static toObject(includeInstance: boolean, msg: SessionDescription): SessionDescription.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: SessionDescription, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): SessionDescription;
-  static deserializeBinaryFromReader(message: SessionDescription, reader: jspb.BinaryReader): SessionDescription;
-}
-
-export namespace SessionDescription {
-  export type AsObject = {
-    type: string,
-    sdp: Uint8Array | string,
+  export interface TargetMap {
+    PUBLISHER: 0;
+    SUBSCRIBER: 1;
   }
+
+  export const Target: TargetMap;
 }
 

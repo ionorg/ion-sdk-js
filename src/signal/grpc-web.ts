@@ -3,7 +3,9 @@ import { EventEmitter } from 'events';
 import { Signal } from './';
 import { grpc } from "@improbable-eng/grpc-web";
 import { SFUClient, Status, BidirectionalStream } from "./_proto/library/sfu_pb_service";
-import { SignalRequest, SignalReply, JoinRequest, JoinReply, Trickle, SessionDescription } from "./_proto/library/sfu_pb";
+import { SignalRequest, SignalReply, JoinRequest, JoinReply } from "./_proto/library/sfu_pb";
+import { Trickle } from '../client';
+import * as pb from "./_proto/library/sfu_pb";
 
 export default class IonSFUgRPCWebSignal implements Signal {
     protected client: SFUClient;
@@ -12,7 +14,7 @@ export default class IonSFUgRPCWebSignal implements Signal {
     private _onready?: () => void;
     private _onerror?: (error: Event) => void;
     onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
-    ontrickle?: (candidate: RTCIceCandidateInit) => void;
+    ontrickle?: (trickle: Trickle) => void;
 
     constructor(uri: string) {
         this._event = new EventEmitter();
@@ -27,19 +29,19 @@ export default class IonSFUgRPCWebSignal implements Signal {
                 case SignalReply.PayloadCase.JOIN:
                     this._event.emit('join', message.getJoin());
                     break;
-                case SignalReply.PayloadCase.NEGOTIATE:
-                    var desc = message.getNegotiate();
-                    var type = desc?.getType();
+                case SignalReply.PayloadCase.DESCRIPTION:
+                    var desc = message.getDescription();
+                    var type = 'offer';
                     switch (type) {
                         case "offer":
                             this._event.emit('offer', desc);
                             if (this.onnegotiate)
-                                this.onnegotiate({ type: "offer", sdp: desc?.getSdp() as string });
+                                this.onnegotiate({ type: "offer", sdp: desc as string });
                             break;
                         case "answer":
                             this._event.emit('answer', desc);
                             if (this.onnegotiate)
-                                this.onnegotiate({ type: "answer", sdp: desc?.getSdp() as string });
+                                this.onnegotiate({ type: "answer", sdp: desc as string });
                             break;
                     }
                     break;
@@ -69,45 +71,37 @@ export default class IonSFUgRPCWebSignal implements Signal {
         var request = new SignalRequest();
         var join = new JoinRequest();
         join.setSid(sid);
-
-        var desc = new SessionDescription();
-        desc.setType(offer.type as string);
-        desc.setSdp(offer.sdp as string);
-
-        join.setOffer(desc);
+        join.setDescription(offer?.sdp as string);
         request.setJoin(join);
         this.streaming.write(request);
 
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
             const handler = (resp: JoinReply) => {
-                var answer = resp.getAnswer();
-                resolve({ type: "answer", sdp: answer?.getSdp() as string });
+                var answer = resp.getDescription();
+                resolve({ type: "answer", sdp:answer as string });
                 this._event.removeListener('join', handler);
             };
             this._event.addListener('join', handler);
         });
     }
 
-    trickle(candidate: RTCIceCandidateInit) {
+    trickle(trickle: Trickle) {
         var request = new SignalRequest();
-        var trickle = new Trickle();
-        trickle.setInit(candidate.toString());
-        request.setTrickle(trickle);
+        var pbTrickle = new pb.Trickle();
+        pbTrickle.setInit(trickle.candidate.candidate as string);
+        request.setTrickle(pbTrickle);
         this.streaming.write(request);
     }
 
     offer(offer: RTCSessionDescriptionInit) {
         const id = uuidv4();
         var request = new SignalRequest();
-        var desc = new SessionDescription();
-        desc.setType(offer.type as string);
-        desc.setSdp(offer.sdp as string);
-        request.setNegotiate(desc);
+        request.setDescription(offer.sdp as string);
         this.streaming.write(request);
 
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
-            const handler = (desc: SessionDescription) => {
-                resolve({ type: "answer", sdp: desc?.getSdp() as string });
+            const handler = (desc: SignalReply) => {
+                resolve({ type: "answer", sdp: desc?.getDescription() as string });
                 this._event.removeListener('answer', handler);
             };
             this._event.addListener('answer', handler);
@@ -116,10 +110,7 @@ export default class IonSFUgRPCWebSignal implements Signal {
 
     answer(answer: RTCSessionDescriptionInit) {
         var request = new SignalRequest();
-        var desc = new SessionDescription();
-        desc.setType(answer.type as string);
-        desc.setSdp(answer.sdp as string);
-        request.setNegotiate(desc);
+        request.setDescription(answer.sdp as string);
         this.streaming.write(request);
     }
 

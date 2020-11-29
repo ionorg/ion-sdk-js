@@ -33,7 +33,7 @@ const local = await LocalStream.getUserMedia({
     simulcast: true, // enable simulcast
 });
 
-// Publish local stream
+// Publish stream
 client.publish(local);
 
 // mute local straem
@@ -42,16 +42,10 @@ local.mute()
 // unmute local stream
 local.unmute()
 
+// create a datachannel
+const dc = client.createDataChannel("data")
+dc.onopen = () => dc.send("hello world")
+
 // Close client connection
 client.close();
-
-// To add your custom stream
-import { LocalStream } from 'ion-sdk-js';
-(...)
-var streamOptions = {
-    codec: 'VP8',
-    resolution: 'hd'
-}
-var myLocalStream = new LocalStream (yourStreamHere, streamOptions)
-
 ```
