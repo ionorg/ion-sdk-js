@@ -1,4 +1,5 @@
-import IonSFUJSONRPCSignal from './ion-sfu';
+import IonSFUJSONRPCSignal from './json-rpc-impl';
+import IonSFUGRPCGWebSignal from './grpc-web-impl';
 import { Trickle } from '../client';
 
 export interface Signal {
@@ -13,4 +14,4 @@ export interface Signal {
   close(): void;
 }
 
-export { IonSFUJSONRPCSignal, Trickle };
+export { IonSFUJSONRPCSignal, IonSFUGRPCGWebSignal, Trickle };

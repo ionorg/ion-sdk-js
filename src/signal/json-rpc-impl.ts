@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Signal } from './';
+import { Signal } from '.';
 import { Trickle } from '../client';
 
 export default class IonSFUJSONRPCSignal implements Signal {
