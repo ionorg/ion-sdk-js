@@ -1,6 +1,8 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
 
+const errNoSession = 'no active session, join first';
+
 export interface Sender {
   stream: MediaStream;
   transceivers: { [kind in 'video' | 'audio']: RTCRtpTransceiver };
@@ -52,15 +54,14 @@ export class Transport {
 }
 
 export default class Client {
-  private initialized: boolean = false;
-  transports: Transports<Role, Transport>;
+  transports?: Transports<Role, Transport>;
+  private config: Configuration;
   private signal: Signal;
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
   ondatachannel?: (ev: RTCDataChannelEvent) => void;
 
   constructor(
-    sid: string,
     signal: Signal,
     config: Configuration = {
       codec: 'vp8',
@@ -78,14 +79,21 @@ export default class Client {
     },
   ) {
     this.signal = signal;
+    this.config = config;
+
+    signal.onnegotiate = this.negotiate.bind(this);
+    signal.ontrickle = this.trickle.bind(this);
+  }
+
+  async join(sid: string) {
     this.transports = {
-      [Role.pub]: new Transport(Role.pub, signal, config),
-      [Role.sub]: new Transport(Role.sub, signal, config),
+      [Role.pub]: new Transport(Role.pub, this.signal, this.config),
+      [Role.sub]: new Transport(Role.sub, this.signal, this.config),
     };
 
     this.transports[Role.sub].pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      const remote = makeRemote(stream, this.transports[Role.sub]);
+      const remote = makeRemote(stream, this.transports![Role.sub]);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);
@@ -102,48 +110,61 @@ export default class Client {
       }
     };
 
-    signal.onnegotiate = this.negotiate.bind(this);
-    signal.ontrickle = this.trickle.bind(this);
-    signal.onready = () => {
-      if (!this.initialized) {
-        this.join(sid);
-        this.initialized = true;
-      }
-    };
-  }
-
-  getPubStats(selector?: MediaStreamTrack) {
-    return this.transports[Role.pub].pc.getStats(selector);
-  }
-
-  getSubStats(selector?: MediaStreamTrack) {
-    return this.transports[Role.sub].pc.getStats(selector);
-  }
-
-  publish(stream: LocalStream) {
-    stream.publish(this.transports[Role.pub].pc);
-  }
-
-  createDataChannel(label: string) {
-    return this.transports[Role.pub].pc.createDataChannel(label);
-  }
-
-  close() {
-    Object.values(this.transports).forEach((t) => t.pc.close());
-    this.signal.close();
-  }
-
-  private async join(sid: string) {
     const offer = await this.transports[Role.pub].pc.createOffer();
     await this.transports[Role.pub].pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, offer);
 
     await this.transports[Role.pub].pc.setRemoteDescription(answer);
-    this.transports[Role.pub].candidates.forEach((c) => this.transports[Role.pub].pc.addIceCandidate(c));
+    this.transports[Role.pub].candidates.forEach((c) => this.transports![Role.pub].pc.addIceCandidate(c));
     this.transports[Role.pub].pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
   }
 
+  leave() {
+    if (this.transports) {
+      Object.values(this.transports).forEach((t) => t.pc.close());
+      delete this.transports;
+    }
+  }
+
+  getPubStats(selector?: MediaStreamTrack) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+    return this.transports[Role.pub].pc.getStats(selector);
+  }
+
+  getSubStats(selector?: MediaStreamTrack) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+    return this.transports[Role.sub].pc.getStats(selector);
+  }
+
+  publish(stream: LocalStream) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+    stream.publish(this.transports[Role.pub].pc);
+  }
+
+  createDataChannel(label: string) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+    return this.transports[Role.pub].pc.createDataChannel(label);
+  }
+
+  close() {
+    if (this.transports) {
+      Object.values(this.transports).forEach((t) => t.pc.close());
+    }
+    this.signal.close();
+  }
+
   private trickle({ candidate, target }: Trickle) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
     if (this.transports[target].pc.remoteDescription) {
       this.transports[target].pc.addIceCandidate(candidate);
     } else {
@@ -152,9 +173,13 @@ export default class Client {
   }
 
   private async negotiate(description: RTCSessionDescriptionInit) {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+
     try {
       await this.transports[Role.sub].pc.setRemoteDescription(description);
-      this.transports[Role.sub].candidates.forEach((c) => this.transports[Role.sub].pc.addIceCandidate(c));
+      this.transports[Role.sub].candidates.forEach((c) => this.transports![Role.sub].pc.addIceCandidate(c));
       this.transports[Role.sub].candidates = [];
       const answer = await this.transports[Role.sub].pc.createAnswer();
       await this.transports[Role.sub].pc.setLocalDescription(answer);
@@ -166,6 +191,10 @@ export default class Client {
   }
 
   private async onNegotiationNeeded() {
+    if (!this.transports) {
+      throw Error(errNoSession);
+    }
+
     try {
       const offer = await this.transports[Role.pub].pc.createOffer();
       await this.transports[Role.pub].pc.setLocalDescription(offer);

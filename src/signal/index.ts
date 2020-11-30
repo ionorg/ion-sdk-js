@@ -3,7 +3,6 @@ import { Trickle } from '../client';
 
 export interface Signal {
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
-  onready?: () => void;
   ontrickle?: (trickle: Trickle) => void;
 
   join(sid: string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
