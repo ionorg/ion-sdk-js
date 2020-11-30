@@ -122,6 +122,9 @@ export default class Client {
 
   publish(stream: LocalStream) {
     stream.publish(this.transports[Role.pub].pc);
+    setTimeout(() => {
+      this.onNegotiationNeeded();
+    }, 2000);
   }
 
   createDataChannel(label: string) {
