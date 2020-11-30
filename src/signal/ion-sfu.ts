@@ -4,7 +4,7 @@ import { Trickle } from '../client';
 
 export default class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
-  private _onready?: () => void;
+  private _onopen?: () => void;
   private _onclose?: (ev: Event) => void;
   private _onerror?: (error: Event) => void;
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
@@ -14,7 +14,7 @@ export default class IonSFUJSONRPCSignal implements Signal {
     this.socket = new WebSocket(uri);
 
     this.socket.addEventListener('open', () => {
-      if (this._onready) this._onready();
+      if (this._onopen) this._onopen();
     });
 
     this.socket.addEventListener('error', (e) => {
@@ -101,11 +101,11 @@ export default class IonSFUJSONRPCSignal implements Signal {
     this.socket.close();
   }
 
-  set onready(onready: () => void) {
+  set onopen(onopen: () => void) {
     if (this.socket.readyState === WebSocket.OPEN) {
-      onready();
+      onopen();
     }
-    this._onready = onready;
+    this._onopen = onopen;
   }
   set onerror(onerror: (error: Event) => void) {
     this._onerror = onerror;
