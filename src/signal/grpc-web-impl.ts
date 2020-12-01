@@ -27,7 +27,8 @@ export default class IonSFUGRPCWebSignal implements Signal {
         this.streaming.on('data', (reply: SignalReply) => {
             switch (reply.getPayloadCase()) {
                 case SignalReply.PayloadCase.JOIN:
-                    this._event.emit('join', reply.getJoin());
+                    var desc = JSON.parse(Uint8ArrayToString(reply.getJoin()?.getDescription() as Uint8Array));
+                    this._event.emit('join-reply', desc);
                     break;
                 case SignalReply.PayloadCase.DESCRIPTION:
                     var desc = JSON.parse(Uint8ArrayToString(reply.getDescription() as Uint8Array));
@@ -39,8 +40,8 @@ export default class IonSFUGRPCWebSignal implements Signal {
                 case SignalReply.PayloadCase.TRICKLE:
                     var pbTrickle = reply.getTrickle();
                     if( pbTrickle?.getInit() !== undefined) {
-                        var candidate = JSON.parse(pbTrickle?.getInit() as string);
-                        var trickle = { target: pbTrickle?.getTarget(), candidate: candidate};
+                        var candidate = JSON.parse(pbTrickle.getInit() as string);
+                        var trickle = { target: pbTrickle.getTarget(), candidate: candidate};
                         if (this.ontrickle) this.ontrickle(trickle as Trickle);
                     }
                     break;
@@ -72,9 +73,9 @@ export default class IonSFUGRPCWebSignal implements Signal {
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
             const handler = (desc: RTCSessionDescriptionInit) => {
                 resolve({ type: "answer", sdp: desc.sdp });
-                this._event.removeListener('description', handler);
+                this._event.removeListener('join-reply', handler);
             };
-            this._event.addListener('description', handler);
+            this._event.addListener('join-reply', handler);
         });
     }
 
