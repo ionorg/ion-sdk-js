@@ -7,7 +7,7 @@ import { SignalRequest, SignalReply, JoinRequest, JoinReply } from "./_proto/lib
 import * as pb from "./_proto/library/sfu_pb";
 import { Trickle } from '../client';
 
-export default class IonSFUGRPCGWebSignal implements Signal {
+export default class IonSFUGRPCWebSignal implements Signal {
     protected client: SFUClient;
     protected streaming: BidirectionalStream<SignalRequest, SignalReply>;
     private _event: EventEmitter;
