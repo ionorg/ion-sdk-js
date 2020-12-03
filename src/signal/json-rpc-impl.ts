@@ -49,7 +49,8 @@ export default class IonSFUJSONRPCSignal implements Signal {
       const handler = (event: MessageEvent<any>) => {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
-          resolve(resp.result);
+          if (resp.error) reject(resp.error);
+          else resolve(resp.result);
           this.socket.removeEventListener('message', handler);
         }
       };
@@ -80,9 +81,10 @@ export default class IonSFUJSONRPCSignal implements Signal {
       const handler = (event: MessageEvent<any>) => {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
-          resolve(resp.result);
+          if (resp.error) reject(resp.error);
+          else resolve(resp.result);
+          this.socket.removeEventListener('message', handler);
         }
-        this.socket.removeEventListener('message', handler);
       };
       this.socket.addEventListener('message', handler);
     });
