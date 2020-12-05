@@ -11,7 +11,8 @@ Frontend sdk for the Ion backend.
 ```ts
 import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
 const signal = new IonSFUJSONRPCSignal("wss://ion-sfu:7000");
-const client = new Client("test session", signal);
+const client = new Client(signal);
+signal.onopen = () => client.join("test session")
 
 // Setup handlers
 client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {

@@ -165,7 +165,7 @@ export class LocalStream extends MediaStream {
   }
 
   private static computeAudioConstraints(constraints: Constraints): MediaTrackConstraints {
-    return !!constraints.audio as MediaTrackConstraints;
+    return constraints.audio as MediaTrackConstraints;
   }
 
   private static computeVideoConstraints(constraints: Constraints): MediaTrackConstraints {
