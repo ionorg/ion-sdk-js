@@ -7,11 +7,12 @@ import { SignalRequest, SignalReply, JoinRequest, JoinReply } from "./_proto/lib
 import * as pb from "./_proto/library/sfu_pb";
 import { Trickle } from '../client';
 
-export default class IonSFUGRPCWebSignal implements Signal {
+class IonSFUGRPCWebSignal implements Signal {
     protected client: SFUClient;
     protected streaming: BidirectionalStream<SignalRequest, SignalReply>;
     private _event: EventEmitter;
-    private _onready?: () => void;
+    private _onopen?: () => void;
+    private _onclose?: (ev: Event) => void;
     private _onerror?: (error: Event) => void;
     onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
     ontrickle?: (trickle: Trickle) => void;
@@ -42,8 +43,8 @@ export default class IonSFUGRPCWebSignal implements Signal {
                     const pbTrickle = reply.getTrickle();
                     if (pbTrickle?.getInit() !== undefined) {
                         const candidate = JSON.parse(pbTrickle.getInit() as string);
-                        const trickle = { target: pbTrickle.getTarget(), candidate: {candidate}};
-                        if (this.ontrickle) this.ontrickle(trickle as Trickle);
+                        const trickle = { target: pbTrickle.getTarget(), candidate };
+                        if (this.ontrickle) this.ontrickle(trickle);
                     }
                     break;
                 case SignalReply.PayloadCase.ICECONNECTIONSTATE:
@@ -108,22 +109,29 @@ export default class IonSFUGRPCWebSignal implements Signal {
         this.streaming.end();
     }
 
-    set onready(onready: () => void) {
+
+    set onopen(onopen: () => void) {
         if (this.streaming !== undefined) {
-            onready();
+            onopen();
         }
-        this._onready = onready;
+        this._onopen = onopen;
     }
 
     set onerror(onerror: (error: Event) => void) {
         this._onerror = onerror;
     }
+
+    set onclose(onclose: (ev: Event) => void) {
+        this._onclose = onclose;
+    }
 }
 
 function Uint8ArrayToString(dataArray: Uint8Array): string {
     let dataString = "";
-    for (const element of  dataArray) {
-      dataString += String.fromCharCode(element);
+    for (const element of dataArray) {
+        dataString += String.fromCharCode(element);
     }
     return dataString
 }
+
+export { IonSFUGRPCWebSignal };

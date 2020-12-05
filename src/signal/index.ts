@@ -1,6 +1,5 @@
-import IonSFUJSONRPCSignal from './json-rpc-impl';
-import IonSFUGRPCWebSignal from './grpc-web-impl';
 import { Trickle } from '../client';
+export {Trickle };
 
 export interface Signal {
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
@@ -12,5 +11,3 @@ export interface Signal {
   trickle(trickle: Trickle): void;
   close(): void;
 }
-
-export { IonSFUJSONRPCSignal, IonSFUGRPCWebSignal, Trickle };
