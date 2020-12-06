@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Signal } from './';
+import { Signal } from '.';
 import { Trickle } from '../client';
 
-export default class IonSFUJSONRPCSignal implements Signal {
+class IonSFUJSONRPCSignal implements Signal {
   protected socket: WebSocket;
   private _onopen?: () => void;
   private _onclose?: (ev: Event) => void;
@@ -116,3 +116,5 @@ export default class IonSFUJSONRPCSignal implements Signal {
     this._onclose = onclose;
   }
 }
+
+export { IonSFUJSONRPCSignal };
