@@ -1,4 +1,6 @@
 const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
 module.exports = [{
   entry: './src/index.ts',
   devtool: 'eval-source-map',
@@ -15,7 +17,7 @@ module.exports = [{
   },
 },{
   entry: './src/signal/grpc-web-impl.ts',
-  devtool: 'eval-source-map',
+  devtool: 'source-map',
   output: {
     filename: 'grpc-web.min.js',
     library: 'Signal',
@@ -26,6 +28,11 @@ module.exports = [{
   },
   module: {
     rules: [{ test: /\.ts$/, loader: 'ts-loader' }],
+  },
+  optimization: {
+    minimizer: [new UglifyJsPlugin({
+      sourceMap: false
+    })]
   },
 },{
   entry: './src/signal/json-rpc-impl.ts',
