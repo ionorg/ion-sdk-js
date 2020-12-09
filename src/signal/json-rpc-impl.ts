@@ -37,7 +37,7 @@ class IonSFUJSONRPCSignal implements Signal {
 
   // JsonRPC2 Call
   async call<T>(method: string, params: any): Promise<T> {
-    const id = uuidv4()
+    const id = uuidv4();
     this.socket.send(
       JSON.stringify({
         method,
@@ -56,7 +56,7 @@ class IonSFUJSONRPCSignal implements Signal {
         }
       };
       this.socket.addEventListener('message', handler);
-    })
+    });
   }
 
   // JsonRPC2 Notification
@@ -64,25 +64,25 @@ class IonSFUJSONRPCSignal implements Signal {
     this.socket.send(
       JSON.stringify({
         method,
-        params
-      })
-    )
+        params,
+      }),
+    );
   }
 
   async join(sid: string, offer: RTCSessionDescriptionInit) {
-    return this.call<RTCSessionDescriptionInit>('join', {sid, offer})
+    return this.call<RTCSessionDescriptionInit>('join', { sid, offer });
   }
 
   trickle(trickle: Trickle) {
-    this.notify('trickle', trickle)
+    this.notify('trickle', trickle);
   }
 
   async offer(offer: RTCSessionDescriptionInit) {
-    return this.call<RTCSessionDescriptionInit>('offer', {desc: offer})
+    return this.call<RTCSessionDescriptionInit>('offer', { desc: offer });
   }
 
   answer(answer: RTCSessionDescriptionInit) {
-    this.notify('answer', {desc: answer})
+    this.notify('answer', { desc: answer });
   }
 
   close() {
