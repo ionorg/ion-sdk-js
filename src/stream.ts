@@ -267,7 +267,7 @@ export class LocalStream extends MediaStream {
     this.addTrack(next);
 
     // If published, replace published track with track from new device
-    if (prev && prev.enabled) {
+    if (prev) {
       this.removeTrack(prev);
       prev.stop();
 
