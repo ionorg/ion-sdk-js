@@ -69,7 +69,7 @@ class IonSFUJSONRPCSignal implements Signal {
     )
   }
 
-  join(sid: string, offer: RTCSessionDescriptionInit) {
+  async join(sid: string, offer: RTCSessionDescriptionInit) {
     return this.call<RTCSessionDescriptionInit>('join', {sid, offer})
   }
 
@@ -77,7 +77,7 @@ class IonSFUJSONRPCSignal implements Signal {
     this.notify('trickle', trickle)
   }
 
-  offer(offer: RTCSessionDescriptionInit) {
+  async offer(offer: RTCSessionDescriptionInit) {
     return this.call<RTCSessionDescriptionInit>('offer', {desc: offer})
   }
 
