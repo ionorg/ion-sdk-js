@@ -35,17 +35,18 @@ class IonSFUJSONRPCSignal implements Signal {
     });
   }
 
-  join(sid: string, offer: RTCSessionDescriptionInit) {
-    const id = uuidv4();
+  // JsonRPC2 Call
+  async call<T>(method: string, params: any): Promise<T> {
+    const id = uuidv4()
     this.socket.send(
       JSON.stringify({
-        method: 'join',
-        params: { sid, offer },
+        method,
+        params,
         id,
       }),
     );
 
-    return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       const handler = (event: MessageEvent<any>) => {
         const resp = JSON.parse(event.data);
         if (resp.id === id) {
@@ -55,48 +56,33 @@ class IonSFUJSONRPCSignal implements Signal {
         }
       };
       this.socket.addEventListener('message', handler);
-    });
+    })
+  }
+
+  // JsonRPC2 Notification
+  notify(method: string, params: any) {
+    this.socket.send(
+      JSON.stringify({
+        method,
+        params
+      })
+    )
+  }
+
+  async join(sid: string, offer: RTCSessionDescriptionInit) {
+    return this.call<RTCSessionDescriptionInit>('join', {sid, offer})
   }
 
   trickle(trickle: Trickle) {
-    this.socket.send(
-      JSON.stringify({
-        method: 'trickle',
-        params: trickle,
-      }),
-    );
+    this.notify('trickle', trickle)
   }
 
-  offer(offer: RTCSessionDescriptionInit) {
-    const id = uuidv4();
-    this.socket.send(
-      JSON.stringify({
-        method: 'offer',
-        params: { desc: offer },
-        id,
-      }),
-    );
-
-    return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
-      const handler = (event: MessageEvent<any>) => {
-        const resp = JSON.parse(event.data);
-        if (resp.id === id) {
-          if (resp.error) reject(resp.error);
-          else resolve(resp.result);
-          this.socket.removeEventListener('message', handler);
-        }
-      };
-      this.socket.addEventListener('message', handler);
-    });
+  async offer(offer: RTCSessionDescriptionInit) {
+    return this.call<RTCSessionDescriptionInit>('offer', {desc: offer})
   }
 
   answer(answer: RTCSessionDescriptionInit) {
-    this.socket.send(
-      JSON.stringify({
-        method: 'answer',
-        params: { desc: answer },
-      }),
-    );
+    this.notify('answer', {desc: answer})
   }
 
   close() {
