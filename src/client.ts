@@ -1,7 +1,8 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
 
-const errNoSession = 'no active session, join first';
+const API_CHANNEL = 'ion-sfu';
+const ERR_NO_SESSION = 'no active session, join first';
 
 export interface Sender {
   stream: MediaStream;
@@ -38,12 +39,8 @@ export class Transport {
     this.candidates = [];
 
     if (role === Role.pub) {
-      this.pc.createDataChannel('ion-sfu');
+      this.pc.createDataChannel(API_CHANNEL);
     }
-
-    this.pc.ondatachannel = ({ channel }) => {
-      this.api = channel;
-    };
 
     this.pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
@@ -101,7 +98,8 @@ export default class Client {
     };
 
     this.transports[Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
-      if (ev.channel.label === 'ion-sfu') {
+      if (ev.channel.label === API_CHANNEL) {
+        this.transports![Role.sub].api = ev.channel;
         return;
       }
 
@@ -128,28 +126,28 @@ export default class Client {
 
   getPubStats(selector?: MediaStreamTrack) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
     return this.transports[Role.pub].pc.getStats(selector);
   }
 
   getSubStats(selector?: MediaStreamTrack) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
     return this.transports[Role.sub].pc.getStats(selector);
   }
 
   publish(stream: LocalStream) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
     stream.publish(this.transports[Role.pub].pc);
   }
 
   createDataChannel(label: string) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
     return this.transports[Role.pub].pc.createDataChannel(label);
   }
@@ -163,7 +161,7 @@ export default class Client {
 
   private trickle({ candidate, target }: Trickle) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
     if (this.transports[target].pc.remoteDescription) {
       this.transports[target].pc.addIceCandidate(candidate);
@@ -174,7 +172,7 @@ export default class Client {
 
   private async negotiate(description: RTCSessionDescriptionInit) {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
 
     try {
@@ -192,7 +190,7 @@ export default class Client {
 
   private async onNegotiationNeeded() {
     if (!this.transports) {
-      throw Error(errNoSession);
+      throw Error(ERR_NO_SESSION);
     }
 
     try {
