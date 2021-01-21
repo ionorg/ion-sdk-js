@@ -334,6 +334,22 @@ export class LocalStream extends MediaStream {
     const track = await this.getNewTrack(kind);
     this.updateTrack(track, prev);
   }
+
+  updateMediaEncodingParams(encodingParams: RTCRtpEncodingParameters) {
+    if (!this.pc) return
+    this.pc?.getSenders()?.forEach(sender => {
+      const params = sender.getParameters()
+      if (!params.encodings) {
+        params.encodings = [{}]
+      }
+      params.encodings[0] = {
+        ...params.encodings[0],
+        ...encodingParams
+      }
+      sender.setParameters(params)
+    })
+
+  }
 }
 
 export interface RemoteStream extends MediaStream {
