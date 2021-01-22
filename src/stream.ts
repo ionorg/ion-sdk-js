@@ -337,16 +337,16 @@ export class LocalStream extends MediaStream {
 
   updateMediaEncodingParams(encodingParams: RTCRtpEncodingParameters) {
     if (!this.pc) return;
-    this.getTracks().forEach(track => {
-      const senders = this.pc?.getSenders()?.filter(sender => track.id === sender.track?.id);
-      senders?.forEach(sender => {
+    this.getTracks().forEach((track) => {
+      const senders = this.pc?.getSenders()?.filter((sender) => track.id === sender.track?.id);
+      senders?.forEach((sender) => {
         const params = sender.getParameters();
         if (!params.encodings) {
           params.encodings = [{}];
         }
         params.encodings[0] = {
           ...params.encodings[0],
-          ...encodingParams
+          ...encodingParams,
         };
         sender.setParameters(params);
       });
