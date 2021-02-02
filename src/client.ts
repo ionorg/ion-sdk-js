@@ -101,9 +101,9 @@ export default class Client {
     this.transports[Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
       if (ev.channel.label === API_CHANNEL) {
         this.transports![Role.sub].api = ev.channel;
-        ev.channel.onmessage = (ev) => {
+        ev.channel.onmessage = (e) => {
           if (this.onspeaker) {
-            this.onspeaker(JSON.parse(ev.data));
+            this.onspeaker(JSON.parse(e.data));
           }
         };
         return;
