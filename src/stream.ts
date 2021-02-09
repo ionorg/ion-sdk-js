@@ -96,7 +96,7 @@ export const VideoConstraints: VideoConstraints = {
   },
 };
 
-type Layer = 'none' | 'low' | 'medium' | 'high';
+type Layer = 'low' | 'medium' | 'high';
 
 export interface Encoding {
   layer: Layer;
@@ -357,10 +357,12 @@ export class LocalStream extends MediaStream {
 export interface RemoteStream extends MediaStream {
   api: RTCDataChannel;
   audio: boolean;
-  video: Layer;
-  _videoPreMute: Layer;
+  video: 'none' | Layer;
+  framerate: Layer;
+  _videoPreMute: 'none' | Layer;
 
-  preferLayer(layer: Layer): void;
+  preferLayer(layer: 'none' | Layer): void;
+  preferFramerate(layer: Layer): void;
   mute(kind: 'audio' | 'video'): void;
   unmute(kind: 'audio' | 'video'): void;
 }
@@ -369,6 +371,7 @@ export function makeRemote(stream: MediaStream, transport: Transport): RemoteStr
   const remote = stream as RemoteStream;
   remote.audio = true;
   remote.video = 'none';
+  remote.framerate = 'high';
   remote._videoPreMute = 'high';
 
   const select = () => {
@@ -376,6 +379,7 @@ export function makeRemote(stream: MediaStream, transport: Transport): RemoteStr
       streamId: remote.id,
       video: remote.video,
       audio: remote.audio,
+      framerate: remote.framerate,
     };
 
     if (transport.api) {
@@ -388,8 +392,13 @@ export function makeRemote(stream: MediaStream, transport: Transport): RemoteStr
     }
   };
 
-  remote.preferLayer = (layer: Layer) => {
+  remote.preferLayer = (layer: 'none' | Layer) => {
     remote.video = layer;
+    select();
+  };
+
+  remote.preferFramerate = (layer: Layer) => {
+    remote.framerate = layer;
     select();
   };
 

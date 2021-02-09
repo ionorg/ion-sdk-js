@@ -57,6 +57,7 @@ export default class Client {
 
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
   ondatachannel?: (ev: RTCDataChannelEvent) => void;
+  onspeaker?: (ev: string[]) => void;
 
   constructor(
     signal: Signal,
@@ -94,6 +95,11 @@ export default class Client {
     this.transports[Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
       if (ev.channel.label === API_CHANNEL) {
         this.transports![Role.sub].api = ev.channel;
+        ev.channel.onmessage = (e) => {
+          if (this.onspeaker) {
+            this.onspeaker(JSON.parse(e.data));
+          }
+        };
         return;
       }
 
