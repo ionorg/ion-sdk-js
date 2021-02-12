@@ -13,7 +13,7 @@ import { Client, LocalStream, RemoteStream } from 'ion-sdk-js';
 import { IonSFUJSONRPCSignal } from 'ion-sdk-js/lib/signal/json-rpc-impl';
 const signal = new IonSFUJSONRPCSignal("wss://ion-sfu:7000");
 const client = new Client(signal);
-signal.onopen = () => client.join("test session")
+signal.onopen = () => client.join("test session", "test uid")
 
 // Setup handlers
 client.ontrack = (track: MediaStreamTrack, stream: RemoteStream) => {
