@@ -47,7 +47,16 @@ export class Transport {
         this.signal.trickle({ target: role, candidate });
       }
     };
-  }
+
+    this.pc.oniceconnectionstatechange = async (e) => {
+      if (this.pc.iceConnectionState === "disconnected") {
+        if (this.pc.restartIce) {
+          // this will trigger onNegotiationNeeded
+          this.pc.restartIce();
+        }
+      }
+    }
+  };
 }
 
 export default class Client {

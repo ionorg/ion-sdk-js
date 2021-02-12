@@ -328,6 +328,7 @@ interface RTCPeerConnection extends EventTarget {
   readonly signalingState: RTCSignalingState;
   readonly connectionState: RTCPeerConnectionState;
 
+  restartIce(): void;
   getConfiguration(): RTCConfiguration;
   setConfiguration(configuration: RTCConfiguration): void;
   close(): void;
