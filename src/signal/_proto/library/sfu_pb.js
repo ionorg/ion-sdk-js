@@ -793,6 +793,7 @@ proto.sfu.JoinRequest.prototype.toObject = function(opt_includeInstance) {
 proto.sfu.JoinRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     sid: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    uid: jspb.Message.getFieldWithDefault(msg, 2, ""),
     description: msg.getDescription_asB64()
   };
 
@@ -835,6 +836,10 @@ proto.sfu.JoinRequest.deserializeBinaryFromReader = function(msg, reader) {
       msg.setSid(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUid(value);
+      break;
+    case 3:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
       msg.setDescription(value);
       break;
@@ -874,10 +879,17 @@ proto.sfu.JoinRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getUid();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getDescription_asU8();
   if (f.length > 0) {
     writer.writeBytes(
-      2,
+      3,
       f
     );
   }
@@ -900,16 +912,31 @@ proto.sfu.JoinRequest.prototype.setSid = function(value) {
 
 
 /**
- * optional bytes description = 2;
- * @return {!(string|Uint8Array)}
+ * optional string uid = 2;
+ * @return {string}
  */
-proto.sfu.JoinRequest.prototype.getDescription = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+proto.sfu.JoinRequest.prototype.getUid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.sfu.JoinRequest.prototype.setUid = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
 /**
- * optional bytes description = 2;
+ * optional bytes description = 3;
+ * @return {!(string|Uint8Array)}
+ */
+proto.sfu.JoinRequest.prototype.getDescription = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * optional bytes description = 3;
  * This is a type-conversion wrapper around `getDescription()`
  * @return {string}
  */
@@ -920,7 +947,7 @@ proto.sfu.JoinRequest.prototype.getDescription_asB64 = function() {
 
 
 /**
- * optional bytes description = 2;
+ * optional bytes description = 3;
  * Note that Uint8Array is not supported on all browsers.
  * @see http://caniuse.com/Uint8Array
  * This is a type-conversion wrapper around `getDescription()`
@@ -934,7 +961,7 @@ proto.sfu.JoinRequest.prototype.getDescription_asU8 = function() {
 
 /** @param {!(string|Uint8Array)} value */
 proto.sfu.JoinRequest.prototype.setDescription = function(value) {
-  jspb.Message.setProto3BytesField(this, 2, value);
+  jspb.Message.setProto3BytesField(this, 3, value);
 };
 
 
