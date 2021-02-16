@@ -235,27 +235,24 @@ export class LocalStream extends MediaStream {
           direction: 'sendonly',
           sendEncodings: encodings,
         });
-        this.setPreferredCodec(transceiver);
+        this.setPreferredCodec(transceiver, track.kind);
       } else {
         const transceiver = this.pc.addTransceiver(track, {
           streams: [this],
           direction: 'sendonly',
           sendEncodings: track.kind === 'video' ? [VideoConstraints[this.constraints.resolution].encodings] : undefined,
         });
-
-        if (track.kind === 'video') {
-          this.setPreferredCodec(transceiver);
-        }
+        this.setPreferredCodec(transceiver, track.kind);
       }
     }
   }
 
-  private setPreferredCodec(transceiver: RTCRtpTransceiver) {
+  private setPreferredCodec(transceiver: RTCRtpTransceiver, kind: string) {
     if ('setCodecPreferences' in transceiver) {
-      const cap = RTCRtpSender.getCapabilities('video');
+      const cap = RTCRtpSender.getCapabilities(kind);
       if (!cap) return;
       const selCodec = cap.codecs.find(
-        (c) => c.mimeType === `video/${this.constraints.codec.toUpperCase()}` || c.mimeType === `audio/OPUS`,
+        (c) => c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}` || c.mimeType.toLowerCase() === `audio/opus`
       );
       if (selCodec) {
         transceiver.setCodecPreferences([selCodec]);
