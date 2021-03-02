@@ -49,14 +49,14 @@ export class Transport {
     };
 
     this.pc.oniceconnectionstatechange = async (e) => {
-      if (this.pc.iceConnectionState === "disconnected") {
+      if (this.pc.iceConnectionState === 'disconnected') {
         if (this.pc.restartIce) {
           // this will trigger onNegotiationNeeded
           this.pc.restartIce();
         }
       }
-    }
-  };
+    };
+  }
 }
 
 export default class Client {
