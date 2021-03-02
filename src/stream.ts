@@ -108,6 +108,7 @@ export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
   simulcast?: boolean;
+  sendEmptyOnMute?: boolean;
 }
 
 const defaults = {
@@ -252,7 +253,9 @@ export class LocalStream extends MediaStream {
       const cap = RTCRtpSender.getCapabilities(kind);
       if (!cap) return;
       const selCodec = cap.codecs.find(
-        (c) => c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}` || c.mimeType.toLowerCase() === `audio/opus`
+        (c) =>
+          c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}` ||
+          c.mimeType.toLowerCase() === `audio/opus`,
       );
       if (selCodec) {
         transceiver.setCodecPreferences([selCodec]);
@@ -283,6 +286,21 @@ export class LocalStream extends MediaStream {
         this.publishTrack(next);
       }
     }
+  }
+
+  private initAudioEmptyTrack(): MediaStreamTrack {
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const dst = oscillator.connect(ctx.createMediaStreamDestination()) as any;
+    oscillator.start();
+    return dst.stream.getAudioTracks()[0];
+  }
+
+  private initVideoEmptyTrack(width: number, height: number): MediaStreamTrack {
+    const canvas = Object.assign(document.createElement('canvas'), { width, height }) as any;
+    canvas.getContext('2d')?.fillRect(0, 0, width, height);
+    const stream = canvas.captureStream();
+    return stream.getVideoTracks()[0];
   }
 
   publish(pc: RTCPeerConnection) {
@@ -321,6 +339,14 @@ export class LocalStream extends MediaStream {
 
   mute(kind: 'audio' | 'video') {
     const track = this.getTrack(kind);
+    if (track && this.constraints.sendEmptyOnMute) {
+      const emptyTrack =
+        kind === 'audio'
+          ? this.initAudioEmptyTrack()
+          : this.initVideoEmptyTrack(track?.getSettings().width || 640, track?.getSettings().height || 360);
+      this.updateTrack(emptyTrack, track);
+      return;
+    }
     if (track) {
       track.stop();
     }
