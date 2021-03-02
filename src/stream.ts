@@ -108,7 +108,7 @@ export interface Constraints extends MediaStreamConstraints {
   resolution: string;
   codec: string;
   simulcast?: boolean;
-  dummyTracks?: boolean;
+  sendEmptyOnMute?: boolean;
 }
 
 const defaults = {
@@ -288,7 +288,7 @@ export class LocalStream extends MediaStream {
     }
   }
 
-  private initAudioDummyTrack(): MediaStreamTrack {
+  private initAudioEmptyTrack(): MediaStreamTrack {
     const ctx = new AudioContext();
     const oscillator = ctx.createOscillator();
     const dst = oscillator.connect(ctx.createMediaStreamDestination()) as any;
@@ -296,7 +296,7 @@ export class LocalStream extends MediaStream {
     return dst.stream.getAudioTracks()[0];
   }
 
-  private initVideoDummyTrack(width: number, height: number): MediaStreamTrack {
+  private initVideoEmptyTrack(width: number, height: number): MediaStreamTrack {
     const canvas = Object.assign(document.createElement('canvas'), { width, height }) as any;
     canvas.getContext('2d')?.fillRect(0, 0, width, height);
     const stream = canvas.captureStream();
@@ -339,12 +339,12 @@ export class LocalStream extends MediaStream {
 
   mute(kind: 'audio' | 'video') {
     const track = this.getTrack(kind);
-    if (track && this.constraints.dummyTracks) {
-      const dummyTrack =
+    if (track && this.constraints.sendEmptyOnMute) {
+      const emptyTrack =
         kind === 'audio'
-          ? this.initAudioDummyTrack()
-          : this.initVideoDummyTrack(track?.getSettings().width || 640, track?.getSettings().height || 360);
-      this.updateTrack(dummyTrack, track);
+          ? this.initAudioEmptyTrack()
+          : this.initVideoEmptyTrack(track?.getSettings().width || 640, track?.getSettings().height || 360);
+      this.updateTrack(emptyTrack, track);
       return;
     }
     if (track) {
