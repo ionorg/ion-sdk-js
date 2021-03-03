@@ -289,8 +289,11 @@ export class LocalStream extends MediaStream {
   }
 
   private initAudioEmptyTrack(): MediaStreamTrack {
+    // @ts-ignore
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioContext();
     const oscillator = ctx.createOscillator();
+    oscillator.frequency.setValueAtTime(20000, ctx.currentTime);
     const dst = oscillator.connect(ctx.createMediaStreamDestination()) as any;
     oscillator.start();
     return dst.stream.getAudioTracks()[0];
@@ -344,6 +347,7 @@ export class LocalStream extends MediaStream {
         kind === 'audio'
           ? this.initAudioEmptyTrack()
           : this.initVideoEmptyTrack(track?.getSettings().width || 640, track?.getSettings().height || 360);
+      emptyTrack.enabled = false;
       this.updateTrack(emptyTrack, track);
       return;
     }
