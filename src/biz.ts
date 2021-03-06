@@ -8,12 +8,44 @@ export interface JoinResult {
     reason: string;
   }
 
-export interface PeerEvent {
+enum PeerState {
+    JOIN,
+    LEAVE
+}
 
+export interface PeerEvent {
+    state: PeerState;
+    peer: Peer;
+}
+
+enum StreamState {
+    ADD,
+    UPDATE,
+    REMOVE
 }
 
 export interface StreamEvent {
-    
+    uid: string;
+    state: StreamState;
+    streams: Array<Stream>;
+}
+
+export interface Track {
+    id: string;
+    kind: string;
+    rid: string;
+    ssrc: number;
+    codec: string;
+}
+
+export interface Stream {
+    id: string;
+	tracks: Array<Track>;
+}
+
+export interface Peer {
+    uid: string;
+    streams: Array<Stream>;
 }
 
 export interface Message {
