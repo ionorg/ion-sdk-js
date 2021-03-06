@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
 import { Signal } from '.';
 import { grpc } from '@improbable-eng/grpc-web';
-import { SFUClient, Status, BidirectionalStream } from './_proto/library/sfu_pb_service';
-import { SignalRequest, SignalReply, JoinRequest, JoinReply } from './_proto/library/sfu_pb';
-import * as pb from './_proto/library/sfu_pb';
+import { SFUClient, Status, BidirectionalStream } from './_proto/library/sfu/sfu_pb_service';
+import { SignalRequest, SignalReply, JoinRequest, JoinReply } from './_proto/library/sfu/sfu_pb';
+import * as pb from './_proto/library/sfu/sfu_pb';
 import { Trickle } from '../client';
 
 class IonSFUGRPCWebSignal implements Signal {
