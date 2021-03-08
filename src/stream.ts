@@ -147,9 +147,7 @@ export class LocalStream extends MediaStream {
     },
   ) {
     // @ts-ignore
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-    });
+    const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
 
     return new LocalStream(stream, {
       ...defaults,
