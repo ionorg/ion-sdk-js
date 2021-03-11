@@ -236,11 +236,14 @@ export class LocalStream extends MediaStream {
         });
         this.setPreferredCodec(transceiver, track.kind);
       } else {
-        const transceiver = this.pc.addTransceiver(track, {
+        const init: RTCRtpTransceiverInit = {
           streams: [this],
           direction: 'sendonly',
-          sendEncodings: track.kind === 'video' ? [VideoConstraints[this.constraints.resolution].encodings] : undefined,
-        });
+        };
+        if (track.kind === 'video') {
+          init.sendEncodings = [VideoConstraints[this.constraints.resolution].encodings];
+        }
+        const transceiver = this.pc.addTransceiver(track, init);
         this.setPreferredCodec(transceiver, track.kind);
       }
     }
