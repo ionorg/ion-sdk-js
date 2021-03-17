@@ -19,22 +19,42 @@ export namespace Empty {
   }
 }
 
+export class Error extends jspb.Message {
+  getCode(): number;
+  setCode(value: number): void;
+
+  getReason(): string;
+  setReason(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Error.AsObject;
+  static toObject(includeInstance: boolean, msg: Error): Error.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: Error, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Error;
+  static deserializeBinaryFromReader(message: Error, reader: jspb.BinaryReader): Error;
+}
+
+export namespace Error {
+  export type AsObject = {
+    code: number,
+    reason: string,
+  }
+}
+
 export class Track extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getLabel(): string;
+  setLabel(value: string): void;
+
   getKind(): string;
   setKind(value: string): void;
 
-  getRid(): string;
-  setRid(value: string): void;
-
-  getSsrc(): number;
-  setSsrc(value: number): void;
-
-  getCodec(): string;
-  setCodec(value: string): void;
-
+  getSimulcastMap(): jspb.Map<string, string>;
+  clearSimulcastMap(): void;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Track.AsObject;
   static toObject(includeInstance: boolean, msg: Track): Track.AsObject;
@@ -48,10 +68,9 @@ export class Track extends jspb.Message {
 export namespace Track {
   export type AsObject = {
     id: string,
+    label: string,
     kind: string,
-    rid: string,
-    ssrc: number,
-    codec: string,
+    simulcastMap: Array<[string, string]>,
   }
 }
 
@@ -82,13 +101,16 @@ export namespace Stream {
 }
 
 export class Peer extends jspb.Message {
+  getSid(): string;
+  setSid(value: string): void;
+
   getUid(): string;
   setUid(value: string): void;
 
-  clearStreamsList(): void;
-  getStreamsList(): Array<Stream>;
-  setStreamsList(value: Array<Stream>): void;
-  addStreams(value?: Stream, index?: number): Stream;
+  getInfo(): Uint8Array | string;
+  getInfo_asU8(): Uint8Array;
+  getInfo_asB64(): string;
+  setInfo(value: Uint8Array | string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Peer.AsObject;
@@ -102,72 +124,87 @@ export class Peer extends jspb.Message {
 
 export namespace Peer {
   export type AsObject = {
+    sid: string,
     uid: string,
-    streamsList: Array<Stream.AsObject>,
+    info: Uint8Array | string,
   }
 }
 
-export class Session extends jspb.Message {
-  hasNode(): boolean;
-  clearNode(): void;
-  getNode(): Node | undefined;
-  setNode(value?: Node): void;
+export class SessionEvent extends jspb.Message {
+  getState(): SessionEvent.StateMap[keyof SessionEvent.StateMap];
+  setState(value: SessionEvent.StateMap[keyof SessionEvent.StateMap]): void;
+
+  getNid(): string;
+  setNid(value: string): void;
 
   getSid(): string;
   setSid(value: string): void;
 
-  clearPeersList(): void;
-  getPeersList(): Array<Peer>;
-  setPeersList(value: Array<Peer>): void;
-  addPeers(value?: Peer, index?: number): Peer;
-
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Session.AsObject;
-  static toObject(includeInstance: boolean, msg: Session): Session.AsObject;
+  toObject(includeInstance?: boolean): SessionEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: SessionEvent): SessionEvent.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Session, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Session;
-  static deserializeBinaryFromReader(message: Session, reader: jspb.BinaryReader): Session;
+  static serializeBinaryToWriter(message: SessionEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SessionEvent;
+  static deserializeBinaryFromReader(message: SessionEvent, reader: jspb.BinaryReader): SessionEvent;
 }
 
-export namespace Session {
+export namespace SessionEvent {
   export type AsObject = {
-    node?: Node.AsObject,
+    state: SessionEvent.StateMap[keyof SessionEvent.StateMap],
+    nid: string,
     sid: string,
-    peersList: Array<Peer.AsObject>,
-  }
-}
-
-export class SessionReport extends jspb.Message {
-  getState(): SessionReport.StateMap[keyof SessionReport.StateMap];
-  setState(value: SessionReport.StateMap[keyof SessionReport.StateMap]): void;
-
-  hasSession(): boolean;
-  clearSession(): void;
-  getSession(): Session | undefined;
-  setSession(value?: Session): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SessionReport.AsObject;
-  static toObject(includeInstance: boolean, msg: SessionReport): SessionReport.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: SessionReport, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): SessionReport;
-  static deserializeBinaryFromReader(message: SessionReport, reader: jspb.BinaryReader): SessionReport;
-}
-
-export namespace SessionReport {
-  export type AsObject = {
-    state: SessionReport.StateMap[keyof SessionReport.StateMap],
-    session?: Session.AsObject,
   }
 
   export interface StateMap {
-    NEW: 0;
-    UPDATE: 1;
-    DELETE: 2;
+    ADD: 0;
+    REMOVE: 1;
+  }
+
+  export const State: StateMap;
+}
+
+export class StreamEvent extends jspb.Message {
+  getState(): StreamEvent.StateMap[keyof StreamEvent.StateMap];
+  setState(value: StreamEvent.StateMap[keyof StreamEvent.StateMap]): void;
+
+  getNid(): string;
+  setNid(value: string): void;
+
+  getSid(): string;
+  setSid(value: string): void;
+
+  getUid(): string;
+  setUid(value: string): void;
+
+  clearStreamsList(): void;
+  getStreamsList(): Array<Stream>;
+  setStreamsList(value: Array<Stream>): void;
+  addStreams(value?: Stream, index?: number): Stream;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StreamEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: StreamEvent): StreamEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: StreamEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): StreamEvent;
+  static deserializeBinaryFromReader(message: StreamEvent, reader: jspb.BinaryReader): StreamEvent;
+}
+
+export namespace StreamEvent {
+  export type AsObject = {
+    state: StreamEvent.StateMap[keyof StreamEvent.StateMap],
+    nid: string,
+    sid: string,
+    uid: string,
+    streamsList: Array<Stream.AsObject>,
+  }
+
+  export interface StateMap {
+    ADD: 0;
+    REMOVE: 1;
   }
 
   export const State: StateMap;
@@ -200,45 +237,8 @@ export namespace PeerEvent {
 
   export interface StateMap {
     JOIN: 0;
-    LEAVE: 1;
-  }
-
-  export const State: StateMap;
-}
-
-export class StreamEvent extends jspb.Message {
-  getUid(): string;
-  setUid(value: string): void;
-
-  getState(): StreamEvent.StateMap[keyof StreamEvent.StateMap];
-  setState(value: StreamEvent.StateMap[keyof StreamEvent.StateMap]): void;
-
-  clearStreamsList(): void;
-  getStreamsList(): Array<Stream>;
-  setStreamsList(value: Array<Stream>): void;
-  addStreams(value?: Stream, index?: number): Stream;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): StreamEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: StreamEvent): StreamEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: StreamEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): StreamEvent;
-  static deserializeBinaryFromReader(message: StreamEvent, reader: jspb.BinaryReader): StreamEvent;
-}
-
-export namespace StreamEvent {
-  export type AsObject = {
-    uid: string,
-    state: StreamEvent.StateMap[keyof StreamEvent.StateMap],
-    streamsList: Array<Stream.AsObject>,
-  }
-
-  export interface StateMap {
-    ADD: 0;
     UPDATE: 1;
-    REMOVE: 2;
+    LEAVE: 2;
   }
 
   export const State: StateMap;
@@ -274,27 +274,30 @@ export namespace Message {
   }
 }
 
-export class Parameter extends jspb.Message {
-  getKey(): string;
-  setKey(value: string): void;
+export class RPC extends jspb.Message {
+  getProtocol(): string;
+  setProtocol(value: string): void;
 
-  getValue(): string;
-  setValue(value: string): void;
+  getAddr(): string;
+  setAddr(value: string): void;
 
+  getParamsMap(): jspb.Map<string, string>;
+  clearParamsMap(): void;
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Parameter.AsObject;
-  static toObject(includeInstance: boolean, msg: Parameter): Parameter.AsObject;
+  toObject(includeInstance?: boolean): RPC.AsObject;
+  static toObject(includeInstance: boolean, msg: RPC): RPC.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Parameter, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Parameter;
-  static deserializeBinaryFromReader(message: Parameter, reader: jspb.BinaryReader): Parameter;
+  static serializeBinaryToWriter(message: RPC, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RPC;
+  static deserializeBinaryFromReader(message: RPC, reader: jspb.BinaryReader): RPC;
 }
 
-export namespace Parameter {
+export namespace RPC {
   export type AsObject = {
-    key: string,
-    value: string,
+    protocol: string,
+    addr: string,
+    paramsMap: Array<[string, string]>,
   }
 }
 
@@ -307,6 +310,11 @@ export class Node extends jspb.Message {
 
   getService(): string;
   setService(value: string): void;
+
+  hasRpc(): boolean;
+  clearRpc(): void;
+  getRpc(): RPC | undefined;
+  setRpc(value?: RPC): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Node.AsObject;
@@ -323,6 +331,7 @@ export namespace Node {
     dc: string,
     nid: string,
     service: string,
+    rpc?: RPC.AsObject,
   }
 }
 

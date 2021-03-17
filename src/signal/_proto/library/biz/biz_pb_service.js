@@ -10,13 +10,13 @@ var Biz = (function () {
   return Biz;
 }());
 
-Biz.Join = {
-  methodName: "Join",
+Biz.Signal = {
+  methodName: "Signal",
   service: Biz,
   requestStream: true,
   responseStream: true,
-  requestType: biz_pb.JoinRequest,
-  responseType: biz_pb.JoinReply
+  requestType: biz_pb.SignalRequest,
+  responseType: biz_pb.SignalReply
 };
 
 exports.Biz = Biz;
@@ -26,13 +26,13 @@ function BizClient(serviceHost, options) {
   this.options = options || {};
 }
 
-BizClient.prototype.join = function join(metadata) {
+BizClient.prototype.signal = function signal(metadata) {
   var listeners = {
     data: [],
     end: [],
     status: []
   };
-  var client = grpc.client(Biz.Join, {
+  var client = grpc.client(Biz.Signal, {
     host: this.serviceHost,
     metadata: metadata,
     transport: this.options.transport

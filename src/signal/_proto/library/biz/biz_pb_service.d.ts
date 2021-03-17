@@ -4,18 +4,18 @@
 import * as biz_pb from "./biz_pb";
 import {grpc} from "@improbable-eng/grpc-web";
 
-type BizJoin = {
+type BizSignal = {
   readonly methodName: string;
   readonly service: typeof Biz;
   readonly requestStream: true;
   readonly responseStream: true;
-  readonly requestType: typeof biz_pb.JoinRequest;
-  readonly responseType: typeof biz_pb.JoinReply;
+  readonly requestType: typeof biz_pb.SignalRequest;
+  readonly responseType: typeof biz_pb.SignalReply;
 };
 
 export class Biz {
   static readonly serviceName: string;
-  static readonly Join: BizJoin;
+  static readonly Signal: BizSignal;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -50,6 +50,6 @@ export class BizClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
-  join(metadata?: grpc.Metadata): BidirectionalStream<biz_pb.JoinRequest, biz_pb.JoinReply>;
+  signal(metadata?: grpc.Metadata): BidirectionalStream<biz_pb.SignalRequest, biz_pb.SignalReply>;
 }
 

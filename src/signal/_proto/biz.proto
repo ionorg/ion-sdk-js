@@ -7,17 +7,15 @@ option go_package = "github.com/pion/ion/pkg/grpc/biz";
 package biz;
 
 service Biz {
-  rpc Join(stream JoinRequest) returns (stream JoinReply);
+  rpc Signal(stream SignalRequest) returns (stream SignalReply);
 }
 
 message Join {
-    string sid = 1;
-    string uid = 2;
-    bytes info = 3;
-    string token = 4;
+    ion.Peer peer = 1;
+    string token = 2;
 }
 
-message JoinResult {
+message JoinReply {
     bool success = 1;
     string reason = 2;
 }
@@ -26,7 +24,11 @@ message Leave {
     string uid = 1;
 }
 
-message JoinRequest {
+message LeaveReply {
+    string reason = 1;
+}
+
+message SignalRequest {
   oneof payload {
     Join join = 1;
     Leave leave = 2;
@@ -34,11 +36,12 @@ message JoinRequest {
   }
 }
 
-message JoinReply {
+message SignalReply {
   oneof payload {
-        JoinResult result = 1;
-        ion.PeerEvent peerEvent = 2;
-        ion.StreamEvent streamEvent = 3;
-        ion.Message msg = 4;
+        JoinReply joinReply = 1;
+        LeaveReply leaveReply = 2;
+        ion.PeerEvent peerEvent = 3;
+        ion.StreamEvent streamEvent = 4;
+        ion.Message msg = 5;
     }
 }

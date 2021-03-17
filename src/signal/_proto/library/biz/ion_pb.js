@@ -12,15 +12,15 @@ var goog = jspb;
 var global = Function('return this')();
 
 goog.exportSymbol('proto.ion.Empty', null, global);
+goog.exportSymbol('proto.ion.Error', null, global);
 goog.exportSymbol('proto.ion.Message', null, global);
 goog.exportSymbol('proto.ion.Node', null, global);
-goog.exportSymbol('proto.ion.Parameter', null, global);
 goog.exportSymbol('proto.ion.Peer', null, global);
 goog.exportSymbol('proto.ion.PeerEvent', null, global);
 goog.exportSymbol('proto.ion.PeerEvent.State', null, global);
-goog.exportSymbol('proto.ion.Session', null, global);
-goog.exportSymbol('proto.ion.SessionReport', null, global);
-goog.exportSymbol('proto.ion.SessionReport.State', null, global);
+goog.exportSymbol('proto.ion.RPC', null, global);
+goog.exportSymbol('proto.ion.SessionEvent', null, global);
+goog.exportSymbol('proto.ion.SessionEvent.State', null, global);
 goog.exportSymbol('proto.ion.Stream', null, global);
 goog.exportSymbol('proto.ion.StreamEvent', null, global);
 goog.exportSymbol('proto.ion.StreamEvent.State', null, global);
@@ -152,6 +152,175 @@ proto.ion.Empty.serializeBinaryToWriter = function(message, writer) {
  * @extends {jspb.Message}
  * @constructor
  */
+proto.ion.Error = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.ion.Error, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.ion.Error.displayName = 'proto.ion.Error';
+}
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.ion.Error.prototype.toObject = function(opt_includeInstance) {
+  return proto.ion.Error.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.ion.Error} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.ion.Error.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    code: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    reason: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.ion.Error}
+ */
+proto.ion.Error.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.ion.Error;
+  return proto.ion.Error.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.ion.Error} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.ion.Error}
+ */
+proto.ion.Error.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setCode(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setReason(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.ion.Error.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.ion.Error.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.ion.Error} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.ion.Error.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getCode();
+  if (f !== 0) {
+    writer.writeInt32(
+      1,
+      f
+    );
+  }
+  f = message.getReason();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional int32 code = 1;
+ * @return {number}
+ */
+proto.ion.Error.prototype.getCode = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/** @param {number} value */
+proto.ion.Error.prototype.setCode = function(value) {
+  jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional string reason = 2;
+ * @return {string}
+ */
+proto.ion.Error.prototype.getReason = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.Error.prototype.setReason = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
 proto.ion.Track = function(opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
@@ -189,10 +358,9 @@ proto.ion.Track.prototype.toObject = function(opt_includeInstance) {
 proto.ion.Track.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    kind: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    rid: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    ssrc: jspb.Message.getFieldWithDefault(msg, 4, 0),
-    codec: jspb.Message.getFieldWithDefault(msg, 5, "")
+    label: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    kind: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    simulcastMap: (f = msg.getSimulcastMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -235,19 +403,17 @@ proto.ion.Track.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
-      msg.setKind(value);
+      msg.setLabel(value);
       break;
     case 3:
       var value = /** @type {string} */ (reader.readString());
-      msg.setRid(value);
+      msg.setKind(value);
       break;
     case 4:
-      var value = /** @type {number} */ (reader.readUint32());
-      msg.setSsrc(value);
-      break;
-    case 5:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setCodec(value);
+      var value = msg.getSimulcastMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "");
+         });
       break;
     default:
       reader.skipField();
@@ -285,33 +451,23 @@ proto.ion.Track.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getKind();
+  f = message.getLabel();
   if (f.length > 0) {
     writer.writeString(
       2,
       f
     );
   }
-  f = message.getRid();
+  f = message.getKind();
   if (f.length > 0) {
     writer.writeString(
       3,
       f
     );
   }
-  f = message.getSsrc();
-  if (f !== 0) {
-    writer.writeUint32(
-      4,
-      f
-    );
-  }
-  f = message.getCodec();
-  if (f.length > 0) {
-    writer.writeString(
-      5,
-      f
-    );
+  f = message.getSimulcastMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(4, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -332,62 +488,50 @@ proto.ion.Track.prototype.setId = function(value) {
 
 
 /**
- * optional string kind = 2;
+ * optional string label = 2;
  * @return {string}
  */
-proto.ion.Track.prototype.getKind = function() {
+proto.ion.Track.prototype.getLabel = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
 /** @param {string} value */
-proto.ion.Track.prototype.setKind = function(value) {
+proto.ion.Track.prototype.setLabel = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
 /**
- * optional string rid = 3;
+ * optional string kind = 3;
  * @return {string}
  */
-proto.ion.Track.prototype.getRid = function() {
+proto.ion.Track.prototype.getKind = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
 
 /** @param {string} value */
-proto.ion.Track.prototype.setRid = function(value) {
+proto.ion.Track.prototype.setKind = function(value) {
   jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
 /**
- * optional uint32 ssrc = 4;
- * @return {number}
+ * map<string, string> simulcast = 4;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
  */
-proto.ion.Track.prototype.getSsrc = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+proto.ion.Track.prototype.getSimulcastMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 4, opt_noLazyCreate,
+      null));
 };
 
 
-/** @param {number} value */
-proto.ion.Track.prototype.setSsrc = function(value) {
-  jspb.Message.setProto3IntField(this, 4, value);
-};
-
-
-/**
- * optional string codec = 5;
- * @return {string}
- */
-proto.ion.Track.prototype.getCodec = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
-};
-
-
-/** @param {string} value */
-proto.ion.Track.prototype.setCodec = function(value) {
-  jspb.Message.setProto3StringField(this, 5, value);
+proto.ion.Track.prototype.clearSimulcastMap = function() {
+  this.getSimulcastMap().clear();
 };
 
 
@@ -414,7 +558,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.ion.Stream.repeatedFields_ = [3];
+proto.ion.Stream.repeatedFields_ = [2];
 
 
 
@@ -445,7 +589,7 @@ proto.ion.Stream.prototype.toObject = function(opt_includeInstance) {
  */
 proto.ion.Stream.toObject = function(includeInstance, msg) {
   var f, obj = {
-    id: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     tracksList: jspb.Message.toObjectList(msg.getTracksList(),
     proto.ion.Track.toObject, includeInstance)
   };
@@ -484,11 +628,11 @@ proto.ion.Stream.deserializeBinaryFromReader = function(msg, reader) {
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 2:
+    case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
       break;
-    case 3:
+    case 2:
       var value = new proto.ion.Track;
       reader.readMessage(value,proto.ion.Track.deserializeBinaryFromReader);
       msg.addTracks(value);
@@ -525,14 +669,14 @@ proto.ion.Stream.serializeBinaryToWriter = function(message, writer) {
   f = message.getId();
   if (f.length > 0) {
     writer.writeString(
-      2,
+      1,
       f
     );
   }
   f = message.getTracksList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      3,
+      2,
       f,
       proto.ion.Track.serializeBinaryToWriter
     );
@@ -541,33 +685,33 @@ proto.ion.Stream.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional string id = 2;
+ * optional string id = 1;
  * @return {string}
  */
 proto.ion.Stream.prototype.getId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /** @param {string} value */
 proto.ion.Stream.prototype.setId = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * repeated Track tracks = 3;
+ * repeated Track tracks = 2;
  * @return {!Array<!proto.ion.Track>}
  */
 proto.ion.Stream.prototype.getTracksList = function() {
   return /** @type{!Array<!proto.ion.Track>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.ion.Track, 3));
+    jspb.Message.getRepeatedWrapperField(this, proto.ion.Track, 2));
 };
 
 
 /** @param {!Array<!proto.ion.Track>} value */
 proto.ion.Stream.prototype.setTracksList = function(value) {
-  jspb.Message.setRepeatedWrapperField(this, 3, value);
+  jspb.Message.setRepeatedWrapperField(this, 2, value);
 };
 
 
@@ -577,7 +721,7 @@ proto.ion.Stream.prototype.setTracksList = function(value) {
  * @return {!proto.ion.Track}
  */
 proto.ion.Stream.prototype.addTracks = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.ion.Track, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.ion.Track, opt_index);
 };
 
 
@@ -598,19 +742,12 @@ proto.ion.Stream.prototype.clearTracksList = function() {
  * @constructor
  */
 proto.ion.Peer = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, proto.ion.Peer.repeatedFields_, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.ion.Peer, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
   proto.ion.Peer.displayName = 'proto.ion.Peer';
 }
-/**
- * List of repeated fields within this message type.
- * @private {!Array<number>}
- * @const
- */
-proto.ion.Peer.repeatedFields_ = [2];
-
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -640,9 +777,9 @@ proto.ion.Peer.prototype.toObject = function(opt_includeInstance) {
  */
 proto.ion.Peer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    uid: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    streamsList: jspb.Message.toObjectList(msg.getStreamsList(),
-    proto.ion.Stream.toObject, includeInstance)
+    sid: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    uid: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    info: msg.getInfo_asB64()
   };
 
   if (includeInstance) {
@@ -681,12 +818,15 @@ proto.ion.Peer.deserializeBinaryFromReader = function(msg, reader) {
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setUid(value);
+      msg.setSid(value);
       break;
     case 2:
-      var value = new proto.ion.Stream;
-      reader.readMessage(value,proto.ion.Stream.deserializeBinaryFromReader);
-      msg.addStreams(value);
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUid(value);
+      break;
+    case 3:
+      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      msg.setInfo(value);
       break;
     default:
       reader.skipField();
@@ -717,67 +857,96 @@ proto.ion.Peer.prototype.serializeBinary = function() {
  */
 proto.ion.Peer.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getUid();
+  f = message.getSid();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
-  f = message.getStreamsList();
+  f = message.getUid();
   if (f.length > 0) {
-    writer.writeRepeatedMessage(
+    writer.writeString(
       2,
-      f,
-      proto.ion.Stream.serializeBinaryToWriter
+      f
+    );
+  }
+  f = message.getInfo_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(
+      3,
+      f
     );
   }
 };
 
 
 /**
- * optional string uid = 1;
+ * optional string sid = 1;
  * @return {string}
  */
-proto.ion.Peer.prototype.getUid = function() {
+proto.ion.Peer.prototype.getSid = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /** @param {string} value */
-proto.ion.Peer.prototype.setUid = function(value) {
+proto.ion.Peer.prototype.setSid = function(value) {
   jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * repeated Stream streams = 2;
- * @return {!Array<!proto.ion.Stream>}
+ * optional string uid = 2;
+ * @return {string}
  */
-proto.ion.Peer.prototype.getStreamsList = function() {
-  return /** @type{!Array<!proto.ion.Stream>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.ion.Stream, 2));
+proto.ion.Peer.prototype.getUid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
-/** @param {!Array<!proto.ion.Stream>} value */
-proto.ion.Peer.prototype.setStreamsList = function(value) {
-  jspb.Message.setRepeatedWrapperField(this, 2, value);
+/** @param {string} value */
+proto.ion.Peer.prototype.setUid = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
 /**
- * @param {!proto.ion.Stream=} opt_value
- * @param {number=} opt_index
- * @return {!proto.ion.Stream}
+ * optional bytes info = 3;
+ * @return {!(string|Uint8Array)}
  */
-proto.ion.Peer.prototype.addStreams = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 2, opt_value, proto.ion.Stream, opt_index);
+proto.ion.Peer.prototype.getInfo = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
 
-proto.ion.Peer.prototype.clearStreamsList = function() {
-  this.setStreamsList([]);
+/**
+ * optional bytes info = 3;
+ * This is a type-conversion wrapper around `getInfo()`
+ * @return {string}
+ */
+proto.ion.Peer.prototype.getInfo_asB64 = function() {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(
+      this.getInfo()));
+};
+
+
+/**
+ * optional bytes info = 3;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getInfo()`
+ * @return {!Uint8Array}
+ */
+proto.ion.Peer.prototype.getInfo_asU8 = function() {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
+      this.getInfo()));
+};
+
+
+/** @param {!(string|Uint8Array)} value */
+proto.ion.Peer.prototype.setInfo = function(value) {
+  jspb.Message.setProto3BytesField(this, 3, value);
 };
 
 
@@ -792,20 +961,13 @@ proto.ion.Peer.prototype.clearStreamsList = function() {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.ion.Session = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, proto.ion.Session.repeatedFields_, null);
+proto.ion.SessionEvent = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
-goog.inherits(proto.ion.Session, jspb.Message);
+goog.inherits(proto.ion.SessionEvent, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
-  proto.ion.Session.displayName = 'proto.ion.Session';
+  proto.ion.SessionEvent.displayName = 'proto.ion.SessionEvent';
 }
-/**
- * List of repeated fields within this message type.
- * @private {!Array<number>}
- * @const
- */
-proto.ion.Session.repeatedFields_ = [4];
-
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -819,8 +981,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
  *     for transitional soy proto support: http://goto/soy-param-migration
  * @return {!Object}
  */
-proto.ion.Session.prototype.toObject = function(opt_includeInstance) {
-  return proto.ion.Session.toObject(opt_includeInstance, this);
+proto.ion.SessionEvent.prototype.toObject = function(opt_includeInstance) {
+  return proto.ion.SessionEvent.toObject(opt_includeInstance, this);
 };
 
 
@@ -829,16 +991,15 @@ proto.ion.Session.prototype.toObject = function(opt_includeInstance) {
  * @param {boolean|undefined} includeInstance Whether to include the JSPB
  *     instance for transitional soy proto support:
  *     http://goto/soy-param-migration
- * @param {!proto.ion.Session} msg The msg instance to transform.
+ * @param {!proto.ion.SessionEvent} msg The msg instance to transform.
  * @return {!Object}
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.ion.Session.toObject = function(includeInstance, msg) {
+proto.ion.SessionEvent.toObject = function(includeInstance, msg) {
   var f, obj = {
-    node: (f = msg.getNode()) && proto.ion.Node.toObject(includeInstance, f),
-    sid: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    peersList: jspb.Message.toObjectList(msg.getPeersList(),
-    proto.ion.Peer.toObject, includeInstance)
+    state: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    nid: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    sid: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -852,42 +1013,40 @@ proto.ion.Session.toObject = function(includeInstance, msg) {
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.ion.Session}
+ * @return {!proto.ion.SessionEvent}
  */
-proto.ion.Session.deserializeBinary = function(bytes) {
+proto.ion.SessionEvent.deserializeBinary = function(bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.ion.Session;
-  return proto.ion.Session.deserializeBinaryFromReader(msg, reader);
+  var msg = new proto.ion.SessionEvent;
+  return proto.ion.SessionEvent.deserializeBinaryFromReader(msg, reader);
 };
 
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
  * given reader into the given message object.
- * @param {!proto.ion.Session} msg The message object to deserialize into.
+ * @param {!proto.ion.SessionEvent} msg The message object to deserialize into.
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.ion.Session}
+ * @return {!proto.ion.SessionEvent}
  */
-proto.ion.Session.deserializeBinaryFromReader = function(msg, reader) {
+proto.ion.SessionEvent.deserializeBinaryFromReader = function(msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = new proto.ion.Node;
-      reader.readMessage(value,proto.ion.Node.deserializeBinaryFromReader);
-      msg.setNode(value);
+    case 2:
+      var value = /** @type {!proto.ion.SessionEvent.State} */ (reader.readEnum());
+      msg.setState(value);
       break;
     case 3:
       var value = /** @type {string} */ (reader.readString());
-      msg.setSid(value);
+      msg.setNid(value);
       break;
     case 4:
-      var value = new proto.ion.Peer;
-      reader.readMessage(value,proto.ion.Peer.deserializeBinaryFromReader);
-      msg.addPeers(value);
+      var value = /** @type {string} */ (reader.readString());
+      msg.setSid(value);
       break;
     default:
       reader.skipField();
@@ -902,9 +1061,9 @@ proto.ion.Session.deserializeBinaryFromReader = function(msg, reader) {
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.ion.Session.prototype.serializeBinary = function() {
+proto.ion.SessionEvent.prototype.serializeBinary = function() {
   var writer = new jspb.BinaryWriter();
-  proto.ion.Session.serializeBinaryToWriter(this, writer);
+  proto.ion.SessionEvent.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
 
@@ -912,250 +1071,31 @@ proto.ion.Session.prototype.serializeBinary = function() {
 /**
  * Serializes the given message to binary data (in protobuf wire
  * format), writing to the given BinaryWriter.
- * @param {!proto.ion.Session} message
+ * @param {!proto.ion.SessionEvent} message
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.ion.Session.serializeBinaryToWriter = function(message, writer) {
+proto.ion.SessionEvent.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getNode();
-  if (f != null) {
-    writer.writeMessage(
-      1,
-      f,
-      proto.ion.Node.serializeBinaryToWriter
+  f = message.getState();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      2,
+      f
     );
   }
-  f = message.getSid();
+  f = message.getNid();
   if (f.length > 0) {
     writer.writeString(
       3,
       f
     );
   }
-  f = message.getPeersList();
+  f = message.getSid();
   if (f.length > 0) {
-    writer.writeRepeatedMessage(
+    writer.writeString(
       4,
-      f,
-      proto.ion.Peer.serializeBinaryToWriter
-    );
-  }
-};
-
-
-/**
- * optional Node node = 1;
- * @return {?proto.ion.Node}
- */
-proto.ion.Session.prototype.getNode = function() {
-  return /** @type{?proto.ion.Node} */ (
-    jspb.Message.getWrapperField(this, proto.ion.Node, 1));
-};
-
-
-/** @param {?proto.ion.Node|undefined} value */
-proto.ion.Session.prototype.setNode = function(value) {
-  jspb.Message.setWrapperField(this, 1, value);
-};
-
-
-proto.ion.Session.prototype.clearNode = function() {
-  this.setNode(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {!boolean}
- */
-proto.ion.Session.prototype.hasNode = function() {
-  return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional string sid = 3;
- * @return {string}
- */
-proto.ion.Session.prototype.getSid = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/** @param {string} value */
-proto.ion.Session.prototype.setSid = function(value) {
-  jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * repeated Peer peers = 4;
- * @return {!Array<!proto.ion.Peer>}
- */
-proto.ion.Session.prototype.getPeersList = function() {
-  return /** @type{!Array<!proto.ion.Peer>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.ion.Peer, 4));
-};
-
-
-/** @param {!Array<!proto.ion.Peer>} value */
-proto.ion.Session.prototype.setPeersList = function(value) {
-  jspb.Message.setRepeatedWrapperField(this, 4, value);
-};
-
-
-/**
- * @param {!proto.ion.Peer=} opt_value
- * @param {number=} opt_index
- * @return {!proto.ion.Peer}
- */
-proto.ion.Session.prototype.addPeers = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 4, opt_value, proto.ion.Peer, opt_index);
-};
-
-
-proto.ion.Session.prototype.clearPeersList = function() {
-  this.setPeersList([]);
-};
-
-
-
-/**
- * Generated by JsPbCodeGenerator.
- * @param {Array=} opt_data Optional initial data array, typically from a
- * server response, or constructed directly in Javascript. The array is used
- * in place and becomes part of the constructed object. It is not cloned.
- * If no data is provided, the constructed object will be empty, but still
- * valid.
- * @extends {jspb.Message}
- * @constructor
- */
-proto.ion.SessionReport = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
-};
-goog.inherits(proto.ion.SessionReport, jspb.Message);
-if (goog.DEBUG && !COMPILED) {
-  proto.ion.SessionReport.displayName = 'proto.ion.SessionReport';
-}
-
-
-if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto suitable for use in Soy templates.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.ion.SessionReport.prototype.toObject = function(opt_includeInstance) {
-  return proto.ion.SessionReport.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.ion.SessionReport} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.ion.SessionReport.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    state: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    session: (f = msg.getSession()) && proto.ion.Session.toObject(includeInstance, f)
-  };
-
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
-
-
-/**
- * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.ion.SessionReport}
- */
-proto.ion.SessionReport.deserializeBinary = function(bytes) {
-  var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.ion.SessionReport;
-  return proto.ion.SessionReport.deserializeBinaryFromReader(msg, reader);
-};
-
-
-/**
- * Deserializes binary data (in protobuf wire format) from the
- * given reader into the given message object.
- * @param {!proto.ion.SessionReport} msg The message object to deserialize into.
- * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.ion.SessionReport}
- */
-proto.ion.SessionReport.deserializeBinaryFromReader = function(msg, reader) {
-  while (reader.nextField()) {
-    if (reader.isEndGroup()) {
-      break;
-    }
-    var field = reader.getFieldNumber();
-    switch (field) {
-    case 3:
-      var value = /** @type {!proto.ion.SessionReport.State} */ (reader.readEnum());
-      msg.setState(value);
-      break;
-    case 4:
-      var value = new proto.ion.Session;
-      reader.readMessage(value,proto.ion.Session.deserializeBinaryFromReader);
-      msg.setSession(value);
-      break;
-    default:
-      reader.skipField();
-      break;
-    }
-  }
-  return msg;
-};
-
-
-/**
- * Serializes the message to binary data (in protobuf wire format).
- * @return {!Uint8Array}
- */
-proto.ion.SessionReport.prototype.serializeBinary = function() {
-  var writer = new jspb.BinaryWriter();
-  proto.ion.SessionReport.serializeBinaryToWriter(this, writer);
-  return writer.getResultBuffer();
-};
-
-
-/**
- * Serializes the given message to binary data (in protobuf wire
- * format), writing to the given BinaryWriter.
- * @param {!proto.ion.SessionReport} message
- * @param {!jspb.BinaryWriter} writer
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.ion.SessionReport.serializeBinaryToWriter = function(message, writer) {
-  var f = undefined;
-  f = message.getState();
-  if (f !== 0.0) {
-    writer.writeEnum(
-      3,
       f
-    );
-  }
-  f = message.getSession();
-  if (f != null) {
-    writer.writeMessage(
-      4,
-      f,
-      proto.ion.Session.serializeBinaryToWriter
     );
   }
 };
@@ -1164,54 +1104,337 @@ proto.ion.SessionReport.serializeBinaryToWriter = function(message, writer) {
 /**
  * @enum {number}
  */
-proto.ion.SessionReport.State = {
-  NEW: 0,
-  UPDATE: 1,
-  DELETE: 2
+proto.ion.SessionEvent.State = {
+  ADD: 0,
+  REMOVE: 1
 };
 
 /**
- * optional State state = 3;
- * @return {!proto.ion.SessionReport.State}
+ * optional State state = 2;
+ * @return {!proto.ion.SessionEvent.State}
  */
-proto.ion.SessionReport.prototype.getState = function() {
-  return /** @type {!proto.ion.SessionReport.State} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+proto.ion.SessionEvent.prototype.getState = function() {
+  return /** @type {!proto.ion.SessionEvent.State} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
 };
 
 
-/** @param {!proto.ion.SessionReport.State} value */
-proto.ion.SessionReport.prototype.setState = function(value) {
-  jspb.Message.setProto3EnumField(this, 3, value);
-};
-
-
-/**
- * optional Session session = 4;
- * @return {?proto.ion.Session}
- */
-proto.ion.SessionReport.prototype.getSession = function() {
-  return /** @type{?proto.ion.Session} */ (
-    jspb.Message.getWrapperField(this, proto.ion.Session, 4));
-};
-
-
-/** @param {?proto.ion.Session|undefined} value */
-proto.ion.SessionReport.prototype.setSession = function(value) {
-  jspb.Message.setWrapperField(this, 4, value);
-};
-
-
-proto.ion.SessionReport.prototype.clearSession = function() {
-  this.setSession(undefined);
+/** @param {!proto.ion.SessionEvent.State} value */
+proto.ion.SessionEvent.prototype.setState = function(value) {
+  jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 
 /**
- * Returns whether this field is set.
- * @return {!boolean}
+ * optional string nid = 3;
+ * @return {string}
  */
-proto.ion.SessionReport.prototype.hasSession = function() {
-  return jspb.Message.getField(this, 4) != null;
+proto.ion.SessionEvent.prototype.getNid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.SessionEvent.prototype.setNid = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional string sid = 4;
+ * @return {string}
+ */
+proto.ion.SessionEvent.prototype.getSid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.SessionEvent.prototype.setSid = function(value) {
+  jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.ion.StreamEvent = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.ion.StreamEvent.repeatedFields_, null);
+};
+goog.inherits(proto.ion.StreamEvent, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  proto.ion.StreamEvent.displayName = 'proto.ion.StreamEvent';
+}
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.ion.StreamEvent.repeatedFields_ = [6];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto suitable for use in Soy templates.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
+ * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
+ *     for transitional soy proto support: http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.ion.StreamEvent.prototype.toObject = function(opt_includeInstance) {
+  return proto.ion.StreamEvent.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Whether to include the JSPB
+ *     instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.ion.StreamEvent} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.ion.StreamEvent.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    state: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    nid: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    sid: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    uid: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    streamsList: jspb.Message.toObjectList(msg.getStreamsList(),
+    proto.ion.Stream.toObject, includeInstance)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.ion.StreamEvent}
+ */
+proto.ion.StreamEvent.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.ion.StreamEvent;
+  return proto.ion.StreamEvent.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.ion.StreamEvent} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.ion.StreamEvent}
+ */
+proto.ion.StreamEvent.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 2:
+      var value = /** @type {!proto.ion.StreamEvent.State} */ (reader.readEnum());
+      msg.setState(value);
+      break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setNid(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setSid(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUid(value);
+      break;
+    case 6:
+      var value = new proto.ion.Stream;
+      reader.readMessage(value,proto.ion.Stream.deserializeBinaryFromReader);
+      msg.addStreams(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.ion.StreamEvent.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.ion.StreamEvent.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.ion.StreamEvent} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.ion.StreamEvent.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getState();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      2,
+      f
+    );
+  }
+  f = message.getNid();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
+  f = message.getSid();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
+  f = message.getUid();
+  if (f.length > 0) {
+    writer.writeString(
+      5,
+      f
+    );
+  }
+  f = message.getStreamsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      6,
+      f,
+      proto.ion.Stream.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * @enum {number}
+ */
+proto.ion.StreamEvent.State = {
+  ADD: 0,
+  REMOVE: 1
+};
+
+/**
+ * optional State state = 2;
+ * @return {!proto.ion.StreamEvent.State}
+ */
+proto.ion.StreamEvent.prototype.getState = function() {
+  return /** @type {!proto.ion.StreamEvent.State} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/** @param {!proto.ion.StreamEvent.State} value */
+proto.ion.StreamEvent.prototype.setState = function(value) {
+  jspb.Message.setProto3EnumField(this, 2, value);
+};
+
+
+/**
+ * optional string nid = 3;
+ * @return {string}
+ */
+proto.ion.StreamEvent.prototype.getNid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.StreamEvent.prototype.setNid = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional string sid = 4;
+ * @return {string}
+ */
+proto.ion.StreamEvent.prototype.getSid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.StreamEvent.prototype.setSid = function(value) {
+  jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string uid = 5;
+ * @return {string}
+ */
+proto.ion.StreamEvent.prototype.getUid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/** @param {string} value */
+proto.ion.StreamEvent.prototype.setUid = function(value) {
+  jspb.Message.setProto3StringField(this, 5, value);
+};
+
+
+/**
+ * repeated Stream streams = 6;
+ * @return {!Array<!proto.ion.Stream>}
+ */
+proto.ion.StreamEvent.prototype.getStreamsList = function() {
+  return /** @type{!Array<!proto.ion.Stream>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.ion.Stream, 6));
+};
+
+
+/** @param {!Array<!proto.ion.Stream>} value */
+proto.ion.StreamEvent.prototype.setStreamsList = function(value) {
+  jspb.Message.setRepeatedWrapperField(this, 6, value);
+};
+
+
+/**
+ * @param {!proto.ion.Stream=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.ion.Stream}
+ */
+proto.ion.StreamEvent.prototype.addStreams = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 6, opt_value, proto.ion.Stream, opt_index);
+};
+
+
+proto.ion.StreamEvent.prototype.clearStreamsList = function() {
+  this.setStreamsList([]);
 };
 
 
@@ -1262,7 +1485,7 @@ proto.ion.PeerEvent.prototype.toObject = function(opt_includeInstance) {
  */
 proto.ion.PeerEvent.toObject = function(includeInstance, msg) {
   var f, obj = {
-    state: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    state: jspb.Message.getFieldWithDefault(msg, 3, 0),
     peer: (f = msg.getPeer()) && proto.ion.Peer.toObject(includeInstance, f)
   };
 
@@ -1300,11 +1523,11 @@ proto.ion.PeerEvent.deserializeBinaryFromReader = function(msg, reader) {
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 2:
+    case 3:
       var value = /** @type {!proto.ion.PeerEvent.State} */ (reader.readEnum());
       msg.setState(value);
       break;
-    case 3:
+    case 4:
       var value = new proto.ion.Peer;
       reader.readMessage(value,proto.ion.Peer.deserializeBinaryFromReader);
       msg.setPeer(value);
@@ -1341,14 +1564,14 @@ proto.ion.PeerEvent.serializeBinaryToWriter = function(message, writer) {
   f = message.getState();
   if (f !== 0.0) {
     writer.writeEnum(
-      2,
+      3,
       f
     );
   }
   f = message.getPeer();
   if (f != null) {
     writer.writeMessage(
-      3,
+      4,
       f,
       proto.ion.Peer.serializeBinaryToWriter
     );
@@ -1361,37 +1584,38 @@ proto.ion.PeerEvent.serializeBinaryToWriter = function(message, writer) {
  */
 proto.ion.PeerEvent.State = {
   JOIN: 0,
-  LEAVE: 1
+  UPDATE: 1,
+  LEAVE: 2
 };
 
 /**
- * optional State state = 2;
+ * optional State state = 3;
  * @return {!proto.ion.PeerEvent.State}
  */
 proto.ion.PeerEvent.prototype.getState = function() {
-  return /** @type {!proto.ion.PeerEvent.State} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+  return /** @type {!proto.ion.PeerEvent.State} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
 };
 
 
 /** @param {!proto.ion.PeerEvent.State} value */
 proto.ion.PeerEvent.prototype.setState = function(value) {
-  jspb.Message.setProto3EnumField(this, 2, value);
+  jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 
 /**
- * optional Peer peer = 3;
+ * optional Peer peer = 4;
  * @return {?proto.ion.Peer}
  */
 proto.ion.PeerEvent.prototype.getPeer = function() {
   return /** @type{?proto.ion.Peer} */ (
-    jspb.Message.getWrapperField(this, proto.ion.Peer, 3));
+    jspb.Message.getWrapperField(this, proto.ion.Peer, 4));
 };
 
 
 /** @param {?proto.ion.Peer|undefined} value */
 proto.ion.PeerEvent.prototype.setPeer = function(value) {
-  jspb.Message.setWrapperField(this, 3, value);
+  jspb.Message.setWrapperField(this, 4, value);
 };
 
 
@@ -1405,238 +1629,7 @@ proto.ion.PeerEvent.prototype.clearPeer = function() {
  * @return {!boolean}
  */
 proto.ion.PeerEvent.prototype.hasPeer = function() {
-  return jspb.Message.getField(this, 3) != null;
-};
-
-
-
-/**
- * Generated by JsPbCodeGenerator.
- * @param {Array=} opt_data Optional initial data array, typically from a
- * server response, or constructed directly in Javascript. The array is used
- * in place and becomes part of the constructed object. It is not cloned.
- * If no data is provided, the constructed object will be empty, but still
- * valid.
- * @extends {jspb.Message}
- * @constructor
- */
-proto.ion.StreamEvent = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, proto.ion.StreamEvent.repeatedFields_, null);
-};
-goog.inherits(proto.ion.StreamEvent, jspb.Message);
-if (goog.DEBUG && !COMPILED) {
-  proto.ion.StreamEvent.displayName = 'proto.ion.StreamEvent';
-}
-/**
- * List of repeated fields within this message type.
- * @private {!Array<number>}
- * @const
- */
-proto.ion.StreamEvent.repeatedFields_ = [5];
-
-
-
-if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto suitable for use in Soy templates.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.ion.StreamEvent.prototype.toObject = function(opt_includeInstance) {
-  return proto.ion.StreamEvent.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.ion.StreamEvent} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.ion.StreamEvent.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    uid: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    state: jspb.Message.getFieldWithDefault(msg, 4, 0),
-    streamsList: jspb.Message.toObjectList(msg.getStreamsList(),
-    proto.ion.Stream.toObject, includeInstance)
-  };
-
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
-
-
-/**
- * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.ion.StreamEvent}
- */
-proto.ion.StreamEvent.deserializeBinary = function(bytes) {
-  var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.ion.StreamEvent;
-  return proto.ion.StreamEvent.deserializeBinaryFromReader(msg, reader);
-};
-
-
-/**
- * Deserializes binary data (in protobuf wire format) from the
- * given reader into the given message object.
- * @param {!proto.ion.StreamEvent} msg The message object to deserialize into.
- * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.ion.StreamEvent}
- */
-proto.ion.StreamEvent.deserializeBinaryFromReader = function(msg, reader) {
-  while (reader.nextField()) {
-    if (reader.isEndGroup()) {
-      break;
-    }
-    var field = reader.getFieldNumber();
-    switch (field) {
-    case 3:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUid(value);
-      break;
-    case 4:
-      var value = /** @type {!proto.ion.StreamEvent.State} */ (reader.readEnum());
-      msg.setState(value);
-      break;
-    case 5:
-      var value = new proto.ion.Stream;
-      reader.readMessage(value,proto.ion.Stream.deserializeBinaryFromReader);
-      msg.addStreams(value);
-      break;
-    default:
-      reader.skipField();
-      break;
-    }
-  }
-  return msg;
-};
-
-
-/**
- * Serializes the message to binary data (in protobuf wire format).
- * @return {!Uint8Array}
- */
-proto.ion.StreamEvent.prototype.serializeBinary = function() {
-  var writer = new jspb.BinaryWriter();
-  proto.ion.StreamEvent.serializeBinaryToWriter(this, writer);
-  return writer.getResultBuffer();
-};
-
-
-/**
- * Serializes the given message to binary data (in protobuf wire
- * format), writing to the given BinaryWriter.
- * @param {!proto.ion.StreamEvent} message
- * @param {!jspb.BinaryWriter} writer
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.ion.StreamEvent.serializeBinaryToWriter = function(message, writer) {
-  var f = undefined;
-  f = message.getUid();
-  if (f.length > 0) {
-    writer.writeString(
-      3,
-      f
-    );
-  }
-  f = message.getState();
-  if (f !== 0.0) {
-    writer.writeEnum(
-      4,
-      f
-    );
-  }
-  f = message.getStreamsList();
-  if (f.length > 0) {
-    writer.writeRepeatedMessage(
-      5,
-      f,
-      proto.ion.Stream.serializeBinaryToWriter
-    );
-  }
-};
-
-
-/**
- * @enum {number}
- */
-proto.ion.StreamEvent.State = {
-  ADD: 0,
-  UPDATE: 1,
-  REMOVE: 2
-};
-
-/**
- * optional string uid = 3;
- * @return {string}
- */
-proto.ion.StreamEvent.prototype.getUid = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/** @param {string} value */
-proto.ion.StreamEvent.prototype.setUid = function(value) {
-  jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * optional State state = 4;
- * @return {!proto.ion.StreamEvent.State}
- */
-proto.ion.StreamEvent.prototype.getState = function() {
-  return /** @type {!proto.ion.StreamEvent.State} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
-};
-
-
-/** @param {!proto.ion.StreamEvent.State} value */
-proto.ion.StreamEvent.prototype.setState = function(value) {
-  jspb.Message.setProto3EnumField(this, 4, value);
-};
-
-
-/**
- * repeated Stream streams = 5;
- * @return {!Array<!proto.ion.Stream>}
- */
-proto.ion.StreamEvent.prototype.getStreamsList = function() {
-  return /** @type{!Array<!proto.ion.Stream>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.ion.Stream, 5));
-};
-
-
-/** @param {!Array<!proto.ion.Stream>} value */
-proto.ion.StreamEvent.prototype.setStreamsList = function(value) {
-  jspb.Message.setRepeatedWrapperField(this, 5, value);
-};
-
-
-/**
- * @param {!proto.ion.Stream=} opt_value
- * @param {number=} opt_index
- * @return {!proto.ion.Stream}
- */
-proto.ion.StreamEvent.prototype.addStreams = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 5, opt_value, proto.ion.Stream, opt_index);
-};
-
-
-proto.ion.StreamEvent.prototype.clearStreamsList = function() {
-  this.setStreamsList([]);
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
@@ -1871,12 +1864,12 @@ proto.ion.Message.prototype.setData = function(value) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.ion.Parameter = function(opt_data) {
+proto.ion.RPC = function(opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
-goog.inherits(proto.ion.Parameter, jspb.Message);
+goog.inherits(proto.ion.RPC, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
-  proto.ion.Parameter.displayName = 'proto.ion.Parameter';
+  proto.ion.RPC.displayName = 'proto.ion.RPC';
 }
 
 
@@ -1891,8 +1884,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
  *     for transitional soy proto support: http://goto/soy-param-migration
  * @return {!Object}
  */
-proto.ion.Parameter.prototype.toObject = function(opt_includeInstance) {
-  return proto.ion.Parameter.toObject(opt_includeInstance, this);
+proto.ion.RPC.prototype.toObject = function(opt_includeInstance) {
+  return proto.ion.RPC.toObject(opt_includeInstance, this);
 };
 
 
@@ -1901,14 +1894,15 @@ proto.ion.Parameter.prototype.toObject = function(opt_includeInstance) {
  * @param {boolean|undefined} includeInstance Whether to include the JSPB
  *     instance for transitional soy proto support:
  *     http://goto/soy-param-migration
- * @param {!proto.ion.Parameter} msg The msg instance to transform.
+ * @param {!proto.ion.RPC} msg The msg instance to transform.
  * @return {!Object}
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.ion.Parameter.toObject = function(includeInstance, msg) {
+proto.ion.RPC.toObject = function(includeInstance, msg) {
   var f, obj = {
-    key: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    value: jspb.Message.getFieldWithDefault(msg, 2, "")
+    protocol: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    addr: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    paramsMap: (f = msg.getParamsMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -1922,23 +1916,23 @@ proto.ion.Parameter.toObject = function(includeInstance, msg) {
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.ion.Parameter}
+ * @return {!proto.ion.RPC}
  */
-proto.ion.Parameter.deserializeBinary = function(bytes) {
+proto.ion.RPC.deserializeBinary = function(bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.ion.Parameter;
-  return proto.ion.Parameter.deserializeBinaryFromReader(msg, reader);
+  var msg = new proto.ion.RPC;
+  return proto.ion.RPC.deserializeBinaryFromReader(msg, reader);
 };
 
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
  * given reader into the given message object.
- * @param {!proto.ion.Parameter} msg The message object to deserialize into.
+ * @param {!proto.ion.RPC} msg The message object to deserialize into.
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.ion.Parameter}
+ * @return {!proto.ion.RPC}
  */
-proto.ion.Parameter.deserializeBinaryFromReader = function(msg, reader) {
+proto.ion.RPC.deserializeBinaryFromReader = function(msg, reader) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
@@ -1947,11 +1941,17 @@ proto.ion.Parameter.deserializeBinaryFromReader = function(msg, reader) {
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setKey(value);
+      msg.setProtocol(value);
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
-      msg.setValue(value);
+      msg.setAddr(value);
+      break;
+    case 3:
+      var value = msg.getParamsMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "");
+         });
       break;
     default:
       reader.skipField();
@@ -1966,9 +1966,9 @@ proto.ion.Parameter.deserializeBinaryFromReader = function(msg, reader) {
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.ion.Parameter.prototype.serializeBinary = function() {
+proto.ion.RPC.prototype.serializeBinary = function() {
   var writer = new jspb.BinaryWriter();
-  proto.ion.Parameter.serializeBinaryToWriter(this, writer);
+  proto.ion.RPC.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
 
@@ -1976,56 +1976,78 @@ proto.ion.Parameter.prototype.serializeBinary = function() {
 /**
  * Serializes the given message to binary data (in protobuf wire
  * format), writing to the given BinaryWriter.
- * @param {!proto.ion.Parameter} message
+ * @param {!proto.ion.RPC} message
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.ion.Parameter.serializeBinaryToWriter = function(message, writer) {
+proto.ion.RPC.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getKey();
+  f = message.getProtocol();
   if (f.length > 0) {
     writer.writeString(
       1,
       f
     );
   }
-  f = message.getValue();
+  f = message.getAddr();
   if (f.length > 0) {
     writer.writeString(
       2,
       f
     );
   }
+  f = message.getParamsMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+  }
 };
 
 
 /**
- * optional string key = 1;
+ * optional string protocol = 1;
  * @return {string}
  */
-proto.ion.Parameter.prototype.getKey = function() {
+proto.ion.RPC.prototype.getProtocol = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /** @param {string} value */
-proto.ion.Parameter.prototype.setKey = function(value) {
+proto.ion.RPC.prototype.setProtocol = function(value) {
   jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
 /**
- * optional string value = 2;
+ * optional string addr = 2;
  * @return {string}
  */
-proto.ion.Parameter.prototype.getValue = function() {
+proto.ion.RPC.prototype.getAddr = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
 /** @param {string} value */
-proto.ion.Parameter.prototype.setValue = function(value) {
+proto.ion.RPC.prototype.setAddr = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * map<string, string> params = 3;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
+ */
+proto.ion.RPC.prototype.getParamsMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 3, opt_noLazyCreate,
+      null));
+};
+
+
+proto.ion.RPC.prototype.clearParamsMap = function() {
+  this.getParamsMap().clear();
 };
 
 
@@ -2078,7 +2100,8 @@ proto.ion.Node.toObject = function(includeInstance, msg) {
   var f, obj = {
     dc: jspb.Message.getFieldWithDefault(msg, 1, ""),
     nid: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    service: jspb.Message.getFieldWithDefault(msg, 3, "")
+    service: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    rpc: (f = msg.getRpc()) && proto.ion.RPC.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2126,6 +2149,11 @@ proto.ion.Node.deserializeBinaryFromReader = function(msg, reader) {
     case 3:
       var value = /** @type {string} */ (reader.readString());
       msg.setService(value);
+      break;
+    case 4:
+      var value = new proto.ion.RPC;
+      reader.readMessage(value,proto.ion.RPC.deserializeBinaryFromReader);
+      msg.setRpc(value);
       break;
     default:
       reader.skipField();
@@ -2177,6 +2205,14 @@ proto.ion.Node.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getRpc();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.ion.RPC.serializeBinaryToWriter
+    );
+  }
 };
 
 
@@ -2222,6 +2258,36 @@ proto.ion.Node.prototype.getService = function() {
 /** @param {string} value */
 proto.ion.Node.prototype.setService = function(value) {
   jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional RPC rpc = 4;
+ * @return {?proto.ion.RPC}
+ */
+proto.ion.Node.prototype.getRpc = function() {
+  return /** @type{?proto.ion.RPC} */ (
+    jspb.Message.getWrapperField(this, proto.ion.RPC, 4));
+};
+
+
+/** @param {?proto.ion.RPC|undefined} value */
+proto.ion.Node.prototype.setRpc = function(value) {
+  jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+proto.ion.Node.prototype.clearRpc = function() {
+  this.setRpc(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {!boolean}
+ */
+proto.ion.Node.prototype.hasRpc = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

@@ -5,16 +5,10 @@ import * as jspb from "google-protobuf";
 import * as ion_pb from "./ion_pb";
 
 export class Join extends jspb.Message {
-  getSid(): string;
-  setSid(value: string): void;
-
-  getUid(): string;
-  setUid(value: string): void;
-
-  getInfo(): Uint8Array | string;
-  getInfo_asU8(): Uint8Array;
-  getInfo_asB64(): string;
-  setInfo(value: Uint8Array | string): void;
+  hasPeer(): boolean;
+  clearPeer(): void;
+  getPeer(): ion_pb.Peer | undefined;
+  setPeer(value?: ion_pb.Peer): void;
 
   getToken(): string;
   setToken(value: string): void;
@@ -31,14 +25,12 @@ export class Join extends jspb.Message {
 
 export namespace Join {
   export type AsObject = {
-    sid: string,
-    uid: string,
-    info: Uint8Array | string,
+    peer?: ion_pb.Peer.AsObject,
     token: string,
   }
 }
 
-export class JoinResult extends jspb.Message {
+export class JoinReply extends jspb.Message {
   getSuccess(): boolean;
   setSuccess(value: boolean): void;
 
@@ -46,16 +38,16 @@ export class JoinResult extends jspb.Message {
   setReason(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): JoinResult.AsObject;
-  static toObject(includeInstance: boolean, msg: JoinResult): JoinResult.AsObject;
+  toObject(includeInstance?: boolean): JoinReply.AsObject;
+  static toObject(includeInstance: boolean, msg: JoinReply): JoinReply.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: JoinResult, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): JoinResult;
-  static deserializeBinaryFromReader(message: JoinResult, reader: jspb.BinaryReader): JoinResult;
+  static serializeBinaryToWriter(message: JoinReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): JoinReply;
+  static deserializeBinaryFromReader(message: JoinReply, reader: jspb.BinaryReader): JoinReply;
 }
 
-export namespace JoinResult {
+export namespace JoinReply {
   export type AsObject = {
     success: boolean,
     reason: string,
@@ -82,7 +74,27 @@ export namespace Leave {
   }
 }
 
-export class JoinRequest extends jspb.Message {
+export class LeaveReply extends jspb.Message {
+  getReason(): string;
+  setReason(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): LeaveReply.AsObject;
+  static toObject(includeInstance: boolean, msg: LeaveReply): LeaveReply.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: LeaveReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): LeaveReply;
+  static deserializeBinaryFromReader(message: LeaveReply, reader: jspb.BinaryReader): LeaveReply;
+}
+
+export namespace LeaveReply {
+  export type AsObject = {
+    reason: string,
+  }
+}
+
+export class SignalRequest extends jspb.Message {
   hasJoin(): boolean;
   clearJoin(): void;
   getJoin(): Join | undefined;
@@ -98,18 +110,18 @@ export class JoinRequest extends jspb.Message {
   getMsg(): ion_pb.Message | undefined;
   setMsg(value?: ion_pb.Message): void;
 
-  getPayloadCase(): JoinRequest.PayloadCase;
+  getPayloadCase(): SignalRequest.PayloadCase;
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): JoinRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: JoinRequest): JoinRequest.AsObject;
+  toObject(includeInstance?: boolean): SignalRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SignalRequest): SignalRequest.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: JoinRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): JoinRequest;
-  static deserializeBinaryFromReader(message: JoinRequest, reader: jspb.BinaryReader): JoinRequest;
+  static serializeBinaryToWriter(message: SignalRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SignalRequest;
+  static deserializeBinaryFromReader(message: SignalRequest, reader: jspb.BinaryReader): SignalRequest;
 }
 
-export namespace JoinRequest {
+export namespace SignalRequest {
   export type AsObject = {
     join?: Join.AsObject,
     leave?: Leave.AsObject,
@@ -124,11 +136,16 @@ export namespace JoinRequest {
   }
 }
 
-export class JoinReply extends jspb.Message {
-  hasResult(): boolean;
-  clearResult(): void;
-  getResult(): JoinResult | undefined;
-  setResult(value?: JoinResult): void;
+export class SignalReply extends jspb.Message {
+  hasJoinreply(): boolean;
+  clearJoinreply(): void;
+  getJoinreply(): JoinReply | undefined;
+  setJoinreply(value?: JoinReply): void;
+
+  hasLeavereply(): boolean;
+  clearLeavereply(): void;
+  getLeavereply(): LeaveReply | undefined;
+  setLeavereply(value?: LeaveReply): void;
 
   hasPeerevent(): boolean;
   clearPeerevent(): void;
@@ -145,20 +162,21 @@ export class JoinReply extends jspb.Message {
   getMsg(): ion_pb.Message | undefined;
   setMsg(value?: ion_pb.Message): void;
 
-  getPayloadCase(): JoinReply.PayloadCase;
+  getPayloadCase(): SignalReply.PayloadCase;
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): JoinReply.AsObject;
-  static toObject(includeInstance: boolean, msg: JoinReply): JoinReply.AsObject;
+  toObject(includeInstance?: boolean): SignalReply.AsObject;
+  static toObject(includeInstance: boolean, msg: SignalReply): SignalReply.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: JoinReply, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): JoinReply;
-  static deserializeBinaryFromReader(message: JoinReply, reader: jspb.BinaryReader): JoinReply;
+  static serializeBinaryToWriter(message: SignalReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SignalReply;
+  static deserializeBinaryFromReader(message: SignalReply, reader: jspb.BinaryReader): SignalReply;
 }
 
-export namespace JoinReply {
+export namespace SignalReply {
   export type AsObject = {
-    result?: JoinResult.AsObject,
+    joinreply?: JoinReply.AsObject,
+    leavereply?: LeaveReply.AsObject,
     peerevent?: ion_pb.PeerEvent.AsObject,
     streamevent?: ion_pb.StreamEvent.AsObject,
     msg?: ion_pb.Message.AsObject,
@@ -166,10 +184,11 @@ export namespace JoinReply {
 
   export enum PayloadCase {
     PAYLOAD_NOT_SET = 0,
-    RESULT = 1,
-    PEEREVENT = 2,
-    STREAMEVENT = 3,
-    MSG = 4,
+    JOINREPLY = 1,
+    LEAVEREPLY = 2,
+    PEEREVENT = 3,
+    STREAMEVENT = 4,
+    MSG = 5,
   }
 }
 
