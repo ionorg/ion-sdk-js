@@ -2,69 +2,16 @@ import { grpc } from '@improbable-eng/grpc-web';
 import { EventEmitter } from 'events';
 import * as biz from './_proto/library/biz/biz_pb';
 import * as ion from './_proto/library/biz/ion_pb';
-import { BidirectionalStream, BizClient } from './_proto/library/biz/biz_pb_service';
+import * as biz_rpc from './_proto/library/biz/biz_pb_service';
+import { JoinResult, PeerState, StreamState, Message } from '../ion';
 
-export interface JoinResult {
-    success: boolean;
-    reason: string;
-  }
-
-enum PeerState {
-    NONE,
-    JOIN,
-    UPDATE,
-    LEAVE,
-}
-
-export interface Peer {
-    uid: string;
-    sid: string;
-    info: any;
-}
-
-export interface PeerEvent {
-    state: PeerState;
-    peer: Peer;
-}
-
-enum StreamState {
-    NONE,
-    ADD,
-    REMOVE,
-}
-
-export interface StreamEvent {
-    uid: string;
-    state: StreamState;
-    streams: Array<Stream>;
-}
-
-export interface Track {
-    id: string;
-    label: string;
-    kind: string;
-    simulcast: Map<string,string>;
-}
-
-export interface Stream {
-    id: string;
-	tracks: Array<Track>;
-}
-
-export interface Message {
-    from: string ;
-    to: string;
-    data: any;
-}
-
-export class BIZ {
-    protected client: BizClient;
-    protected streaming: BidirectionalStream<biz.SignalRequest, biz.SignalReply>;
-    private _event: EventEmitter;
+export class BizClient extends EventEmitter {
+    protected client: biz_rpc.BizClient;
+    protected streaming: biz_rpc.BidirectionalStream<biz.SignalRequest, biz.SignalReply>;
 
     constructor(uri: string) {
-        this._event = new EventEmitter();
-        this.client = new BizClient(uri, {
+        super();
+        this.client = new biz_rpc.BizClient(uri, {
           transport: grpc.WebsocketTransport(),
         });
 
@@ -73,17 +20,11 @@ export class BIZ {
             switch (reply.getPayloadCase()) {
                 case biz.SignalReply.PayloadCase.JOINREPLY:
                     var result = {success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason"};
-                    this._event.emit('join-reply', result);
-                    if (this.onjoin) {
-                        this.onjoin(result.success, result.reason);
-                    }
+                    this.emit('join-reply', result);
                 break;
                 case biz.SignalReply.PayloadCase.LEAVEREPLY:
                     const reason = reply.getLeavereply()?.getReason() || "unkown reason";
-                    this._event.emit('leave-reply', reason);
-                    if (this.onleave) {
-                        this.onleave(reason);
-                    }
+                    this.emit('leave-reply', reason);
                 break;
                 case biz.SignalReply.PayloadCase.PEEREVENT:
                 {
@@ -105,9 +46,7 @@ export class BIZ {
                             state = PeerState.LEAVE;
                             break;
                     }
-                    if (this.onpeerevent) {
-                        this.onpeerevent(state, peer);
-                    }
+                    this.emit("peer-event", {state, peer});
                 }
                 break;
                 case biz.SignalReply.PayloadCase.STREAMEVENT:
@@ -142,21 +81,12 @@ export class BIZ {
                         }
                         streams.push(stream);
                     });
-
-                    if (this.onstreamevent) {
-                        this.onstreamevent(state, sid, uid, streams);
-                    }
+                    this.emit("stream-event", {state, sid, uid, streams});
                 }
                 break;
                 case biz.SignalReply.PayloadCase.MSG:
                     const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: reply.getMsg()?.getData()};
-                    this._event.emit('message', msg);
-                    if (this.onmessage) {
-                        this.onmessage(
-                            reply.getMsg()?.getFrom() || "",
-                            reply.getMsg()?.getTo() || "",
-                            reply.getMsg()?.getData());
-                    }
+                    this.emit('message', msg);
                 break;
             }
         });
@@ -183,9 +113,9 @@ export class BIZ {
         return new Promise<JoinResult>((resolve, reject) => {
         const handler = (result: JoinResult) => {
             resolve(result);
-            this._event.removeListener('join-reply', handler);
+            this.removeListener('join-reply', handler);
         };
-        this._event.addListener('join-reply', handler);
+        this.addListener('join-reply', handler);
         });
     }
 
@@ -200,13 +130,13 @@ export class BIZ {
         return new Promise<string>((resolve, reject) => {
             const handler = (reason: string) => {
                 resolve(reason);
-                this._event.removeListener('join-reply', handler);
+                this.removeListener('join-reply', handler);
             };
-            this._event.addListener('join-reply', handler);
+            this.addListener('join-reply', handler);
         });
     }
 
-    async send(msg: Message) {
+    async sendMessage(msg: Message) {
         const request = new biz.SignalRequest();
         const message = new ion.Message();
         message.setFrom(msg.from);
@@ -216,13 +146,7 @@ export class BIZ {
         this.streaming.write(request);
     }
 
-    onjoin?:(success: boolean, reason: string) => void;
-
-    onleave?:(reason: string) => void;
-
-    onpeerevent?: (state: PeerState, peer: Peer) => void;
-
-    onstreamevent?: (state: StreamState, sid: string, uid: string, streams: Array<Stream>) => void;
-
-    onmessage?:(from: string, to: string, data: any) => void;
+    close () {
+        this.streaming.end();
+    }
 }
