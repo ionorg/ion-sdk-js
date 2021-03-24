@@ -20,7 +20,7 @@ export class BizClient extends EventEmitter {
         this.streaming.on('data', (reply: biz.SignalReply) => {
             switch (reply.getPayloadCase()) {
                 case biz.SignalReply.PayloadCase.JOINREPLY:
-                    var result = {success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason"};
+                    const result = {success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason"};
                     this.emit('join-reply', result.success, result.reason);
                 break;
                 case biz.SignalReply.PayloadCase.LEAVEREPLY:
@@ -31,15 +31,14 @@ export class BizClient extends EventEmitter {
                 {
                     const evt = reply.getPeerevent();
                     let state = PeerState.NONE;
-                    let info = {};
+                    const  info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
                     switch(evt?.getState()) {
                         case ion.PeerEvent.State.JOIN:
                             state = PeerState.JOIN;
-                            info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
                             break;
                         case ion.PeerEvent.State.UPDATE:
                             state = PeerState.UPDATE;
-                            info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
+                            
                             break;
                         case ion.PeerEvent.State.LEAVE:
                             state = PeerState.LEAVE;
@@ -48,7 +47,7 @@ export class BizClient extends EventEmitter {
                     const peer = {
                         uid: evt?.getPeer()?.getUid() || "",
                         sid: evt?.getPeer()?.getSid() || "",
-                        info: info,
+                        info: info || {},
                     }
                     this.emit("peer-event", {state, peer});
                 }
@@ -67,11 +66,11 @@ export class BizClient extends EventEmitter {
                     };
                     const sid = evt?.getSid() || "";
                     const uid = evt?.getUid() || "";
-                    let streams = Array<any>();
+                    const streams = Array<any>();
                     evt?.getStreamsList().forEach((ionStream: ion.Stream) => {
-                        let tracks = Array<any>();
+                        const tracks = Array<any>();
                         ionStream.getTracksList().forEach((ionTrack: ion.Track) => {
-                            let track = {
+                            const track = {
                                 id: ionTrack.getId(),
                                 label: ionTrack.getLabel(),
                                 kind: ionTrack.getKind(),
@@ -79,9 +78,9 @@ export class BizClient extends EventEmitter {
                             }
                             tracks.push(track);
                         });
-                        let stream = {
+                        const stream = {
                             id: ionStream.getId(),
-                            tracks: tracks,
+                            tracks: tracks || [],
                         }
                         streams.push(stream);
                     });
@@ -90,7 +89,7 @@ export class BizClient extends EventEmitter {
                 break;
                 case biz.SignalReply.PayloadCase.MSG:
                     const data = JSON.parse(Uint8ArrayToString(reply.getMsg()?.getData() as Uint8Array));
-                    const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data};
+                    const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data || {}};
                     this.emit('message', msg);
                 break;
             }

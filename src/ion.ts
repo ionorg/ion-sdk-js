@@ -37,7 +37,7 @@ export enum StreamState {
 export interface StreamEvent {
     uid: string;
     state: StreamState;
-    streams: Array<Stream>;
+    streams: Stream[];
 }
 
 export interface Track {
@@ -49,7 +49,7 @@ export interface Track {
 
 export interface Stream {
     id: string;
-	tracks: Array<Track>;
+	tracks: Track[];
 }
 
 export interface Message {
@@ -94,7 +94,7 @@ export class IonConnector {
             }
             if (success && !this._sfu) {
                 const signal = new IonSFUGRPCWebSignal(url);
-                var sfu = new Client(signal, config);
+                const sfu = new Client(signal, config);
 
                 sfu.ontrack =   (track: MediaStreamTrack, stream: RemoteStream) => 
                                                 this.ontrack?.call(this, track, stream);
