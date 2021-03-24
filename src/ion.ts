@@ -20,7 +20,7 @@ export enum PeerState {
 export interface Peer {
     uid: string;
     sid: string;
-    info: any;
+    info: Map<string, any>;
 }
 
 export interface PeerEvent {
@@ -55,7 +55,7 @@ export interface Stream {
 export interface Message {
     from: string ;
     to: string;
-    data: any;
+    data: Map<string, any>;
 }
 
 export class IonConnector {
@@ -135,18 +135,18 @@ export class IonConnector {
 
     get sfu() { return this._sfu; }
 
-    async join(sid: string, uid: string, info: any): Promise<JoinResult> {
+    async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
         this._sid = sid;
         this._uid = uid;
-        return this._biz.join(sid, uid, info, "");
+        return this._biz.join(sid, uid, info, token);
     }
 
     async leave(uid: string): Promise<string> {
         return this._biz.leave(uid)
     }
 
-    async message(from: string, to: string, data: any | undefined): Promise<void> {
-        return this._biz.sendMessage({from, to, data});
+    async message(from: string, to: string, data: Map<string, any>): Promise<void> {
+        return this._biz.sendMessage(from, to, data);
     }
 
     close() {

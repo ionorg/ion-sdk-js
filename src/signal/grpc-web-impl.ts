@@ -6,6 +6,7 @@ import { SFUClient, Status, BidirectionalStream } from './_proto/library/sfu/sfu
 import { SignalRequest, SignalReply, JoinRequest, JoinReply } from './_proto/library/sfu/sfu_pb';
 import * as pb from './_proto/library/sfu/sfu_pb';
 import { Trickle } from '../client';
+import { Uint8ArrayToString } from './utils';
 
 class IonSFUGRPCWebSignal implements Signal {
   protected client: SFUClient;
@@ -124,14 +125,6 @@ class IonSFUGRPCWebSignal implements Signal {
   set onclose(onclose: (ev: Event) => void) {
     this._onclose = onclose;
   }
-}
-
-function Uint8ArrayToString(dataArray: Uint8Array): string {
-  let dataString = '';
-  for (const element of dataArray) {
-    dataString += String.fromCharCode(element);
-  }
-  return dataString;
 }
 
 export { IonSFUGRPCWebSignal };

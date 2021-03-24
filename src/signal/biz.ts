@@ -4,6 +4,7 @@ import * as biz from './_proto/library/biz/biz_pb';
 import * as ion from './_proto/library/biz/ion_pb';
 import * as biz_rpc from './_proto/library/biz/biz_pb_service';
 import { JoinResult, PeerState, StreamState, Message } from '../ion';
+import { Uint8ArrayToString } from './utils';
 
 export class BizClient extends EventEmitter {
     protected client: biz_rpc.BizClient;
@@ -20,7 +21,7 @@ export class BizClient extends EventEmitter {
             switch (reply.getPayloadCase()) {
                 case biz.SignalReply.PayloadCase.JOINREPLY:
                     var result = {success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason"};
-                    this.emit('join-reply', result);
+                    this.emit('join-reply', result.success, result.reason);
                 break;
                 case biz.SignalReply.PayloadCase.LEAVEREPLY:
                     const reason = reply.getLeavereply()?.getReason() || "unkown reason";
@@ -29,22 +30,25 @@ export class BizClient extends EventEmitter {
                 case biz.SignalReply.PayloadCase.PEEREVENT:
                 {
                     const evt = reply.getPeerevent();
-                    const peer = {
-                        uid: evt?.getPeer()?.getUid() || "",
-                        sid: evt?.getPeer()?.getSid() || "",
-                        info: evt?.getPeer()?.getInfo()
-                    }
                     let state = PeerState.NONE;
+                    let info = {};
                     switch(evt?.getState()) {
                         case ion.PeerEvent.State.JOIN:
                             state = PeerState.JOIN;
+                            info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
                             break;
                         case ion.PeerEvent.State.UPDATE:
                             state = PeerState.UPDATE;
+                            info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
                             break;
                         case ion.PeerEvent.State.LEAVE:
                             state = PeerState.LEAVE;
                             break;
+                    }
+                    const peer = {
+                        uid: evt?.getPeer()?.getUid() || "",
+                        sid: evt?.getPeer()?.getSid() || "",
+                        info: info,
                     }
                     this.emit("peer-event", {state, peer});
                 }
@@ -85,7 +89,8 @@ export class BizClient extends EventEmitter {
                 }
                 break;
                 case biz.SignalReply.PayloadCase.MSG:
-                    const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: reply.getMsg()?.getData()};
+                    const data = JSON.parse(Uint8ArrayToString(reply.getMsg()?.getData() as Uint8Array));
+                    const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data};
                     this.emit('message', msg);
                 break;
             }
@@ -93,11 +98,10 @@ export class BizClient extends EventEmitter {
     }
 
 
-    async join(sid: string, uid: string, info: any, token: string): Promise<JoinResult> {
+    async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
         const request = new biz.SignalRequest();
         const join = new biz.Join();
-        join.setToken(token);
-
+        join.setToken(token || '');
         const peer = new ion.Peer();
         peer.setSid(sid);
         peer.setUid(uid);
@@ -136,12 +140,13 @@ export class BizClient extends EventEmitter {
         });
     }
 
-    async sendMessage(msg: Message) {
+    async sendMessage(from: string, to: string, data: Map<string, any>) {
         const request = new biz.SignalRequest();
         const message = new ion.Message();
-        message.setFrom(msg.from);
-        message.setTo(msg.to);
-        message.setData(msg.data);
+        message.setFrom(from);
+        message.setTo(to);
+        const buffer = Uint8Array.from(JSON.stringify(data), (c) => c.charCodeAt(0));
+        message.setData(buffer);
         request.setMsg(message);
         this.streaming.write(request);
     }
