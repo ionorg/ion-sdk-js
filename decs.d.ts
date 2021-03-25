@@ -99,6 +99,7 @@ interface RTCDtlsTransport {
 // https://www.w3.org/TR/webrtc/#idl-def-rtcrtpcodeccapability
 interface RTCRtpCodecCapability {
   mimeType: string;
+  sdpFmtpLine?: string;
 }
 
 // https://www.w3.org/TR/webrtc/#idl-def-rtcrtpheaderextensioncapability
