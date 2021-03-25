@@ -64,6 +64,7 @@ export default class Client {
   private config: Configuration;
   private signal: Signal;
 
+  onapiready?: () => void;
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
   ondatachannel?: (ev: RTCDataChannelEvent) => void;
   onspeaker?: (ev: string[]) => void;
@@ -109,6 +110,9 @@ export default class Client {
             this.onspeaker(JSON.parse(e.data));
           }
         };
+        if (this.onapiready) {
+          this.onapiready();
+        }
         return;
       }
 
