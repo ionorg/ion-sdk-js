@@ -185,7 +185,7 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
-    let answer: RTCSessionDescriptionInit|undefined = undefined;
+    let answer: RTCSessionDescriptionInit|undefined;
     try {
       await this.transports[Role.sub].pc.setRemoteDescription(description);
       this.transports[Role.sub].candidates.forEach((c) => this.transports![Role.sub].pc.addIceCandidate(c));
@@ -206,7 +206,8 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
-    let offer, answer: RTCSessionDescriptionInit|undefined = undefined;
+    let offer: RTCSessionDescriptionInit|undefined;
+    let answer: RTCSessionDescriptionInit|undefined;
     try {
       offer = await this.transports[Role.pub].pc.createOffer();
       await this.transports[Role.pub].pc.setLocalDescription(offer);
