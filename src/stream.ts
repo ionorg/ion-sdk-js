@@ -257,25 +257,25 @@ export class LocalStream extends MediaStream {
 
       let selCodec: RTCRtpCodecCapability | undefined;
       if (this.constraints.preferredCodecProfile && kind === 'video') {
-        const allCodecProfiles = cap.codecs.filter((c) => c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}`);
+        const allCodecProfiles = cap.codecs.filter(
+          (c) => c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}`,
+        );
         if (!allCodecProfiles) {
           return;
         }
         selCodec = allCodecProfiles.find(
           (c) =>
-            c.sdpFmtpLine &&
-            c.sdpFmtpLine?.indexOf(`profile-level-id=${this.constraints.preferredCodecProfile}`) >= 0
+            c.sdpFmtpLine && c.sdpFmtpLine?.indexOf(`profile-level-id=${this.constraints.preferredCodecProfile}`) >= 0,
         );
         if (!selCodec) {
           // get first one
           selCodec = allCodecProfiles[0];
-
         }
       } else {
         selCodec = cap.codecs.find(
           (c) =>
             c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}` ||
-            c.mimeType.toLowerCase() === `audio/opus`
+            c.mimeType.toLowerCase() === `audio/opus`,
         );
       }
       if (selCodec) {

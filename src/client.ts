@@ -67,7 +67,12 @@ export default class Client {
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
   ondatachannel?: (ev: RTCDataChannelEvent) => void;
   onspeaker?: (ev: string[]) => void;
-  onerrnegotiate?: (role: Role, err: Error, offer?: RTCSessionDescriptionInit, answer?: RTCSessionDescriptionInit) => void;
+  onerrnegotiate?: (
+    role: Role,
+    err: Error,
+    offer?: RTCSessionDescriptionInit,
+    answer?: RTCSessionDescriptionInit,
+  ) => void;
 
   constructor(
     signal: Signal,
@@ -185,7 +190,7 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
-    let answer: RTCSessionDescriptionInit|undefined;
+    let answer: RTCSessionDescriptionInit | undefined;
     try {
       await this.transports[Role.sub].pc.setRemoteDescription(description);
       this.transports[Role.sub].candidates.forEach((c) => this.transports![Role.sub].pc.addIceCandidate(c));
@@ -196,9 +201,8 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-      if(this.onerrnegotiate) this.onerrnegotiate(Role.sub, err, description, answer)
+      if (this.onerrnegotiate) this.onerrnegotiate(Role.sub, err, description, answer);
     }
-
   }
 
   private async onNegotiationNeeded() {
@@ -206,8 +210,8 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
-    let offer: RTCSessionDescriptionInit|undefined;
-    let answer: RTCSessionDescriptionInit|undefined;
+    let offer: RTCSessionDescriptionInit | undefined;
+    let answer: RTCSessionDescriptionInit | undefined;
     try {
       offer = await this.transports[Role.pub].pc.createOffer();
       await this.transports[Role.pub].pc.setLocalDescription(offer);
@@ -216,7 +220,7 @@ export default class Client {
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
-      if(this.onerrnegotiate) this.onerrnegotiate(Role.pub, err, offer, answer);
+      if (this.onerrnegotiate) this.onerrnegotiate(Role.pub, err, offer, answer);
     }
   }
 }
