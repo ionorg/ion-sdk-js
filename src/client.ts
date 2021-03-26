@@ -67,6 +67,7 @@ export default class Client {
   ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
   ondatachannel?: (ev: RTCDataChannelEvent) => void;
   onspeaker?: (ev: string[]) => void;
+  onerrnegotiate?: (role: Role, err: Error, offer?: RTCSessionDescriptionInit, answer?: RTCSessionDescriptionInit) => void;
 
   constructor(
     signal: Signal,
@@ -184,17 +185,20 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
+    let answer: RTCSessionDescriptionInit|undefined = undefined;
     try {
       await this.transports[Role.sub].pc.setRemoteDescription(description);
       this.transports[Role.sub].candidates.forEach((c) => this.transports![Role.sub].pc.addIceCandidate(c));
       this.transports[Role.sub].candidates = [];
-      const answer = await this.transports[Role.sub].pc.createAnswer();
+      answer = await this.transports[Role.sub].pc.createAnswer();
       await this.transports[Role.sub].pc.setLocalDescription(answer);
       this.signal.answer(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
+      if(this.onerrnegotiate) this.onerrnegotiate(Role.sub, err, description, answer)
     }
+
   }
 
   private async onNegotiationNeeded() {
@@ -202,14 +206,16 @@ export default class Client {
       throw Error(ERR_NO_SESSION);
     }
 
+    let offer, answer: RTCSessionDescriptionInit|undefined = undefined;
     try {
-      const offer = await this.transports[Role.pub].pc.createOffer();
+      offer = await this.transports[Role.pub].pc.createOffer();
       await this.transports[Role.pub].pc.setLocalDescription(offer);
-      const answer = await this.signal.offer(offer);
+      answer = await this.signal.offer(offer);
       await this.transports[Role.pub].pc.setRemoteDescription(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
       console.error(err);
+      if(this.onerrnegotiate) this.onerrnegotiate(Role.pub, err, offer, answer);
     }
   }
 }
