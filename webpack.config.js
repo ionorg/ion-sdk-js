@@ -16,6 +16,25 @@ module.exports = [{
     rules: [{ test: /\.ts$/, loader: 'ts-loader' }],
   },
 },{
+  entry: './src/ion.ts',
+  devtool: 'source-map',
+  output: {
+    filename: 'ion-connector.min.js',
+    library: 'Ion',
+    path: path.resolve(__dirname, 'dist'),
+  },
+  resolve: {
+    extensions: ['.webpack.js', '.web.js', '.ts', '.js'],
+  },
+  module: {
+    rules: [{ test: /\.ts$/, loader: 'ts-loader' }],
+  },
+  optimization: {
+    minimizer: [new UglifyJsPlugin({
+      sourceMap: false
+    })]
+  },
+},{
   entry: './src/signal/grpc-web-impl.ts',
   devtool: 'source-map',
   output: {
