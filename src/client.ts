@@ -101,21 +101,24 @@ export default class Client {
       }
     };
 
-    this.transports[Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
-      if (ev.channel.label === API_CHANNEL) {
-        this.transports![Role.sub].api = ev.channel;
-        ev.channel.onmessage = (e) => {
-          if (this.onspeaker) {
-            this.onspeaker(JSON.parse(e.data));
-          }
-        };
-        return;
-      }
+    const apiReady = new Promise<void>((resolve) => {
+      this.transports![Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
+        if (ev.channel.label === API_CHANNEL) {
+          this.transports![Role.sub].api = ev.channel;
+          ev.channel.onmessage = (e) => {
+            if (this.onspeaker) {
+              this.onspeaker(JSON.parse(e.data));
+            }
+          };
+          resolve();
+          return;
+        }
 
-      if (this.ondatachannel) {
-        this.ondatachannel(ev);
-      }
-    };
+        if (this.ondatachannel) {
+          this.ondatachannel(ev);
+        }
+      };
+    });
 
     const offer = await this.transports[Role.pub].pc.createOffer();
     await this.transports[Role.pub].pc.setLocalDescription(offer);
@@ -124,6 +127,8 @@ export default class Client {
     await this.transports[Role.pub].pc.setRemoteDescription(answer);
     this.transports[Role.pub].candidates.forEach((c) => this.transports![Role.pub].pc.addIceCandidate(c));
     this.transports[Role.pub].pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
+
+    return apiReady;
   }
 
   leave() {
