@@ -7,7 +7,7 @@ interface VideoConstraints {
   };
 }
 
-const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd'];
+const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd'] as const;
 
 export const VideoConstraints: VideoConstraints = {
   qvga: {
@@ -105,14 +105,14 @@ export interface Encoding {
 }
 
 export interface Constraints extends MediaStreamConstraints {
-  resolution: string;
+  resolution: typeof resolutions[number];
   codec: string;
   simulcast?: boolean;
   sendEmptyOnMute?: boolean;
   preferredCodecProfile?: string;
 }
 
-const defaults = {
+const defaults: Constraints = {
   resolution: 'hd',
   codec: 'vp8',
   audio: true,
