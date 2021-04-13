@@ -100,7 +100,7 @@ export default class Client {
 
     this.transports[Role.sub].pc.ontrack = (ev: RTCTrackEvent) => {
       const stream = ev.streams[0];
-      const remote = makeRemote(stream, this.transports![Role.sub]);
+      const remote = new RemoteStream(stream, this.transports![Role.sub]);
 
       if (this.ontrack) {
         this.ontrack(ev.track, remote);

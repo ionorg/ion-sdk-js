@@ -120,7 +120,7 @@ const defaults: Constraints = {
   simulcast: false,
 };
 
-export class LocalStream extends MediaStream {
+export class LocalStream {
   static async getUserMedia(constraints: Constraints = defaults) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: LocalStream.computeAudioConstraints({
@@ -158,9 +158,10 @@ export class LocalStream extends MediaStream {
 
   constraints: Constraints;
   pc?: RTCPeerConnection;
+  stream: MediaStream;
 
   constructor(stream: MediaStream, constraints: Constraints) {
-    super(stream);
+    this.stream = stream;
     this.constraints = constraints;
   }
 
@@ -182,12 +183,12 @@ export class LocalStream extends MediaStream {
   private getTrack(kind: 'audio' | 'video') {
     let tracks;
     if (kind === 'video') {
-      tracks = this.getVideoTracks();
-      return tracks.length > 0 ? this.getVideoTracks()[0] : undefined;
+      tracks = this.stream.getVideoTracks();
+      return tracks.length > 0 ? this.stream.getVideoTracks()[0] : undefined;
     }
 
-    tracks = this.getAudioTracks();
-    return tracks.length > 0 ? this.getAudioTracks()[0] : undefined;
+    tracks = this.stream.getAudioTracks();
+    return tracks.length > 0 ? this.stream.getAudioTracks()[0] : undefined;
   }
 
   private async getNewTrack(kind: 'audio' | 'video') {
@@ -231,14 +232,14 @@ export class LocalStream extends MediaStream {
         }
 
         const transceiver = this.pc.addTransceiver(track, {
-          streams: [this],
+          streams: [this.stream],
           direction: 'sendonly',
           sendEncodings: encodings,
         });
         this.setPreferredCodec(transceiver, track.kind);
       } else {
         const init: RTCRtpTransceiverInit = {
-          streams: [this],
+          streams: [this.stream],
           direction: 'sendonly',
         };
         if (track.kind === 'video') {
@@ -285,11 +286,11 @@ export class LocalStream extends MediaStream {
   }
 
   private updateTrack(next: MediaStreamTrack, prev?: MediaStreamTrack) {
-    this.addTrack(next);
+    this.stream.addTrack(next);
 
     // If published, replace published track with track from new device
     if (prev) {
-      this.removeTrack(prev);
+      this.stream.removeTrack(prev);
       prev.stop();
 
       if (this.pc) {
@@ -301,7 +302,7 @@ export class LocalStream extends MediaStream {
         });
       }
     } else {
-      this.addTrack(next);
+      this.stream.addTrack(next);
 
       if (this.pc) {
         this.publishTrack(next);
@@ -329,12 +330,12 @@ export class LocalStream extends MediaStream {
 
   publish(pc: RTCPeerConnection) {
     this.pc = pc;
-    this.getTracks().forEach(this.publishTrack.bind(this));
+    this.stream.getTracks().forEach(this.publishTrack.bind(this));
   }
 
   unpublish() {
     if (this.pc) {
-      const tracks = this.getTracks();
+      const tracks = this.stream.getTracks();
       this.pc.getSenders().forEach((s: RTCRtpSender) => {
         if (s.track && tracks.includes(s.track)) {
           this.pc!.removeTrack(s);
@@ -385,7 +386,7 @@ export class LocalStream extends MediaStream {
 
   updateMediaEncodingParams(encodingParams: RTCRtpEncodingParameters) {
     if (!this.pc) return;
-    this.getTracks().forEach((track) => {
+    this.stream.getTracks().forEach((track) => {
       const senders = this.pc?.getSenders()?.filter((sender) => track.id === sender.track?.id);
       senders?.forEach((sender) => {
         const params = sender.getParameters();
@@ -402,72 +403,67 @@ export class LocalStream extends MediaStream {
   }
 }
 
-export interface RemoteStream extends MediaStream {
-  api: RTCDataChannel;
+export class RemoteStream {
   audio: boolean;
   video: 'none' | Layer;
   framerate: Layer;
   _videoPreMute: 'none' | Layer;
+  stream: MediaStream;
+  transport: Transport;
 
-  preferLayer(layer: 'none' | Layer): void;
-  preferFramerate(layer: Layer): void;
-  mute(kind: 'audio' | 'video'): void;
-  unmute(kind: 'audio' | 'video'): void;
-}
+  constructor(stream: MediaStream, transport: Transport) {
+    this.stream = stream;
+    this.transport = transport;
+    this.audio = true;
+    this.video = 'none';
+    this.framerate = 'high';
+    this._videoPreMute = 'high';
+  }
 
-export function makeRemote(stream: MediaStream, transport: Transport): RemoteStream {
-  const remote = stream as RemoteStream;
-  remote.audio = true;
-  remote.video = 'none';
-  remote.framerate = 'high';
-  remote._videoPreMute = 'high';
-
-  const select = () => {
+  private select() {
     const call = {
-      streamId: remote.id,
-      video: remote.video,
-      audio: remote.audio,
-      framerate: remote.framerate,
+      streamId: this.stream.id,
+      video: this.video,
+      audio: this.audio,
+      framerate: this.framerate,
     };
 
-    if (transport.api) {
-      if (transport.api.readyState !== 'open') {
+    if (this.transport.api) {
+      if (this.transport.api.readyState !== 'open') {
         // queue call if we aren't open yet
-        transport.api.onopen = () => transport.api?.send(JSON.stringify(call));
+        this.transport.api.onopen = () => this.transport.api?.send(JSON.stringify(call));
       } else {
-        transport.api.send(JSON.stringify(call));
+        this.transport.api.send(JSON.stringify(call));
       }
     }
   };
 
-  remote.preferLayer = (layer: 'none' | Layer) => {
-    remote.video = layer;
-    select();
-  };
+  preferLayer(layer: 'none' | Layer) {
+    this.video = layer;
+    this.select();
+  }
 
-  remote.preferFramerate = (layer: Layer) => {
-    remote.framerate = layer;
-    select();
-  };
+  preferFramerate(layer: 'none' | Layer) {
+    this.video = layer;
+    this.select();
+  }
 
-  remote.mute = (kind: 'audio' | 'video') => {
+  mute(kind: 'audio' | 'video') {
     if (kind === 'audio') {
-      remote.audio = false;
+      this.audio = false;
     } else if (kind === 'video') {
-      remote._videoPreMute = remote.video;
-      remote.video = 'none';
+      this._videoPreMute = this.video;
+      this.video = 'none';
     }
-    select();
-  };
+    this.select();
+  }
 
-  remote.unmute = (kind: 'audio' | 'video') => {
+  unmute(kind: 'audio' | 'video') {
     if (kind === 'audio') {
-      remote.audio = true;
+      this.audio = true;
     } else if (kind === 'video') {
-      remote.video = remote._videoPreMute;
+      this.video = this._videoPreMute;
     }
-    select();
-  };
-
-  return remote;
+    this.select();
+  }
 }
