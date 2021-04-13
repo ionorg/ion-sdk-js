@@ -401,6 +401,22 @@ export class LocalStream {
       });
     });
   }
+
+  get id() {
+    return this.stream.id;
+  }
+
+  get mediaStream() {
+    return this.stream;
+  }
+
+  set onaddtrack(callback: ((this: MediaStream, ev: MediaStreamTrackEvent) => any) | null) {
+    this.stream.onaddtrack = callback;
+  }
+
+  set onremovetrack(callback: ((this: MediaStream, ev: MediaStreamTrackEvent) => any) | null) {
+    this.stream.onremovetrack = callback;
+  }
 }
 
 export class RemoteStream {
@@ -436,7 +452,7 @@ export class RemoteStream {
         this.transport.api.send(JSON.stringify(call));
       }
     }
-  };
+  }
 
   preferLayer(layer: 'none' | Layer) {
     this.video = layer;
@@ -465,5 +481,21 @@ export class RemoteStream {
       this.video = this._videoPreMute;
     }
     this.select();
+  }
+
+  get id() {
+    return this.stream.id;
+  }
+
+  get mediaStream() {
+    return this.stream;
+  }
+
+  set onaddtrack(callback: ((this: MediaStream, ev: MediaStreamTrackEvent) => any) | null) {
+    this.stream.onaddtrack = callback;
+  }
+
+  set onremovetrack(callback: ((this: MediaStream, ev: MediaStreamTrackEvent) => any) | null) {
+    this.stream.onremovetrack = callback;
   }
 }

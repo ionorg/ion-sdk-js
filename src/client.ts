@@ -1,5 +1,5 @@
 import { Signal } from './signal';
-import { LocalStream, makeRemote, RemoteStream } from './stream';
+import { LocalStream, RemoteStream } from './stream';
 
 const API_CHANNEL = 'ion-sfu';
 const ERR_NO_SESSION = 'no active session, join first';
