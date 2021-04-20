@@ -102,9 +102,9 @@ export class IonConnector {
                                                 this.ondatachannel?.call(this, ev);
                 sfu.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
 
-                await sfu.join(this._sid, this._uid);
-
                 this._sfu = sfu;
+
+                await sfu.join(this._sid, this._uid);
             }
         });
 
