@@ -3,12 +3,14 @@ import { LocalStream, RemoteStream, Constraints } from './stream';
 import { BizClient } from './signal/biz';
 import { IonSFUGRPCWebSignal } from './signal/grpc-web-impl';
 import { Signal, Trickle } from './signal';
+import { grpc } from '@improbable-eng/grpc-web';
+
 export { Client, LocalStream, RemoteStream, Constraints, Signal, Trickle };
 
 export interface JoinResult {
     success: boolean;
     reason: string;
-  }
+}
 
 export enum PeerState {
     NONE,
@@ -44,16 +46,16 @@ export interface Track {
     id: string;
     label: string;
     kind: string;
-    simulcast: Map<string,string>;
+    simulcast: Map<string, string>;
 }
 
 export interface Stream {
     id: string;
-	tracks: Track[];
+    tracks: Track[];
 }
 
 export interface Message {
-    from: string ;
+    from: string;
     to: string;
     data: Map<string, any>;
 }
@@ -63,18 +65,19 @@ export class IonConnector {
     private _sfu: Client | undefined;
     private _sid: string;
     private _uid: string;
+    private _metadata: grpc.Metadata;
 
-    onerror?:(err: Error) => void;
+    onerror?: (err: Event) => void;
 
-    onjoin?:(success: boolean, reason: string) => void;
+    onjoin?: (success: boolean, reason: string) => void;
 
-    onleave?:(reason: string) => void;
+    onleave?: (reason: string) => void;
 
     onpeerevent?: (ev: PeerEvent) => void;
 
     onstreamevent?: (ev: StreamEvent) => void;
 
-    onmessage?:(msg: Message) => void;
+    onmessage?: (msg: Message) => void;
 
     ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
 
@@ -82,55 +85,49 @@ export class IonConnector {
 
     onspeaker?: (ev: string[]) => void;
 
-    constructor(url: string, config?: Configuration) {
+    constructor(url: string, token?: string, config?: Configuration) {
         this._sid = "";
         this._uid = "";
         this._sfu = undefined;
-        this._biz = new BizClient(url);
-      
+        this._metadata = new grpc.Metadata();
+
+        if (token) {
+            this._metadata.append("authorization", token);
+        }
+
+        this._biz = new BizClient(url, this._metadata);
+
+        this._biz.onHeaders = (headers: grpc.Metadata) => {
+            headers.forEach((key,value) => {
+                if(key !== "trailer" && key !== "content-type") {
+                    this._metadata.append(key, value);
+                }
+            });
+        }
+
+        this._biz.onEnd = (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => {
+            this.onerror?.call(this, new CustomEvent("biz", { "detail": {status, statusMessage}}));
+        }
+
         this._biz.on("join-reply", async (success: boolean, reason: string) => {
-            if (this.onjoin) {
-                this.onjoin(success, reason);
-            }
+            this.onjoin?.call(this, success, reason);
+
             if (success && !this._sfu) {
-                const signal = new IonSFUGRPCWebSignal(url);
-                const sfu = new Client(signal, config);
-
-                sfu.ontrack =   (track: MediaStreamTrack, stream: RemoteStream) => 
-                                                this.ontrack?.call(this, track, stream);
-                sfu.ondatachannel = (ev: RTCDataChannelEvent) =>
-                                                this.ondatachannel?.call(this, ev);
-                sfu.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
-
-                this._sfu = sfu;
-
-                await sfu.join(this._sid, this._uid);
+                const signal = new IonSFUGRPCWebSignal(url, this._metadata);
+                this._sfu = new Client(signal, config);
+                this._sfu.ontrack = (track: MediaStreamTrack, stream: RemoteStream) =>
+                    this.ontrack?.call(this, track, stream);
+                this._sfu.ondatachannel = (ev: RTCDataChannelEvent) =>
+                    this.ondatachannel?.call(this, ev);
+                this._sfu.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
+                await this._sfu.join(this._sid, this._uid);
             }
         });
 
-        this._biz.on("leave-reply", (reason: string) => {
-            if (this.onleave) {
-                this.onleave(reason);
-            }
-        });
-
-        this._biz.on("peer-event", (ev: PeerEvent) => {
-            if(this.onpeerevent) {
-                this.onpeerevent(ev);
-            }
-        })
-
-        this._biz.on("stream-event", (ev: StreamEvent) => {
-            if(this.onstreamevent) {
-                this.onstreamevent(ev);
-            }
-        })
-
-        this._biz.on("message", (msg: Message) => {
-            if(this.onmessage) {
-                this.onmessage(msg);
-            }
-        })
+        this._biz.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
+        this._biz.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
+        this._biz.on("stream-event", (ev: StreamEvent) => this.onstreamevent?.call(this, ev));
+        this._biz.on("message", (msg: Message) => this.onmessage?.call(this, msg));
     }
 
     get sfu() { return this._sfu; }

@@ -7,95 +7,102 @@ import { JoinResult, PeerState, StreamState, Message } from '../ion';
 import { Uint8ArrayToString } from './utils';
 
 export class BizClient extends EventEmitter {
-    protected client: biz_rpc.BizClient;
-    protected streaming: biz_rpc.BidirectionalStream<biz.SignalRequest, biz.SignalReply>;
+    protected client: grpc.Client<biz.SignalRequest, biz.SignalReply>;
+    onHeaders?: (headers: grpc.Metadata) => void;
+    onEnd?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
 
-    constructor(uri: string) {
+    constructor(uri: string, metadata: grpc.Metadata) {
         super();
-        this.client = new biz_rpc.BizClient(uri, {
-          transport: grpc.WebsocketTransport(),
-        });
 
-        this.streaming = this.client.signal();
-        this.streaming.on('data', (reply: biz.SignalReply) => {
+        const client = grpc.client(biz_rpc.Biz.Signal, {
+            host: uri,
+            transport: grpc.WebsocketTransport(),
+        }) as grpc.Client<biz.SignalRequest, biz.SignalReply>;
+
+        client.onHeaders((headers: grpc.Metadata) =>  this.onHeaders?.call(this, headers));
+        client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => this.onEnd?.call(this, status, statusMessage, trailers));
+
+        client.onMessage((reply: biz.SignalReply) => {
             switch (reply.getPayloadCase()) {
                 case biz.SignalReply.PayloadCase.JOINREPLY:
-                    const result = {success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason"};
+                    const result = { success: reply.getJoinreply()?.getSuccess() || false, reason: reply.getJoinreply()?.getReason() || "unkown reason" };
                     this.emit('join-reply', result.success, result.reason);
-                break;
+                    break;
                 case biz.SignalReply.PayloadCase.LEAVEREPLY:
                     const reason = reply.getLeavereply()?.getReason() || "unkown reason";
                     this.emit('leave-reply', reason);
-                break;
+                    break;
                 case biz.SignalReply.PayloadCase.PEEREVENT:
-                {
-                    const evt = reply.getPeerevent();
-                    let state = PeerState.NONE;
-                    const  info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
-                    switch(evt?.getState()) {
-                        case ion.PeerEvent.State.JOIN:
-                            state = PeerState.JOIN;
-                            break;
-                        case ion.PeerEvent.State.UPDATE:
-                            state = PeerState.UPDATE;
-                            
-                            break;
-                        case ion.PeerEvent.State.LEAVE:
-                            state = PeerState.LEAVE;
-                            break;
-                    }
-                    const peer = {
-                        uid: evt?.getPeer()?.getUid() || "",
-                        sid: evt?.getPeer()?.getSid() || "",
-                        info: info || {},
-                    }
-                    this.emit("peer-event", {state, peer});
-                }
-                break;
-                case biz.SignalReply.PayloadCase.STREAMEVENT:
-                {
-                    const evt = reply.getStreamevent();
-                    let state = StreamState.NONE;
-                    switch(evt?.getState()) {
-                        case ion.StreamEvent.State.ADD:
-                            state = StreamState.ADD;
-                            break;
-                        case ion.StreamEvent.State.REMOVE:
-                            state = StreamState.REMOVE;
-                            break;
-                    };
-                    const sid = evt?.getSid() || "";
-                    const uid = evt?.getUid() || "";
-                    const streams = Array<any>();
-                    evt?.getStreamsList().forEach((ionStream: ion.Stream) => {
-                        const tracks = Array<any>();
-                        ionStream.getTracksList().forEach((ionTrack: ion.Track) => {
-                            const track = {
-                                id: ionTrack.getId(),
-                                label: ionTrack.getLabel(),
-                                kind: ionTrack.getKind(),
-                                simulcast: ionTrack.getSimulcastMap(),
-                            }
-                            tracks.push(track);
-                        });
-                        const stream = {
-                            id: ionStream.getId(),
-                            tracks: tracks || [],
+                    {
+                        const evt = reply.getPeerevent();
+                        let state = PeerState.NONE;
+                        const info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
+                        switch (evt?.getState()) {
+                            case ion.PeerEvent.State.JOIN:
+                                state = PeerState.JOIN;
+                                break;
+                            case ion.PeerEvent.State.UPDATE:
+                                state = PeerState.UPDATE;
+
+                                break;
+                            case ion.PeerEvent.State.LEAVE:
+                                state = PeerState.LEAVE;
+                                break;
                         }
-                        streams.push(stream);
-                    });
-                    this.emit("stream-event", {state, sid, uid, streams});
-                }
-                break;
+                        const peer = {
+                            uid: evt?.getPeer()?.getUid() || "",
+                            sid: evt?.getPeer()?.getSid() || "",
+                            info: info || {},
+                        }
+                        this.emit("peer-event", { state, peer });
+                    }
+                    break;
+                case biz.SignalReply.PayloadCase.STREAMEVENT:
+                    {
+                        const evt = reply.getStreamevent();
+                        let state = StreamState.NONE;
+                        switch (evt?.getState()) {
+                            case ion.StreamEvent.State.ADD:
+                                state = StreamState.ADD;
+                                break;
+                            case ion.StreamEvent.State.REMOVE:
+                                state = StreamState.REMOVE;
+                                break;
+                        };
+                        const sid = evt?.getSid() || "";
+                        const uid = evt?.getUid() || "";
+                        const streams = Array<any>();
+                        evt?.getStreamsList().forEach((ionStream: ion.Stream) => {
+                            const tracks = Array<any>();
+                            ionStream.getTracksList().forEach((ionTrack: ion.Track) => {
+                                const track = {
+                                    id: ionTrack.getId(),
+                                    label: ionTrack.getLabel(),
+                                    kind: ionTrack.getKind(),
+                                    simulcast: ionTrack.getSimulcastMap(),
+                                }
+                                tracks.push(track);
+                            });
+                            const stream = {
+                                id: ionStream.getId(),
+                                tracks: tracks || [],
+                            }
+                            streams.push(stream);
+                        });
+                        this.emit("stream-event", { state, sid, uid, streams });
+                    }
+                    break;
                 case biz.SignalReply.PayloadCase.MSG:
                     const data = JSON.parse(Uint8ArrayToString(reply.getMsg()?.getData() as Uint8Array));
-                    const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data || {}};
+                    const msg = { from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data || {} };
                     this.emit('message', msg);
-                break;
+                    break;
             }
         });
-    }
 
+        this.client = client;
+        this.client.start(metadata);
+    }
 
     async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
         const request = new biz.SignalRequest();
@@ -110,15 +117,15 @@ export class BizClient extends EventEmitter {
 
         join.setPeer(peer);
         request.setJoin(join);
-        
-        this.streaming.write(request);
+
+        this.client.send(request);
 
         return new Promise<JoinResult>((resolve, reject) => {
-        const handler = (result: JoinResult) => {
-            resolve(result);
-            this.removeListener('join-reply', handler);
-        };
-        this.addListener('join-reply', handler);
+            const handler = (result: JoinResult) => {
+                resolve(result);
+                this.removeListener('join-reply', handler);
+            };
+            this.addListener('join-reply', handler);
         });
     }
 
@@ -128,7 +135,7 @@ export class BizClient extends EventEmitter {
         leave.setUid(uid);
         request.setLeave(leave);
 
-        this.streaming.write(request);
+        this.client.send(request);
 
         return new Promise<string>((resolve, reject) => {
             const handler = (reason: string) => {
@@ -147,10 +154,10 @@ export class BizClient extends EventEmitter {
         const buffer = Uint8Array.from(JSON.stringify(data), (c) => c.charCodeAt(0));
         message.setData(buffer);
         request.setMsg(message);
-        this.streaming.write(request);
+        this.client.send(request);
     }
 
-    close () {
-        this.streaming.end();
+    close() {
+        this.client.finishSend();
     }
 }
