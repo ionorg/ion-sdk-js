@@ -97,7 +97,7 @@ export class BizClient extends EventEmitter {
     }
 
 
-    async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
+    async join(sid: string, uid: string, info: Record<string, any>, token: string | undefined): Promise<JoinResult> {
         const request = new biz.SignalRequest();
         const join = new biz.Join();
         join.setToken(token || '');
