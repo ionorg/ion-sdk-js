@@ -135,7 +135,7 @@ export class IonConnector {
 
     get sfu() { return this._sfu; }
 
-    async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
+    async join(sid: string, uid: string, info: Record<string, any>, token: string | undefined): Promise<JoinResult> {
         this._sid = sid;
         this._uid = uid;
         return this._biz.join(sid, uid, info, token);
