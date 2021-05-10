@@ -1,25 +1,144 @@
 import { grpc } from '@improbable-eng/grpc-web';
+import { Code } from '@improbable-eng/grpc-web/dist/typings/Code';
+import { BrowserHeaders } from 'browser-headers';
+import { IonService, IonBaseConnector } from './ion';
+import * as biz from '../signal/_proto/library/biz/biz_pb';
+import * as ion from '../signal/_proto/library/biz/ion_pb';
+import * as biz_rpc from '../signal/_proto/library/biz/biz_pb_service';
 import { EventEmitter } from 'events';
-import * as biz from './_proto/library/biz/biz_pb';
-import * as ion from './_proto/library/biz/ion_pb';
-import * as biz_rpc from './_proto/library/biz/biz_pb_service';
-import { JoinResult, PeerState, StreamState, Message } from '../ion';
-import { Uint8ArrayToString } from './utils';
+import { Uint8ArrayToString } from '../signal/utils';
 
-export class BizClient extends EventEmitter {
+export interface JoinResult {
+    success: boolean;
+    reason: string;
+}
+
+export enum PeerState {
+    NONE,
+    JOIN,
+    UPDATE,
+    LEAVE,
+}
+
+export interface Peer {
+    uid: string;
+    sid: string;
+    info: Map<string, any>;
+}
+
+export interface PeerEvent {
+    state: PeerState;
+    peer: Peer;
+}
+
+export enum StreamState {
+    NONE,
+    ADD,
+    REMOVE,
+}
+
+export interface StreamEvent {
+    uid: string;
+    state: StreamState;
+    streams: Stream[];
+}
+
+export interface Track {
+    id: string;
+    label: string;
+    kind: string;
+    simulcast: Map<string, string>;
+}
+
+export interface Stream {
+    id: string;
+    tracks: Track[];
+}
+
+export interface Message {
+    from: string;
+    to: string;
+    data: Map<string, any>;
+}
+
+export class IonAppBiz implements IonService {
+    connector: IonBaseConnector;
+    closed: boolean;
+    _biz?: IonBizGRPCClient;
+    onerror?: (err: Event) => void;
+    onjoin?: (success: boolean, reason: string) => void;
+    onleave?: (reason: string) => void;
+    onpeerevent?: (ev: PeerEvent) => void;
+    onstreamevent?: (ev: StreamEvent) => void;
+    onmessage?: (msg: Message) => void;
+
+    constructor(connector: IonBaseConnector) {
+        this.closed = true;
+        this.connector = connector;
+        this.connector.registerService("biz", this);
+    }
+
+    async join(
+        sid: string,
+        uid: string,
+        info: Map<string, any>): Promise<JoinResult | undefined> {
+        this.connect();
+        return this._biz?.join(sid, uid, info);
+    }
+
+    async leave(uid: string): Promise<string | undefined> {
+        return this._biz?.leave(uid);
+    }
+
+    async message(from: string, to: string, data: Map<string, any>): Promise<void> {
+        return this._biz?.sendMessage(from, to, data);
+    }
+
+    connect(): void {
+        if (!this._biz) {
+            this._biz = new IonBizGRPCClient(this.connector);
+            this._biz.onHeaders = (headers: grpc.Metadata) =>
+                this.onHeadersHandler?.call(this, headers);
+            this._biz.onEnd = (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
+                this.onEndHandler?.call(this, status, statusMessage, trailers);
+
+            this._biz.on("join-reply", async (success: boolean, reason: string) => {
+                this.onjoin?.call(this, success, reason);
+            });
+            this._biz.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
+            this._biz.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
+            this._biz.on("stream-event", (ev: StreamEvent) => this.onstreamevent?.call(this, ev));
+            this._biz.on("message", (msg: Message) => this.onmessage?.call(this, msg));
+        }
+    }
+
+    close(): void {
+        if (this._biz) {
+            this._biz.close();
+        }
+    }
+
+    onHeadersHandler?: (headers: grpc.Metadata) => void;
+    onHeaders(handler: (headers: BrowserHeaders) => void): void {
+        this.onHeadersHandler = handler;
+    };
+    onEndHandler?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
+    onEnd(handler: (status: Code, statusMessage: string, trailers: BrowserHeaders) => void): void {
+        this.onEndHandler = handler;
+    }
+}
+
+class IonBizGRPCClient extends EventEmitter {
+    connector: IonBaseConnector;
     protected client: grpc.Client<biz.SignalRequest, biz.SignalReply>;
     onHeaders?: (headers: grpc.Metadata) => void;
     onEnd?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
 
-    constructor(uri: string, metadata: grpc.Metadata) {
+    constructor(connector: IonBaseConnector) {
         super();
-
-        const client = grpc.client(biz_rpc.Biz.Signal, {
-            host: uri,
-            transport: grpc.WebsocketTransport(),
-        }) as grpc.Client<biz.SignalRequest, biz.SignalReply>;
-
-        client.onHeaders((headers: grpc.Metadata) =>  this.onHeaders?.call(this, headers));
+        this.connector = connector;
+        const client = grpc.client(biz_rpc.Biz.Signal, connector.grpcClientRpcOptions()) as grpc.Client<biz.SignalRequest, biz.SignalReply>;
+        client.onHeaders((headers: grpc.Metadata) => this.onHeaders?.call(this, headers));
         client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => this.onEnd?.call(this, status, statusMessage, trailers));
 
         client.onMessage((reply: biz.SignalReply) => {
@@ -101,13 +220,12 @@ export class BizClient extends EventEmitter {
         });
 
         this.client = client;
-        this.client.start(metadata);
+        this.client.start(connector.metadata);
     }
 
-    async join(sid: string, uid: string, info: Map<string, any>, token: string | undefined): Promise<JoinResult> {
+    async join(sid: string, uid: string, info: Map<string, any>): Promise<JoinResult> {
         const request = new biz.SignalRequest();
         const join = new biz.Join();
-        join.setToken(token || '');
         const peer = new ion.Peer();
         peer.setSid(sid);
         peer.setUid(uid);
