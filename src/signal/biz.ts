@@ -139,7 +139,7 @@ export class BizClient extends EventEmitter {
         });
     }
 
-    async sendMessage(from: string, to: string, data: Map<string, any>) {
+    async sendMessage(from: string, to: string, data: Record<string, any>) {
         const request = new biz.SignalRequest();
         const message = new ion.Message();
         message.setFrom(from);
