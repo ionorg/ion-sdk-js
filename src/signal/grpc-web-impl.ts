@@ -5,7 +5,7 @@ import { grpc } from '@improbable-eng/grpc-web';
 import * as sfu_rpc from './_proto/library/sfu/sfu_pb_service';
 import * as pb from './_proto/library/sfu/sfu_pb';
 import { Trickle } from '../client';
-import { Uint8ArrayToString } from './utils';
+import { Uint8ArrayToJSONString } from './utils';
 
 class IonSFUGRPCWebSignal implements Signal {
   protected client: grpc.Client<pb.SignalRequest, pb.SignalReply>;
@@ -30,11 +30,11 @@ class IonSFUGRPCWebSignal implements Signal {
     client.onMessage((reply: pb.SignalReply) => {
       switch (reply.getPayloadCase()) {
         case pb.SignalReply.PayloadCase.JOIN:
-          const answer = JSON.parse(Uint8ArrayToString(reply.getJoin()?.getDescription() as Uint8Array));
+          const answer = JSON.parse(Uint8ArrayToJSONString(reply.getJoin()?.getDescription() as Uint8Array));
           this._event.emit('join-reply', answer);
           break;
         case pb.SignalReply.PayloadCase.DESCRIPTION:
-          const desc = JSON.parse(Uint8ArrayToString(reply.getDescription() as Uint8Array));
+          const desc = JSON.parse(Uint8ArrayToJSONString(reply.getDescription() as Uint8Array));
           if (desc.type === 'offer') {
             if (this.onnegotiate) this.onnegotiate(desc);
           } else if (desc.type === 'answer') {

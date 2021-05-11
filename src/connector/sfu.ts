@@ -7,7 +7,7 @@ import Client, { Configuration } from '../client';
 import { EventEmitter } from 'events';
 import * as sfu_rpc from '../signal/_proto/library/sfu/sfu_pb_service';
 import * as pb from '../signal/_proto/library/sfu/sfu_pb';
-import { Uint8ArrayToString } from '../signal/utils';
+import { Uint8ArrayToJSONString } from '../signal/utils';
 import { LocalStream, RemoteStream, Constraints } from '../stream';
 
 
@@ -92,11 +92,11 @@ class IonSFUGRPCSignal implements Signal {
         client.onMessage((reply: pb.SignalReply) => {
             switch (reply.getPayloadCase()) {
                 case pb.SignalReply.PayloadCase.JOIN:
-                    const answer = JSON.parse(Uint8ArrayToString(reply.getJoin()?.getDescription() as Uint8Array));
+                    const answer = JSON.parse(Uint8ArrayToJSONString(reply.getJoin()?.getDescription() as Uint8Array));
                     this._event.emit('join-reply', answer);
                     break;
                 case pb.SignalReply.PayloadCase.DESCRIPTION:
-                    const desc = JSON.parse(Uint8ArrayToString(reply.getDescription() as Uint8Array));
+                    const desc = JSON.parse(Uint8ArrayToJSONString(reply.getDescription() as Uint8Array));
                     if (desc.type === 'offer') {
                         if (this.onnegotiate) this.onnegotiate(desc);
                     } else if (desc.type === 'answer') {
