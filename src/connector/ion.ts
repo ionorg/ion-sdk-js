@@ -1,20 +1,18 @@
 import { grpc } from '@improbable-eng/grpc-web';
 
 export interface IonService {
-    connector: IonBaseConnector;
-    closed: boolean;
+    name: string;
     connect(): void;
+    connected: boolean;
     close(): void;
-    onHeaders: (handler: (headers: grpc.Metadata) => void) => void;
-    onEnd: (handler: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void) => void;
 }
 
 export class IonBaseConnector {
     public metadata: grpc.Metadata;
     public uri: string;
     public services: Map<string, IonService>;
-    onopen?: (service: string) => void;
-    onclose?: (service: string, ev: Event) => void;
+    onopen?: (service: IonService) => void;
+    onclose?: (service: IonService, ev: Event) => void;
 
     constructor(uri: string, token?: string) {
         this.uri = uri;
@@ -34,28 +32,30 @@ export class IonBaseConnector {
     }
 
     public close(): void {
-        this.services.forEach((service: IonService)=>{
-            if(!service.closed) {
+        this.services.forEach((service: IonService) => {
+            if (service.connected) {
                 service.close();
             }
         });
     }
 
-    registerService(name: string, service: IonService) {
+    public onHeaders(service: IonService, headers: grpc.Metadata): void {
         // Merge metadata.
-        service.onHeaders((headers: grpc.Metadata) => {
-            headers.forEach((key, value) => {
-                if (key.toLowerCase() !== "trailer" && key.toLowerCase() !== "content-type") {
-                    this.metadata.append(key, value);
-                }
-            });
-            this.onopen?.call(this, name);
+        headers.forEach((key, value) => {
+            if (key.toLowerCase() !== "trailer" && key.toLowerCase() !== "content-type") {
+                this.metadata.append(key, value);
+            }
         });
+        service.connected = true;
+        this.onopen?.call(this, service);
+    }
 
-        service.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => {
-            this.onclose?.call(this, name, new CustomEvent(name, { "detail": { status, statusMessage, trailers } }));
-        });
+    public onEnd(service: IonService, status: grpc.Code, statusMessage: string, trailers: grpc.Metadata): void {
+        service.connected = false;
+        this.onclose?.call(this, service, new CustomEvent(service.name, { "detail": { status, statusMessage, trailers } }));
+    }
 
-        this.services.set(name, service);
+    registerService(service: IonService) {
+        this.services.set(service.name, service);
     }
 }

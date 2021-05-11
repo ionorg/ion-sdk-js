@@ -3,8 +3,7 @@ import { Code } from '@improbable-eng/grpc-web/dist/typings/Code';
 import { BrowserHeaders } from 'browser-headers';
 import { IonService, IonBaseConnector } from './ion';
 import { Signal, Trickle } from '../signal';
-import Client from '../client';
-import { v4 as uuidv4 } from 'uuid';
+import Client, { Configuration } from '../client';
 import { EventEmitter } from 'events';
 import * as sfu_rpc from '../signal/_proto/library/sfu/sfu_pb_service';
 import * as pb from '../signal/_proto/library/sfu/sfu_pb';
@@ -13,8 +12,10 @@ import { LocalStream, RemoteStream, Constraints } from '../stream';
 
 
 export class IonSDKSFU implements IonService {
+    name: string;
     connector: IonBaseConnector;
-    closed: boolean;
+    connected: boolean;
+    config?: Configuration;
     protected _client?: grpc.Client<pb.SignalRequest, pb.SignalReply>;
     private _sfu?: Client;
     private _sig?: IonSFUGRPCSignal;
@@ -22,14 +23,15 @@ export class IonSDKSFU implements IonService {
     ondatachannel?: (ev: RTCDataChannelEvent) => void;
     onspeaker?: (ev: string[]) => void;
 
-    constructor(connector: IonBaseConnector) {
-        this.closed = true;
+    constructor(connector: IonBaseConnector, config?: Configuration) {
+        this.name = "sfu";
+        this.config = config;
+        this.connected = false;
         this.connector = connector;
-        this.connector.registerService("sfu", this);
+        this.connector.registerService(this);
     }
 
     async join(sid: string, uid: string) {
-        this.connect();
         return this._sfu?.join(sid, uid);
     }
 
@@ -55,15 +57,10 @@ export class IonSDKSFU implements IonService {
 
     connect(): void {
         if (!this._sig) {
-            this._sig = new IonSFUGRPCSignal(this.connector);
-            this._sig.onHeaders = (headers: grpc.Metadata) =>
-                this.onHeadersHandler?.call(this, headers);
-            this._sig.onEnd = (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
-                this.onEndHandler?.call(this, status, statusMessage, trailers);
+            this._sig = new IonSFUGRPCSignal(this, this.connector);
         }
-
         if (!this._sfu) {
-            this._sfu = new Client(this._sig);
+            this._sfu = new Client(this._sig, this?.config);
             this._sfu.ontrack = (track: MediaStreamTrack, stream: RemoteStream) =>
                 this.ontrack?.call(this, track, stream);
             this._sfu.ondatachannel = (ev: RTCDataChannelEvent) =>
@@ -77,15 +74,6 @@ export class IonSDKSFU implements IonService {
             this._sfu.close();
         }
     }
-
-    onHeadersHandler?: (headers: grpc.Metadata) => void;
-    onHeaders(handler: (headers: BrowserHeaders) => void): void {
-        this.onHeadersHandler = handler;
-    };
-    onEndHandler?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
-    onEnd(handler: (status: Code, statusMessage: string, trailers: BrowserHeaders) => void): void {
-        this.onEndHandler = handler;
-    }
 }
 
 class IonSFUGRPCSignal implements Signal {
@@ -94,13 +82,13 @@ class IonSFUGRPCSignal implements Signal {
     private _event: EventEmitter;
     onnegotiate?: ((jsep: RTCSessionDescriptionInit) => void) | undefined;
     ontrickle?: ((trickle: Trickle) => void) | undefined;
-    constructor(connector: IonBaseConnector) {
+    constructor(service: IonService, connector: IonBaseConnector) {
         this.connector = connector;
         this._event = new EventEmitter();
         const client = grpc.client(sfu_rpc.SFU.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.SignalRequest, pb.SignalReply>;
         client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
-            this.onEnd?.call(this, status, statusMessage, trailers));
-        client.onHeaders((headers: grpc.Metadata) => this.onHeaders?.call(this, headers));
+            connector.onEnd(service, status, statusMessage, trailers));
+        client.onHeaders((headers: grpc.Metadata) => connector.onHeaders(service, headers));
         client.onMessage((reply: pb.SignalReply) => {
             switch (reply.getPayloadCase()) {
                 case pb.SignalReply.PayloadCase.JOIN:
@@ -159,7 +147,6 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     offer(offer: RTCSessionDescriptionInit) {
-        const id = uuidv4();
         const request = new pb.SignalRequest();
         const buffer = Uint8Array.from(JSON.stringify(offer), (c) => c.charCodeAt(0));
         request.setDescription(buffer);
@@ -184,6 +171,4 @@ class IonSFUGRPCSignal implements Signal {
     close(): void {
         this.client?.close();
     }
-    onHeaders?: (headers: grpc.Metadata) => void;
-    onEnd?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
 }

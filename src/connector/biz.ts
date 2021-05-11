@@ -62,8 +62,9 @@ export interface Message {
 }
 
 export class IonAppBiz implements IonService {
+    name: string;
     connector: IonBaseConnector;
-    closed: boolean;
+    connected: boolean;
     _biz?: IonBizGRPCClient;
     onerror?: (err: Event) => void;
     onjoin?: (success: boolean, reason: string) => void;
@@ -73,16 +74,16 @@ export class IonAppBiz implements IonService {
     onmessage?: (msg: Message) => void;
 
     constructor(connector: IonBaseConnector) {
-        this.closed = true;
+        this.name = "biz";
+        this.connected = false;
         this.connector = connector;
-        this.connector.registerService("biz", this);
+        this.connector.registerService(this);
     }
 
     async join(
         sid: string,
         uid: string,
         info: Map<string, any>): Promise<JoinResult | undefined> {
-        this.connect();
         return this._biz?.join(sid, uid, info);
     }
 
@@ -96,12 +97,7 @@ export class IonAppBiz implements IonService {
 
     connect(): void {
         if (!this._biz) {
-            this._biz = new IonBizGRPCClient(this.connector);
-            this._biz.onHeaders = (headers: grpc.Metadata) =>
-                this.onHeadersHandler?.call(this, headers);
-            this._biz.onEnd = (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
-                this.onEndHandler?.call(this, status, statusMessage, trailers);
-
+            this._biz = new IonBizGRPCClient(this, this.connector);
             this._biz.on("join-reply", async (success: boolean, reason: string) => {
                 this.onjoin?.call(this, success, reason);
             });
@@ -117,29 +113,19 @@ export class IonAppBiz implements IonService {
             this._biz.close();
         }
     }
-
-    onHeadersHandler?: (headers: grpc.Metadata) => void;
-    onHeaders(handler: (headers: BrowserHeaders) => void): void {
-        this.onHeadersHandler = handler;
-    };
-    onEndHandler?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
-    onEnd(handler: (status: Code, statusMessage: string, trailers: BrowserHeaders) => void): void {
-        this.onEndHandler = handler;
-    }
 }
 
 class IonBizGRPCClient extends EventEmitter {
     connector: IonBaseConnector;
     protected client: grpc.Client<biz.SignalRequest, biz.SignalReply>;
-    onHeaders?: (headers: grpc.Metadata) => void;
-    onEnd?: (status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => void;
-
-    constructor(connector: IonBaseConnector) {
+    constructor(service: IonService, connector: IonBaseConnector) {
         super();
         this.connector = connector;
         const client = grpc.client(biz_rpc.Biz.Signal, connector.grpcClientRpcOptions()) as grpc.Client<biz.SignalRequest, biz.SignalReply>;
-        client.onHeaders((headers: grpc.Metadata) => this.onHeaders?.call(this, headers));
-        client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => this.onEnd?.call(this, status, statusMessage, trailers));
+
+        client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
+            connector.onEnd(service, status, statusMessage, trailers));
+        client.onHeaders((headers: grpc.Metadata) => connector.onHeaders(service, headers));
 
         client.onMessage((reply: biz.SignalReply) => {
             switch (reply.getPayloadCase()) {
