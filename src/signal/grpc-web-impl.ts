@@ -6,7 +6,7 @@ import { SFUClient, Status, BidirectionalStream } from './_proto/library/sfu/sfu
 import { SignalRequest, SignalReply, JoinRequest, JoinReply } from './_proto/library/sfu/sfu_pb';
 import * as pb from './_proto/library/sfu/sfu_pb';
 import { Trickle } from '../client';
-import { Uint8ArrayToString } from './utils';
+import { Uint8ArrayToJSONString } from './utils';
 
 class IonSFUGRPCWebSignal implements Signal {
   protected client: SFUClient;
@@ -29,11 +29,11 @@ class IonSFUGRPCWebSignal implements Signal {
     this.streaming.on('data', (reply: SignalReply) => {
       switch (reply.getPayloadCase()) {
         case SignalReply.PayloadCase.JOIN:
-          const answer = JSON.parse(Uint8ArrayToString(reply.getJoin()?.getDescription() as Uint8Array));
+          const answer = JSON.parse(Uint8ArrayToJSONString(reply.getJoin()?.getDescription() as Uint8Array));
           this._event.emit('join-reply', answer);
           break;
         case SignalReply.PayloadCase.DESCRIPTION:
-          const desc = JSON.parse(Uint8ArrayToString(reply.getDescription() as Uint8Array));
+          const desc = JSON.parse(Uint8ArrayToJSONString(reply.getDescription() as Uint8Array));
           if (desc.type === 'offer') {
             if (this.onnegotiate) this.onnegotiate(desc);
           } else if (desc.type === 'answer') {

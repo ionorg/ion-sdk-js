@@ -4,7 +4,7 @@ import * as biz from './_proto/library/biz/biz_pb';
 import * as ion from './_proto/library/biz/ion_pb';
 import * as biz_rpc from './_proto/library/biz/biz_pb_service';
 import { JoinResult, PeerState, StreamState, Message } from '../ion';
-import { Uint8ArrayToString } from './utils';
+import { Uint8ArrayToJSONString } from './utils';
 
 export class BizClient extends EventEmitter {
     protected client: biz_rpc.BizClient;
@@ -31,7 +31,7 @@ export class BizClient extends EventEmitter {
                 {
                     const evt = reply.getPeerevent();
                     let state = PeerState.NONE;
-                    const  info = JSON.parse(Uint8ArrayToString(evt?.getPeer()?.getInfo() as Uint8Array));
+                    const  info = JSON.parse(Uint8ArrayToJSONString(evt?.getPeer()?.getInfo() as Uint8Array));
                     switch(evt?.getState()) {
                         case ion.PeerEvent.State.JOIN:
                             state = PeerState.JOIN;
@@ -88,7 +88,7 @@ export class BizClient extends EventEmitter {
                 }
                 break;
                 case biz.SignalReply.PayloadCase.MSG:
-                    const data = JSON.parse(Uint8ArrayToString(reply.getMsg()?.getData() as Uint8Array));
+                    const data = JSON.parse(Uint8ArrayToJSONString(reply.getMsg()?.getData() as Uint8Array));
                     const msg = {from: reply.getMsg()?.getFrom() || "", to: reply.getMsg()?.getTo() || "", data: data || {}};
                     this.emit('message', msg);
                 break;

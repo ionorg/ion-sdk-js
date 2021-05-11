@@ -1,7 +1,11 @@
-export function Uint8ArrayToString(dataArray: Uint8Array): string {
-    let dataString = '';
+export function Uint8ArrayToJSONString(dataArray: Uint8Array): string {
+  let dataString = '';
+  if(dataArray.length >= 2) {
     for (const element of dataArray) {
       dataString += String.fromCharCode(element);
     }
-    return dataString;
+  } else {
+    dataString = '{}';
+  }
+  return dataString;
 }
