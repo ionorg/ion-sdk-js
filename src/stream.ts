@@ -387,7 +387,7 @@ export class LocalStream extends MediaStream {
   async enableLayers(layers: Layer[]) {
     const call = {
       streamId: this.id,
-      layers
+      layers,
     };
     const callStr = JSON.stringify(call);
 
@@ -400,33 +400,37 @@ export class LocalStream extends MediaStream {
       }
     }
     const layerValues = ['high', 'medium', 'low'] as const;
-    await Promise.all(layerValues.map(async (layer) => {
-      await this.updateMediaEncodingParams({active: layers.includes(layer)}, layer)
-    }));
+    await Promise.all(
+      layerValues.map(async (layer) => {
+        await this.updateMediaEncodingParams({ active: layers.includes(layer) }, layer);
+      }),
+    );
   }
 
   async updateMediaEncodingParams(encodingParams: RTCRtpEncodingParameters, layer?: Layer) {
     if (!this.pc) return;
     const tracks = this.getTracks();
-    await Promise.all(this.pc?.getSenders()
-      .filter(sender => sender.track && tracks.includes(sender.track))
-      .map(async (sender) => {
-        const params = sender.getParameters();
-        if (!params.encodings) {
-          params.encodings = [{}];
-        }
-        let idx = 0;
-        if (this.constraints.simulcast && layer) {
-          const rid = layer === 'high' ? 'f' : layer === 'medium' ? 'h' : 'q';
-          idx = params.encodings.findIndex(encoding => encoding.rid === rid);
-          if (params.encodings.length < idx + 1) return;
-        }
-        params.encodings[idx] = {
-          ...params.encodings[idx],
-          ...encodingParams,
-        };
-        await sender.setParameters(params);
-      })
+    await Promise.all(
+      this.pc
+        ?.getSenders()
+        .filter((sender) => sender.track && tracks.includes(sender.track))
+        .map(async (sender) => {
+          const params = sender.getParameters();
+          if (!params.encodings) {
+            params.encodings = [{}];
+          }
+          let idx = 0;
+          if (this.constraints.simulcast && layer) {
+            const rid = layer === 'high' ? 'f' : layer === 'medium' ? 'h' : 'q';
+            idx = params.encodings.findIndex((encoding) => encoding.rid === rid);
+            if (params.encodings.length < idx + 1) return;
+          }
+          params.encodings[idx] = {
+            ...params.encodings[idx],
+            ...encodingParams,
+          };
+          await sender.setParameters(params);
+        }),
     );
   }
 }

@@ -19,9 +19,9 @@ export interface Trickle {
 }
 
 export interface ActiveLayer {
-  streamId: string,
-  activeLayer: string,
-  availableLayers: string[]
+  streamId: string;
+  activeLayer: string;
+  availableLayers: string[];
 }
 
 enum Role {
@@ -244,23 +244,23 @@ export default class Client {
   private processChannelMessage(msg: any) {
     if (msg.method !== undefined && msg.params !== undefined) {
       switch (msg.method) {
-        case "audioLevels":
+        case 'audioLevels':
           if (this.onspeaker) {
             this.onspeaker(msg.params);
           }
           break;
-        case "activeLayer":
+        case 'activeLayer':
           if (this.onactivelayer) {
             this.onactivelayer(msg.params);
           }
           break;
         default:
-          // do nothing
+        // do nothing
       }
     } else {
       // legacy channel message - payload contains audio levels
       if (this.onspeaker) {
-        this.onspeaker(msg)
+        this.onspeaker(msg);
       }
     }
   }
