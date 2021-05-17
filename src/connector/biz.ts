@@ -1,10 +1,8 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { Code } from '@improbable-eng/grpc-web/dist/typings/Code';
-import { BrowserHeaders } from 'browser-headers';
 import { IonService, IonBaseConnector } from './ion';
-import * as biz from '../signal/_proto/library/biz/biz_pb';
-import * as ion from '../signal/_proto/library/biz/ion_pb';
-import * as biz_rpc from '../signal/_proto/library/biz/biz_pb_service';
+import * as biz from '../_library/apps/biz/proto/biz_pb';
+import * as ion from '../_library/proto/ion/ion_pb';
+import * as biz_rpc from '../_library/apps/biz/proto/biz_pb_service';
 import { EventEmitter } from 'events';
 import { Uint8ArrayToJSONString } from '../signal/utils';
 

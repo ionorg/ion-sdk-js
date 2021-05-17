@@ -1,14 +1,14 @@
 // package: biz
-// file: biz.proto
+// file: apps/biz/proto/biz.proto
 
 import * as jspb from "google-protobuf";
-import * as ion_pb from "./ion_pb";
+import * as proto_ion_ion_pb from "../../../proto/ion/ion_pb";
 
 export class Join extends jspb.Message {
   hasPeer(): boolean;
   clearPeer(): void;
-  getPeer(): ion_pb.Peer | undefined;
-  setPeer(value?: ion_pb.Peer): void;
+  getPeer(): proto_ion_ion_pb.Peer | undefined;
+  setPeer(value?: proto_ion_ion_pb.Peer): void;
 
   getToken(): string;
   setToken(value: string): void;
@@ -25,7 +25,7 @@ export class Join extends jspb.Message {
 
 export namespace Join {
   export type AsObject = {
-    peer?: ion_pb.Peer.AsObject,
+    peer?: proto_ion_ion_pb.Peer.AsObject,
     token: string,
   }
 }
@@ -107,8 +107,8 @@ export class SignalRequest extends jspb.Message {
 
   hasMsg(): boolean;
   clearMsg(): void;
-  getMsg(): ion_pb.Message | undefined;
-  setMsg(value?: ion_pb.Message): void;
+  getMsg(): proto_ion_ion_pb.Message | undefined;
+  setMsg(value?: proto_ion_ion_pb.Message): void;
 
   getPayloadCase(): SignalRequest.PayloadCase;
   serializeBinary(): Uint8Array;
@@ -125,7 +125,7 @@ export namespace SignalRequest {
   export type AsObject = {
     join?: Join.AsObject,
     leave?: Leave.AsObject,
-    msg?: ion_pb.Message.AsObject,
+    msg?: proto_ion_ion_pb.Message.AsObject,
   }
 
   export enum PayloadCase {
@@ -149,18 +149,18 @@ export class SignalReply extends jspb.Message {
 
   hasPeerevent(): boolean;
   clearPeerevent(): void;
-  getPeerevent(): ion_pb.PeerEvent | undefined;
-  setPeerevent(value?: ion_pb.PeerEvent): void;
+  getPeerevent(): proto_ion_ion_pb.PeerEvent | undefined;
+  setPeerevent(value?: proto_ion_ion_pb.PeerEvent): void;
 
   hasStreamevent(): boolean;
   clearStreamevent(): void;
-  getStreamevent(): ion_pb.StreamEvent | undefined;
-  setStreamevent(value?: ion_pb.StreamEvent): void;
+  getStreamevent(): proto_ion_ion_pb.StreamEvent | undefined;
+  setStreamevent(value?: proto_ion_ion_pb.StreamEvent): void;
 
   hasMsg(): boolean;
   clearMsg(): void;
-  getMsg(): ion_pb.Message | undefined;
-  setMsg(value?: ion_pb.Message): void;
+  getMsg(): proto_ion_ion_pb.Message | undefined;
+  setMsg(value?: proto_ion_ion_pb.Message): void;
 
   getPayloadCase(): SignalReply.PayloadCase;
   serializeBinary(): Uint8Array;
@@ -177,9 +177,9 @@ export namespace SignalReply {
   export type AsObject = {
     joinreply?: JoinReply.AsObject,
     leavereply?: LeaveReply.AsObject,
-    peerevent?: ion_pb.PeerEvent.AsObject,
-    streamevent?: ion_pb.StreamEvent.AsObject,
-    msg?: ion_pb.Message.AsObject,
+    peerevent?: proto_ion_ion_pb.PeerEvent.AsObject,
+    streamevent?: proto_ion_ion_pb.StreamEvent.AsObject,
+    msg?: proto_ion_ion_pb.Message.AsObject,
   }
 
   export enum PayloadCase {

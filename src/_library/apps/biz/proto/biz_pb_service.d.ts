@@ -1,7 +1,7 @@
 // package: biz
-// file: biz.proto
+// file: apps/biz/proto/biz.proto
 
-import * as biz_pb from "./biz_pb";
+import * as apps_biz_proto_biz_pb from "../../../apps/biz/proto/biz_pb";
 import {grpc} from "@improbable-eng/grpc-web";
 
 type BizSignal = {
@@ -9,8 +9,8 @@ type BizSignal = {
   readonly service: typeof Biz;
   readonly requestStream: true;
   readonly responseStream: true;
-  readonly requestType: typeof biz_pb.SignalRequest;
-  readonly responseType: typeof biz_pb.SignalReply;
+  readonly requestType: typeof apps_biz_proto_biz_pb.SignalRequest;
+  readonly responseType: typeof apps_biz_proto_biz_pb.SignalReply;
 };
 
 export class Biz {
@@ -50,6 +50,6 @@ export class BizClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
-  signal(metadata?: grpc.Metadata): BidirectionalStream<biz_pb.SignalRequest, biz_pb.SignalReply>;
+  signal(metadata?: grpc.Metadata): BidirectionalStream<apps_biz_proto_biz_pb.SignalRequest, apps_biz_proto_biz_pb.SignalReply>;
 }
 

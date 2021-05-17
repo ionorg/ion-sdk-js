@@ -1,5 +1,5 @@
 // package: sfu
-// file: sfu.proto
+// file: proto/sfu/sfu.proto
 
 import * as jspb from "google-protobuf";
 
@@ -125,6 +125,8 @@ export class JoinRequest extends jspb.Message {
   getDescription_asB64(): string;
   setDescription(value: Uint8Array | string): void;
 
+  getConfigMap(): jspb.Map<string, string>;
+  clearConfigMap(): void;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinRequest.AsObject;
   static toObject(includeInstance: boolean, msg: JoinRequest): JoinRequest.AsObject;
@@ -140,6 +142,7 @@ export namespace JoinRequest {
     sid: string,
     uid: string,
     description: Uint8Array | string,
+    configMap: Array<[string, string]>,
   }
 }
 

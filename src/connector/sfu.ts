@@ -1,12 +1,10 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { Code } from '@improbable-eng/grpc-web/dist/typings/Code';
-import { BrowserHeaders } from 'browser-headers';
 import { IonService, IonBaseConnector } from './ion';
 import { Signal, Trickle } from '../signal';
 import Client, { Configuration } from '../client';
 import { EventEmitter } from 'events';
-import * as sfu_rpc from '../signal/_proto/library/sfu/sfu_pb_service';
-import * as pb from '../signal/_proto/library/sfu/sfu_pb';
+import * as sfu_rpc from '../_library/proto/sfu/sfu_pb_service';
+import * as pb from '../_library/proto/sfu/sfu_pb';
 import { Uint8ArrayToJSONString } from '../signal/utils';
 import { LocalStream, RemoteStream, Constraints } from '../stream';
 

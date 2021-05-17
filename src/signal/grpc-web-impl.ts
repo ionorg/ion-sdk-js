@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
 import { Signal } from '.';
 import { grpc } from '@improbable-eng/grpc-web';
-import * as sfu_rpc from './_proto/library/sfu/sfu_pb_service';
-import * as pb from './_proto/library/sfu/sfu_pb';
+import * as sfu_rpc from '../_library/proto/sfu/sfu_pb_service';
+import * as pb from '../_library/proto/sfu/sfu_pb';
 import { Trickle } from '../client';
 import { Uint8ArrayToJSONString } from './utils';
 
