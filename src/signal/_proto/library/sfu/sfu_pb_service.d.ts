@@ -1,8 +1,8 @@
 // package: sfu
 // file: sfu.proto
 
-import * as sfu_pb from "./sfu_pb";
-import {grpc} from "@improbable-eng/grpc-web";
+import * as sfu_pb from './sfu_pb';
+import { grpc } from '@improbable-eng/grpc-web';
 
 type SFUSignal = {
   readonly methodName: string;
@@ -18,8 +18,8 @@ export class SFU {
   static readonly Signal: SFUSignal;
 }
 
-export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
-export type Status = { details: string, code: number; metadata: grpc.Metadata }
+export type ServiceError = { message: string; code: number; metadata: grpc.Metadata };
+export type Status = { details: string; code: number; metadata: grpc.Metadata };
 
 interface UnaryResponse {
   cancel(): void;
@@ -52,4 +52,3 @@ export class SFUClient {
   constructor(serviceHost: string, options?: grpc.RpcOptions);
   signal(metadata?: grpc.Metadata): BidirectionalStream<sfu_pb.SignalRequest, sfu_pb.SignalReply>;
 }
-

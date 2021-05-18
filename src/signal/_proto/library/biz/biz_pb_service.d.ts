@@ -1,8 +1,8 @@
 // package: biz
 // file: biz.proto
 
-import * as biz_pb from "./biz_pb";
-import {grpc} from "@improbable-eng/grpc-web";
+import * as biz_pb from './biz_pb';
+import { grpc } from '@improbable-eng/grpc-web';
 
 type BizSignal = {
   readonly methodName: string;
@@ -18,8 +18,8 @@ export class Biz {
   static readonly Signal: BizSignal;
 }
 
-export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
-export type Status = { details: string, code: number; metadata: grpc.Metadata }
+export type ServiceError = { message: string; code: number; metadata: grpc.Metadata };
+export type Status = { details: string; code: number; metadata: grpc.Metadata };
 
 interface UnaryResponse {
   cancel(): void;
@@ -52,4 +52,3 @@ export class BizClient {
   constructor(serviceHost: string, options?: grpc.RpcOptions);
   signal(metadata?: grpc.Metadata): BidirectionalStream<biz_pb.SignalRequest, biz_pb.SignalReply>;
 }
-

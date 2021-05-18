@@ -18,6 +18,12 @@ export interface Trickle {
   target: Role;
 }
 
+export interface ActiveLayer {
+  streamId: string;
+  activeLayer: string;
+  availableLayers: string[];
+}
+
 enum Role {
   pub = 0,
   sub = 1,
@@ -73,6 +79,7 @@ export default class Client {
     offer?: RTCSessionDescriptionInit,
     answer?: RTCSessionDescriptionInit,
   ) => void;
+  onactivelayer?: (al: ActiveLayer) => void;
 
   constructor(
     signal: Signal,
@@ -111,9 +118,14 @@ export default class Client {
       this.transports![Role.sub].pc.ondatachannel = (ev: RTCDataChannelEvent) => {
         if (ev.channel.label === API_CHANNEL) {
           this.transports![Role.sub].api = ev.channel;
+          this.transports![Role.pub].api = ev.channel;
           ev.channel.onmessage = (e) => {
-            if (this.onspeaker) {
-              this.onspeaker(JSON.parse(e.data));
+            try {
+              const msg = JSON.parse(e.data);
+              this.processChannelMessage(msg);
+            } catch (err) {
+              /* tslint:disable-next-line:no-console */
+              console.error(err);
             }
           };
           resolve();
@@ -162,7 +174,7 @@ export default class Client {
     if (!this.transports) {
       throw Error(ERR_NO_SESSION);
     }
-    stream.publish(this.transports[Role.pub].pc);
+    stream.publish(this.transports[Role.pub]);
   }
 
   createDataChannel(label: string) {
@@ -226,6 +238,30 @@ export default class Client {
       /* tslint:disable-next-line:no-console */
       console.error(err);
       if (this.onerrnegotiate) this.onerrnegotiate(Role.pub, err, offer, answer);
+    }
+  }
+
+  private processChannelMessage(msg: any) {
+    if (msg.method !== undefined && msg.params !== undefined) {
+      switch (msg.method) {
+        case 'audioLevels':
+          if (this.onspeaker) {
+            this.onspeaker(msg.params);
+          }
+          break;
+        case 'activeLayer':
+          if (this.onactivelayer) {
+            this.onactivelayer(msg.params);
+          }
+          break;
+        default:
+        // do nothing
+      }
+    } else {
+      // legacy channel message - payload contains audio levels
+      if (this.onspeaker) {
+        this.onspeaker(msg);
+      }
     }
   }
 }
