@@ -10,11 +10,11 @@ class IonSFUJSONRPCSignal implements Signal {
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
   ontrickle?: (trickle: Trickle) => void;
 
-  private _notify_handlers: { [ method: string ]: (params: any) => void }; 
+  private _notifyhandlers: { [ method: string ]: (params: any) => void }; 
 
   constructor(uri: string) {
     this.socket = new WebSocket(uri);
-    this._notify_handlers = {}; 
+    this._notifyhandlers = {}; 
 
     this.socket.addEventListener('open', () => {
       if (this._onopen) this._onopen();
@@ -35,7 +35,7 @@ class IonSFUJSONRPCSignal implements Signal {
       } else if (resp.method === 'trickle') {
         if (this.ontrickle) this.ontrickle(resp.params);
       } else {
-        const handler = this._notify_handlers[resp.method];
+        const handler = this._notifyhandlers[resp.method];
         if (handler) {
           handler(resp.params);
         }
@@ -46,7 +46,7 @@ class IonSFUJSONRPCSignal implements Signal {
 
 
   on_notify<T>(method: string, cb: (params: T) => void) {
-    this._notify_handlers[method] = cb
+    this._notifyhandlers[method] = cb
   }
 
   // JsonRPC2 Call
