@@ -63,7 +63,7 @@ export class IonAppBiz implements IonService {
     name: string;
     connector: IonBaseConnector;
     connected: boolean;
-    _biz?: IonBizGRPCClient;
+    _rpc?: IonBizGRPCClient;
     onerror?: (err: Event) => void;
     onjoin?: (success: boolean, reason: string) => void;
     onleave?: (reason: string) => void;
@@ -82,40 +82,40 @@ export class IonAppBiz implements IonService {
         sid: string,
         uid: string,
         info: Map<string, any>): Promise<JoinResult | undefined> {
-        return this._biz?.join(sid, uid, info);
+        return this._rpc?.join(sid, uid, info);
     }
 
     async leave(uid: string): Promise<string | undefined> {
-        return this._biz?.leave(uid);
+        return this._rpc?.leave(uid);
     }
 
     async message(from: string, to: string, data: Map<string, any>): Promise<void> {
-        return this._biz?.sendMessage(from, to, data);
+        return this._rpc?.sendMessage(from, to, data);
     }
 
     connect(): void {
-        if (!this._biz) {
-            this._biz = new IonBizGRPCClient(this, this.connector);
-            this._biz.on("join-reply", async (success: boolean, reason: string) => {
+        if (!this._rpc) {
+            this._rpc = new IonBizGRPCClient(this, this.connector);
+            this._rpc.on("join-reply", async (success: boolean, reason: string) => {
                 this.onjoin?.call(this, success, reason);
             });
-            this._biz.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
-            this._biz.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
-            this._biz.on("stream-event", (ev: StreamEvent) => this.onstreamevent?.call(this, ev));
-            this._biz.on("message", (msg: Message) => this.onmessage?.call(this, msg));
+            this._rpc.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
+            this._rpc.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
+            this._rpc.on("stream-event", (ev: StreamEvent) => this.onstreamevent?.call(this, ev));
+            this._rpc.on("message", (msg: Message) => this.onmessage?.call(this, msg));
         }
     }
 
     close(): void {
-        if (this._biz) {
-            this._biz.close();
+        if (this._rpc) {
+            this._rpc.close();
         }
     }
 }
 
 class IonBizGRPCClient extends EventEmitter {
     connector: IonBaseConnector;
-    protected client: grpc.Client<biz.SignalRequest, biz.SignalReply>;
+    protected _client: grpc.Client<biz.SignalRequest, biz.SignalReply>;
     constructor(service: IonService, connector: IonBaseConnector) {
         super();
         this.connector = connector;
@@ -203,8 +203,8 @@ class IonBizGRPCClient extends EventEmitter {
             }
         });
 
-        this.client = client;
-        this.client.start(connector.metadata);
+        this._client = client;
+        this._client.start(connector.metadata);
     }
 
     async join(sid: string, uid: string, info: Map<string, any>): Promise<JoinResult> {
@@ -220,7 +220,7 @@ class IonBizGRPCClient extends EventEmitter {
         join.setPeer(peer);
         request.setJoin(join);
 
-        this.client.send(request);
+        this._client.send(request);
 
         return new Promise<JoinResult>((resolve, reject) => {
             const handler = (result: JoinResult) => {
@@ -237,7 +237,7 @@ class IonBizGRPCClient extends EventEmitter {
         leave.setUid(uid);
         request.setLeave(leave);
 
-        this.client.send(request);
+        this._client.send(request);
 
         return new Promise<string>((resolve, reject) => {
             const handler = (reason: string) => {
@@ -256,10 +256,10 @@ class IonBizGRPCClient extends EventEmitter {
         const buffer = Uint8Array.from(JSON.stringify(data), (c) => c.charCodeAt(0));
         message.setData(buffer);
         request.setMsg(message);
-        this.client.send(request);
+        this._client.send(request);
     }
 
     close() {
-        this.client.finishSend();
+        this._client.finishSend();
     }
 }

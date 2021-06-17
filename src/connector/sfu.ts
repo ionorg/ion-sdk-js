@@ -14,7 +14,7 @@ export class IonSDKSFU implements IonService {
     connector: IonBaseConnector;
     connected: boolean;
     config?: Configuration;
-    protected _client?: grpc.Client<pb.SignalRequest, pb.SignalReply>;
+    protected _rpc?: grpc.Client<pb.SignalRequest, pb.SignalReply>;
     private _sfu?: Client;
     private _sig?: IonSFUGRPCSignal;
     ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
@@ -76,7 +76,7 @@ export class IonSDKSFU implements IonService {
 
 class IonSFUGRPCSignal implements Signal {
     connector: IonBaseConnector;
-    protected client: grpc.Client<pb.SignalRequest, pb.SignalReply>;
+    protected _client: grpc.Client<pb.SignalRequest, pb.SignalReply>;
     private _event: EventEmitter;
     onnegotiate?: ((jsep: RTCSessionDescriptionInit) => void) | undefined;
     ontrickle?: ((trickle: Trickle) => void) | undefined;
@@ -114,8 +114,8 @@ class IonSFUGRPCSignal implements Signal {
                     break;
             }
         });
-        this.client = client;
-        this.client.start(this.connector.metadata);
+        this._client = client;
+        this._client.start(this.connector.metadata);
     }
 
     join(sid: string, uid: string, offer: RTCSessionDescriptionInit) {
@@ -126,7 +126,7 @@ class IonSFUGRPCSignal implements Signal {
         const buffer = Uint8Array.from(JSON.stringify(offer), (c) => c.charCodeAt(0));
         join.setDescription(buffer);
         request.setJoin(join);
-        this.client.send(request);
+        this._client.send(request);
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
             const handler = (desc: RTCSessionDescriptionInit) => {
                 resolve({ type: 'answer', sdp: desc.sdp });
@@ -141,14 +141,14 @@ class IonSFUGRPCSignal implements Signal {
         const pbTrickle = new pb.Trickle();
         pbTrickle.setInit(JSON.stringify(trickle.candidate));
         request.setTrickle(pbTrickle);
-        this.client.send(request);
+        this._client.send(request);
     }
 
     offer(offer: RTCSessionDescriptionInit) {
         const request = new pb.SignalRequest();
         const buffer = Uint8Array.from(JSON.stringify(offer), (c) => c.charCodeAt(0));
         request.setDescription(buffer);
-        this.client.send(request);
+        this._client.send(request);
 
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
             const handler = (desc: RTCSessionDescriptionInit) => {
@@ -163,10 +163,10 @@ class IonSFUGRPCSignal implements Signal {
         const request = new pb.SignalRequest();
         const buffer = Uint8Array.from(JSON.stringify(answer), (c) => c.charCodeAt(0));
         request.setDescription(buffer);
-        this.client.send(request);
+        this._client.send(request);
     }
 
     close(): void {
-        this.client?.close();
+        this._client?.close();
     }
 }
