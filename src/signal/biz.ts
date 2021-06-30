@@ -135,9 +135,9 @@ export class BizClient extends EventEmitter {
     return new Promise<string>((resolve, reject) => {
       const handler = (reason: string) => {
         resolve(reason);
-        this.removeListener('join-reply', handler);
+        this.removeListener('leave-reply', handler);
       };
-      this.addListener('join-reply', handler);
+      this.addListener('leave-reply', handler);
     });
   }
 
