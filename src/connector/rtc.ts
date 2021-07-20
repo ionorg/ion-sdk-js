@@ -28,7 +28,7 @@ export interface Simulcast {
 export interface Track {
     id: string;
     kind: string;
-    simulcast: Array<Simulcast>;
+    simulcast: Simulcast[];
 }
 
 export interface Stream {
@@ -212,7 +212,7 @@ class IonSFUGRPCSignal implements Signal {
 
     offer(offer: RTCSessionDescriptionInit) {
         const request = new pb.Signalling();
-        let dest = new pb.SessionDescription();
+        const dest = new pb.SessionDescription();
         dest.setSdp(offer.sdp || '');
         dest.setType(offer.type || '');
         dest.setTarget(pb.Target.PUBLISHER);
@@ -230,11 +230,11 @@ class IonSFUGRPCSignal implements Signal {
 
     answer(answer: RTCSessionDescriptionInit) {
         const request = new pb.Signalling();
-        let dest = new pb.SessionDescription();
-        dest.setSdp(answer.sdp || '');
-        dest.setType(answer.type || '');
-        dest.setTarget(pb.Target.SUBSCRIBER);
-        request.setDescription(dest);
+        const desc = new pb.SessionDescription();
+        desc.setSdp(answer.sdp || '');
+        desc.setType(answer.type || '');
+        desc.setTarget(pb.Target.SUBSCRIBER);
+        request.setDescription(desc);
         this._client.send(request);
     }
 
