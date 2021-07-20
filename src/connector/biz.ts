@@ -4,7 +4,7 @@ import * as biz from '../_library/apps/biz/proto/biz_pb';
 import * as ion from '../_library/proto/ion/ion_pb';
 import * as biz_rpc from '../_library/apps/biz/proto/biz_pb_service';
 import { EventEmitter } from 'events';
-import { Uint8ArrayToJSONString } from '../signal/utils';
+import { Uint8ArrayToJSONString } from './utils';
 
 export interface JoinResult {
     success: boolean;
@@ -29,30 +29,6 @@ export interface PeerEvent {
     peer: Peer;
 }
 
-export enum StreamState {
-    NONE,
-    ADD,
-    REMOVE,
-}
-
-export interface StreamEvent {
-    uid: string;
-    state: StreamState;
-    streams: Stream[];
-}
-
-export interface Track {
-    id: string;
-    label: string;
-    kind: string;
-    simulcast: Map<string, string>;
-}
-
-export interface Stream {
-    id: string;
-    tracks: Track[];
-}
-
 export interface Message {
     from: string;
     to: string;
@@ -68,7 +44,6 @@ export class IonAppBiz implements IonService {
     onjoin?: (success: boolean, reason: string) => void;
     onleave?: (reason: string) => void;
     onpeerevent?: (ev: PeerEvent) => void;
-    onstreamevent?: (ev: StreamEvent) => void;
     onmessage?: (msg: Message) => void;
 
     constructor(connector: IonBaseConnector) {
@@ -101,7 +76,6 @@ export class IonAppBiz implements IonService {
             });
             this._rpc.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
             this._rpc.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
-            this._rpc.on("stream-event", (ev: StreamEvent) => this.onstreamevent?.call(this, ev));
             this._rpc.on("message", (msg: Message) => this.onmessage?.call(this, msg));
         }
     }
@@ -161,39 +135,7 @@ class IonBizGRPCClient extends EventEmitter {
                     }
                     break;
                 case biz.SignalReply.PayloadCase.STREAMEVENT:
-                    {
-                        const evt = reply.getStreamevent();
-                        let state = StreamState.NONE;
-                        switch (evt?.getState()) {
-                            case ion.StreamEvent.State.ADD:
-                                state = StreamState.ADD;
-                                break;
-                            case ion.StreamEvent.State.REMOVE:
-                                state = StreamState.REMOVE;
-                                break;
-                        };
-                        const sid = evt?.getSid() || "";
-                        const uid = evt?.getUid() || "";
-                        const streams = Array<any>();
-                        evt?.getStreamsList().forEach((ionStream: ion.Stream) => {
-                            const tracks = Array<any>();
-                            ionStream.getTracksList().forEach((ionTrack: ion.Track) => {
-                                const track = {
-                                    id: ionTrack.getId(),
-                                    label: ionTrack.getLabel(),
-                                    kind: ionTrack.getKind(),
-                                    simulcast: ionTrack.getSimulcastMap(),
-                                }
-                                tracks.push(track);
-                            });
-                            const stream = {
-                                id: ionStream.getId(),
-                                tracks: tracks || [],
-                            }
-                            streams.push(stream);
-                        });
-                        this.emit("stream-event", { state, sid, uid, streams });
-                    }
+                    
                     break;
                 case biz.SignalReply.PayloadCase.MSG:
                     const data = JSON.parse(Uint8ArrayToJSONString(reply.getMsg()?.getData() as Uint8Array));
