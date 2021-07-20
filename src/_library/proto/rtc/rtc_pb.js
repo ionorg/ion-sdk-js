@@ -937,7 +937,7 @@ proto.rtc.Trickle.prototype.toObject = function(opt_includeInstance) {
 proto.rtc.Trickle.toObject = function(includeInstance, msg) {
   var f, obj = {
     target: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    init: jspb.Message.getFieldWithDefault(msg, 3, "")
+    init: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -978,7 +978,7 @@ proto.rtc.Trickle.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {!proto.rtc.Target} */ (reader.readEnum());
       msg.setTarget(value);
       break;
-    case 3:
+    case 2:
       var value = /** @type {string} */ (reader.readString());
       msg.setInit(value);
       break;
@@ -1021,7 +1021,7 @@ proto.rtc.Trickle.serializeBinaryToWriter = function(message, writer) {
   f = message.getInit();
   if (f.length > 0) {
     writer.writeString(
-      3,
+      2,
       f
     );
   }
@@ -1047,11 +1047,11 @@ proto.rtc.Trickle.prototype.setTarget = function(value) {
 
 
 /**
- * optional string init = 3;
+ * optional string init = 2;
  * @return {string}
  */
 proto.rtc.Trickle.prototype.getInit = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
@@ -1060,7 +1060,7 @@ proto.rtc.Trickle.prototype.getInit = function() {
  * @return {!proto.rtc.Trickle} returns this
  */
 proto.rtc.Trickle.prototype.setInit = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -2454,7 +2454,7 @@ proto.rtc.UpdateSettings.prototype.hasSubcription = function() {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.rtc.Signalling.oneofGroups_ = [[1,2,5,3,4,6,7]];
+proto.rtc.Signalling.oneofGroups_ = [[1,2,3,4,5,6,7]];
 
 /**
  * @enum {number}
@@ -2463,9 +2463,9 @@ proto.rtc.Signalling.PayloadCase = {
   PAYLOAD_NOT_SET: 0,
   JOIN: 1,
   REPLY: 2,
-  ERROR: 5,
-  DESCRIPTION: 3,
-  TRICKLE: 4,
+  ERROR: 3,
+  DESCRIPTION: 4,
+  TRICKLE: 5,
   UPDATESETTINGS: 6,
   STREAMEVENT: 7
 };
@@ -2561,17 +2561,17 @@ proto.rtc.Signalling.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.rtc.JoinReply.deserializeBinaryFromReader);
       msg.setReply(value);
       break;
-    case 5:
+    case 3:
       var value = new proto.rtc.Error;
       reader.readMessage(value,proto.rtc.Error.deserializeBinaryFromReader);
       msg.setError(value);
       break;
-    case 3:
+    case 4:
       var value = new proto.rtc.SessionDescription;
       reader.readMessage(value,proto.rtc.SessionDescription.deserializeBinaryFromReader);
       msg.setDescription(value);
       break;
-    case 4:
+    case 5:
       var value = new proto.rtc.Trickle;
       reader.readMessage(value,proto.rtc.Trickle.deserializeBinaryFromReader);
       msg.setTrickle(value);
@@ -2634,7 +2634,7 @@ proto.rtc.Signalling.serializeBinaryToWriter = function(message, writer) {
   f = message.getError();
   if (f != null) {
     writer.writeMessage(
-      5,
+      3,
       f,
       proto.rtc.Error.serializeBinaryToWriter
     );
@@ -2642,7 +2642,7 @@ proto.rtc.Signalling.serializeBinaryToWriter = function(message, writer) {
   f = message.getDescription();
   if (f != null) {
     writer.writeMessage(
-      3,
+      4,
       f,
       proto.rtc.SessionDescription.serializeBinaryToWriter
     );
@@ -2650,7 +2650,7 @@ proto.rtc.Signalling.serializeBinaryToWriter = function(message, writer) {
   f = message.getTrickle();
   if (f != null) {
     writer.writeMessage(
-      4,
+      5,
       f,
       proto.rtc.Trickle.serializeBinaryToWriter
     );
@@ -2749,12 +2749,12 @@ proto.rtc.Signalling.prototype.hasReply = function() {
 
 
 /**
- * optional Error error = 5;
+ * optional Error error = 3;
  * @return {?proto.rtc.Error}
  */
 proto.rtc.Signalling.prototype.getError = function() {
   return /** @type{?proto.rtc.Error} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.Error, 5));
+    jspb.Message.getWrapperField(this, proto.rtc.Error, 3));
 };
 
 
@@ -2763,7 +2763,7 @@ proto.rtc.Signalling.prototype.getError = function() {
  * @return {!proto.rtc.Signalling} returns this
 */
 proto.rtc.Signalling.prototype.setError = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 5, proto.rtc.Signalling.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 3, proto.rtc.Signalling.oneofGroups_[0], value);
 };
 
 
@@ -2781,17 +2781,17 @@ proto.rtc.Signalling.prototype.clearError = function() {
  * @return {boolean}
  */
 proto.rtc.Signalling.prototype.hasError = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
 /**
- * optional SessionDescription description = 3;
+ * optional SessionDescription description = 4;
  * @return {?proto.rtc.SessionDescription}
  */
 proto.rtc.Signalling.prototype.getDescription = function() {
   return /** @type{?proto.rtc.SessionDescription} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.SessionDescription, 3));
+    jspb.Message.getWrapperField(this, proto.rtc.SessionDescription, 4));
 };
 
 
@@ -2800,7 +2800,7 @@ proto.rtc.Signalling.prototype.getDescription = function() {
  * @return {!proto.rtc.Signalling} returns this
 */
 proto.rtc.Signalling.prototype.setDescription = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 3, proto.rtc.Signalling.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 4, proto.rtc.Signalling.oneofGroups_[0], value);
 };
 
 
@@ -2818,17 +2818,17 @@ proto.rtc.Signalling.prototype.clearDescription = function() {
  * @return {boolean}
  */
 proto.rtc.Signalling.prototype.hasDescription = function() {
-  return jspb.Message.getField(this, 3) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional Trickle trickle = 4;
+ * optional Trickle trickle = 5;
  * @return {?proto.rtc.Trickle}
  */
 proto.rtc.Signalling.prototype.getTrickle = function() {
   return /** @type{?proto.rtc.Trickle} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.Trickle, 4));
+    jspb.Message.getWrapperField(this, proto.rtc.Trickle, 5));
 };
 
 
@@ -2837,7 +2837,7 @@ proto.rtc.Signalling.prototype.getTrickle = function() {
  * @return {!proto.rtc.Signalling} returns this
 */
 proto.rtc.Signalling.prototype.setTrickle = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 4, proto.rtc.Signalling.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 5, proto.rtc.Signalling.oneofGroups_[0], value);
 };
 
 
@@ -2855,7 +2855,7 @@ proto.rtc.Signalling.prototype.clearTrickle = function() {
  * @return {boolean}
  */
 proto.rtc.Signalling.prototype.hasTrickle = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

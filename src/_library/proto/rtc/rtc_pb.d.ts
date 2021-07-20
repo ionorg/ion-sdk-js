@@ -380,9 +380,9 @@ export namespace Signalling {
     PAYLOAD_NOT_SET = 0,
     JOIN = 1,
     REPLY = 2,
-    ERROR = 5,
-    DESCRIPTION = 3,
-    TRICKLE = 4,
+    ERROR = 3,
+    DESCRIPTION = 4,
+    TRICKLE = 5,
     UPDATESETTINGS = 6,
     STREAMEVENT = 7,
   }
