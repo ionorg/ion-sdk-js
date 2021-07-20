@@ -1,7 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { IonService, IonBaseConnector } from './ion';
-import Client, { Configuration, Trickle } from './client';
-import { Signal } from './signal';
+import Client, { Configuration, Trickle, Signal } from './client';
 import { EventEmitter } from 'events';
 import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';

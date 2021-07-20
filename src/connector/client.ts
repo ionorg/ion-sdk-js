@@ -1,4 +1,3 @@
-import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
 
 const API_CHANNEL = 'ion-sfu';
@@ -22,6 +21,17 @@ export interface ActiveLayer {
   streamId: string;
   activeLayer: string;
   availableLayers: string[];
+}
+
+export interface Signal {
+  onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
+  ontrickle?: (trickle: Trickle) => void;
+
+  join(sid: string, uid: null | string): Promise<any>;
+  offer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
+  answer(answer: RTCSessionDescriptionInit): void;
+  trickle(trickle: Trickle): void;
+  close(): void;
 }
 
 enum Role {
