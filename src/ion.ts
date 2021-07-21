@@ -89,9 +89,6 @@ export class IonConnector {
     this._biz = new BizClient(url);
 
     this._biz.on('join-reply', async (success: boolean, reason: string) => {
-      if (this.onjoin) {
-        this.onjoin(success, reason);
-      }
       if (success && !this._sfu) {
         const signal = new IonSFUGRPCWebSignal(url);
         const sfu = new Client(signal, config);
@@ -103,6 +100,9 @@ export class IonConnector {
         this._sfu = sfu;
 
         await sfu.join(this._sid, this._uid);
+      }
+      if (this.onjoin) {
+        this.onjoin(success, reason);
       }
     });
 
