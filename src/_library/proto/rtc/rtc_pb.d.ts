@@ -39,11 +39,6 @@ export class JoinReply extends jspb.Message {
   getError(): Error | undefined;
   setError(value?: Error): void;
 
-  clearOtherstreamsList(): void;
-  getOtherstreamsList(): Array<Stream>;
-  setOtherstreamsList(value: Array<Stream>): void;
-  addOtherstreams(value?: Stream, index?: number): Stream;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinReply.AsObject;
   static toObject(includeInstance: boolean, msg: JoinReply): JoinReply.AsObject;
@@ -58,7 +53,6 @@ export namespace JoinReply {
   export type AsObject = {
     success: boolean,
     error?: Error.AsObject,
-    otherstreamsList: Array<Stream.AsObject>,
   }
 }
 
@@ -170,11 +164,17 @@ export class Track extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getStreamId(): string;
+  setStreamId(value: string): void;
+
   getKind(): string;
   setKind(value: string): void;
 
   getMuted(): boolean;
   setMuted(value: boolean): void;
+
+  getRid(): string;
+  setRid(value: string): void;
 
   clearSimulcastList(): void;
   getSimulcastList(): Array<Simulcast>;
@@ -194,18 +194,20 @@ export class Track extends jspb.Message {
 export namespace Track {
   export type AsObject = {
     id: string,
+    streamId: string,
     kind: string,
     muted: boolean,
+    rid: string,
     simulcastList: Array<Simulcast.AsObject>,
   }
 }
 
-export class Stream extends jspb.Message {
+export class TrackEvent extends jspb.Message {
+  getState(): TrackEvent.StateMap[keyof TrackEvent.StateMap];
+  setState(value: TrackEvent.StateMap[keyof TrackEvent.StateMap]): void;
+
   getUid(): string;
   setUid(value: string): void;
-
-  getMsid(): string;
-  setMsid(value: string): void;
 
   clearTracksList(): void;
   getTracksList(): Array<Track>;
@@ -213,52 +215,25 @@ export class Stream extends jspb.Message {
   addTracks(value?: Track, index?: number): Track;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Stream.AsObject;
-  static toObject(includeInstance: boolean, msg: Stream): Stream.AsObject;
+  toObject(includeInstance?: boolean): TrackEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: TrackEvent): TrackEvent.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Stream, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Stream;
-  static deserializeBinaryFromReader(message: Stream, reader: jspb.BinaryReader): Stream;
+  static serializeBinaryToWriter(message: TrackEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TrackEvent;
+  static deserializeBinaryFromReader(message: TrackEvent, reader: jspb.BinaryReader): TrackEvent;
 }
 
-export namespace Stream {
+export namespace TrackEvent {
   export type AsObject = {
+    state: TrackEvent.StateMap[keyof TrackEvent.StateMap],
     uid: string,
-    msid: string,
     tracksList: Array<Track.AsObject>,
-  }
-}
-
-export class StreamEvent extends jspb.Message {
-  getState(): StreamEvent.StateMap[keyof StreamEvent.StateMap];
-  setState(value: StreamEvent.StateMap[keyof StreamEvent.StateMap]): void;
-
-  clearStreamsList(): void;
-  getStreamsList(): Array<Stream>;
-  setStreamsList(value: Array<Stream>): void;
-  addStreams(value?: Stream, index?: number): Stream;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): StreamEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: StreamEvent): StreamEvent.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: StreamEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): StreamEvent;
-  static deserializeBinaryFromReader(message: StreamEvent, reader: jspb.BinaryReader): StreamEvent;
-}
-
-export namespace StreamEvent {
-  export type AsObject = {
-    state: StreamEvent.StateMap[keyof StreamEvent.StateMap],
-    streamsList: Array<Stream.AsObject>,
   }
 
   export interface StateMap {
     ADD: 0;
-    UPDATE: 1;
-    REMOVE: 2;
+    REMOVE: 1;
   }
 
   export const State: StateMap;
@@ -290,11 +265,75 @@ export namespace Subscription {
   }
 }
 
+export class MuteTrack extends jspb.Message {
+  clearTrackidsList(): void;
+  getTrackidsList(): Array<string>;
+  setTrackidsList(value: Array<string>): void;
+  addTrackids(value: string, index?: number): string;
+
+  getMuted(): boolean;
+  setMuted(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MuteTrack.AsObject;
+  static toObject(includeInstance: boolean, msg: MuteTrack): MuteTrack.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MuteTrack, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MuteTrack;
+  static deserializeBinaryFromReader(message: MuteTrack, reader: jspb.BinaryReader): MuteTrack;
+}
+
+export namespace MuteTrack {
+  export type AsObject = {
+    trackidsList: Array<string>,
+    muted: boolean,
+  }
+}
+
+export class SwitchScalabilityLayer extends jspb.Message {
+  getTrackid(): string;
+  setTrackid(value: string): void;
+
+  getSpatiallayer(): number;
+  setSpatiallayer(value: number): void;
+
+  getTemporallayer(): number;
+  setTemporallayer(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SwitchScalabilityLayer.AsObject;
+  static toObject(includeInstance: boolean, msg: SwitchScalabilityLayer): SwitchScalabilityLayer.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SwitchScalabilityLayer, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SwitchScalabilityLayer;
+  static deserializeBinaryFromReader(message: SwitchScalabilityLayer, reader: jspb.BinaryReader): SwitchScalabilityLayer;
+}
+
+export namespace SwitchScalabilityLayer {
+  export type AsObject = {
+    trackid: string,
+    spatiallayer: number,
+    temporallayer: number,
+  }
+}
+
 export class UpdateSettings extends jspb.Message {
   hasSubcription(): boolean;
   clearSubcription(): void;
   getSubcription(): Subscription | undefined;
   setSubcription(value?: Subscription): void;
+
+  hasSwitchlayer(): boolean;
+  clearSwitchlayer(): void;
+  getSwitchlayer(): SwitchScalabilityLayer | undefined;
+  setSwitchlayer(value?: SwitchScalabilityLayer): void;
+
+  hasMutetrack(): boolean;
+  clearMutetrack(): void;
+  getMutetrack(): MuteTrack | undefined;
+  setMutetrack(value?: MuteTrack): void;
 
   getCommandCase(): UpdateSettings.CommandCase;
   serializeBinary(): Uint8Array;
@@ -310,11 +349,15 @@ export class UpdateSettings extends jspb.Message {
 export namespace UpdateSettings {
   export type AsObject = {
     subcription?: Subscription.AsObject,
+    switchlayer?: SwitchScalabilityLayer.AsObject,
+    mutetrack?: MuteTrack.AsObject,
   }
 
   export enum CommandCase {
     COMMAND_NOT_SET = 0,
-    SUBCRIPTION = 2,
+    SUBCRIPTION = 1,
+    SWITCHLAYER = 2,
+    MUTETRACK = 3,
   }
 }
 
@@ -349,10 +392,10 @@ export class Signalling extends jspb.Message {
   getUpdatesettings(): UpdateSettings | undefined;
   setUpdatesettings(value?: UpdateSettings): void;
 
-  hasStreamevent(): boolean;
-  clearStreamevent(): void;
-  getStreamevent(): StreamEvent | undefined;
-  setStreamevent(value?: StreamEvent): void;
+  hasTrackevent(): boolean;
+  clearTrackevent(): void;
+  getTrackevent(): TrackEvent | undefined;
+  setTrackevent(value?: TrackEvent): void;
 
   getPayloadCase(): Signalling.PayloadCase;
   serializeBinary(): Uint8Array;
@@ -373,7 +416,7 @@ export namespace Signalling {
     description?: SessionDescription.AsObject,
     trickle?: Trickle.AsObject,
     updatesettings?: UpdateSettings.AsObject,
-    streamevent?: StreamEvent.AsObject,
+    trackevent?: TrackEvent.AsObject,
   }
 
   export enum PayloadCase {
@@ -384,7 +427,7 @@ export namespace Signalling {
     DESCRIPTION = 4,
     TRICKLE = 5,
     UPDATESETTINGS = 6,
-    STREAMEVENT = 7,
+    TRACKEVENT = 7,
   }
 }
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <!-- Required meta tags -->
   <meta charset="utf-8" />
@@ -12,8 +13,8 @@
       width: 320px;
     }
   </style>
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
     crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
@@ -88,12 +89,12 @@
     const joinBtns = document.getElementById("start-btns");
 
     const connector = new Ion.IonBaseConnector("http://localhost:5551", "token121231231");
-    connector.onopen = function(svc) {
-        console.log("onopen: service = ", svc.name);
+    connector.onopen = function (svc) {
+      console.log("onopen: service = ", svc.name);
     };
-    
-    connector.onclose = function(svc, err) {
-        console.log("onclose: service = ", svc.name, ", err = ", JSON.stringify(err.detail));
+
+    connector.onclose = function (svc, err) {
+      console.log("onclose: service = ", svc.name, ", err = ", JSON.stringify(err.detail));
     };
 
     const uid = uuidv4();
@@ -104,8 +105,21 @@
 
     const sfu = new Ion.IonSDKRTC(connector);
 
-    sfu.onstreamevent = function (ev) {
-      console.log("onstreamevent: state = ", ev.state, ", streams = ", JSON.stringify(ev.streams));
+    sfu.ontrackevent = function (ev) {
+      console.log("ontrackevent: \nuid = ",ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
+      if (ev.state == 1) {
+        var trackIds = [];
+        ev.tracks.forEach(track => {
+            trackIds.push(track.id);
+        });
+        sfu.subscribe(trackIds, true);
+        setTimeout(function () {
+          sfu.subscribe(trackIds, false);
+          setTimeout(function () {
+            sfu.subscribe(trackIds, true);
+          }, 5000);
+        }, 5000);
+      }
     };
 
     sfu.connect();
@@ -141,7 +155,7 @@
       Ion.LocalStream.getUserMedia({
         resolution: "hd",
         audio: true,
-        simulcast: true,
+        simulcast: false,
       })
         .then((media) => {
           localStream = media;
@@ -156,18 +170,21 @@
     };
 
     sfu.ontrack = (track, stream) => {
-      console.log("got track", track.id, "for stream", stream.id);
+      console.log("got ", track.kind, " track", track.id, "for stream", stream.id);
       if (track.kind === "video") {
         track.onunmute = () => {
           if (!streams[stream.id]) {
-            var remoteVideo = document.createElement("video");
+            const remoteVideo = document.createElement("video");
             remoteVideo.srcObject = stream;
             remoteVideo.autoplay = true;
             remoteVideo.muted = true;
             remotesDiv.appendChild(remoteVideo);
+            streams[stream.id] = stream;
             stream.onremovetrack = () => {
-              remotesDiv.removeChild(remoteVideo);
-              streams[stream.id] = null;
+              if(streams[stream.id]){
+                remotesDiv.removeChild(remoteVideo);
+                streams[stream.id] = null;
+              }
             };
           }
         };

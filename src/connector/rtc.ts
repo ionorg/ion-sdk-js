@@ -7,15 +7,16 @@ import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream, Constraints } from './stream';
 
 
-export enum StreamState {
-    NONE,
+export enum TrackState {
+    NONE = 0,
     ADD,
     REMOVE,
 }
 
-export interface StreamEvent {
-    state: StreamState;
-    streams: Stream[];
+export interface TrackEvent {
+    state: TrackState;
+    uid: string;
+    tracks: Track[];
 }
 
 
@@ -27,11 +28,13 @@ export interface Simulcast {
 
 export interface Track {
     id: string;
+    stream_id: string;
     kind: string;
+    muted: boolean;
     simulcast: Simulcast[];
 }
 
-export interface Stream {
+export interface Track {
     id: string;
     tracks: Track[];
 }
@@ -47,7 +50,7 @@ export class IonSDKRTC implements IonService {
     ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
     ondatachannel?: (ev: RTCDataChannelEvent) => void;
     onspeaker?: (ev: string[]) => void;
-    onstreamevent?: (ev: StreamEvent) => void;
+    ontrackevent?: (ev: TrackEvent) => void;
 
     constructor(connector: IonBaseConnector, config?: Configuration) {
         this.name = "rtc";
@@ -77,6 +80,10 @@ export class IonSDKRTC implements IonService {
         this._sfu?.publish(stream);
     }
 
+    subscribe(trackIds: string[], enabled: boolean) {
+        this._sig?.subscribe(trackIds,enabled);
+    }
+
     createDataChannel(label: string) {
         return this._sfu?.createDataChannel(label);
     }
@@ -92,7 +99,7 @@ export class IonSDKRTC implements IonService {
             this._sfu.ondatachannel = (ev: RTCDataChannelEvent) =>
                 this.ondatachannel?.call(this, ev);
             this._sfu.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
-            this._sig.onstreamevent = (ev: StreamEvent) => this.onstreamevent?.call(this, ev);
+            this._sig.ontrackevent = (ev: TrackEvent) => this.ontrackevent?.call(this, ev);
         }
     }
 
@@ -109,7 +116,7 @@ class IonSFUGRPCSignal implements Signal {
     private _event: EventEmitter = new EventEmitter();
     onnegotiate?: ((jsep: RTCSessionDescriptionInit) => void) | undefined;
     ontrickle?: ((trickle: Trickle) => void) | undefined;
-    onstreamevent?: (ev: StreamEvent) => void;
+    ontrackevent?: (ev: TrackEvent) => void;
     constructor(service: IonService, connector: IonBaseConnector) {
         this.connector = connector;
         const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Signalling, pb.Signalling>;
@@ -138,44 +145,39 @@ class IonSFUGRPCSignal implements Signal {
                         if (this.ontrickle) this.ontrickle(trickle);
                     }
                     break;
-                case pb.Signalling.PayloadCase.STREAMEVENT:
+                case pb.Signalling.PayloadCase.TRACKEVENT:
                     {
-                        const evt = reply.getStreamevent();
-                        let state = StreamState.NONE;
+                        const evt = reply.getTrackevent();
+                        let state = TrackState.NONE;
                         switch (evt?.getState()) {
-                            case pb.StreamEvent.State.ADD:
-                                state = StreamState.ADD;
+                            case pb.TrackEvent.State.ADD:
+                                state = TrackState.ADD;
                                 break;
-                            case pb.StreamEvent.State.REMOVE:
-                                state = StreamState.REMOVE;
+                            case pb.TrackEvent.State.REMOVE:
+                                state = TrackState.REMOVE;
                                 break;
                         };
-                        const streams = Array<any>();
-                        evt?.getStreamsList().forEach((rtcStream: pb.Stream) => {
-                            const tracks = Array<any>();
-                            rtcStream.getTracksList().forEach((rtcTrack: pb.Track) => {
-                                const simulcasts = Array<any>();
-                                rtcTrack.getSimulcastList().forEach((rtcSimulcast: pb.Simulcast) => {
-                                    simulcasts.push({
-                                        rid: rtcSimulcast.getRid(),
-                                        direction: rtcSimulcast.getDirection(),
-                                        parameters: rtcSimulcast.getParameters(),
-                                    });
-                                });
-                                tracks.push({
-                                    id: rtcTrack.getId(),
-                                    kind: rtcTrack.getKind(),
-                                    simulcast: simulcasts,
-                                    muted: rtcTrack.getMuted(),
+                        const tracks = Array<any>();
+                        const uid = evt?.getUid() || '';
+                        evt?.getTracksList().forEach((rtcTrack: pb.Track) => {
+                            const simulcasts = Array<any>();
+                            rtcTrack.getSimulcastList().forEach((rtcSimulcast: pb.Simulcast) => {
+                                simulcasts.push({
+                                    rid: rtcSimulcast.getRid(),
+                                    direction: rtcSimulcast.getDirection(),
+                                    parameters: rtcSimulcast.getParameters(),
                                 });
                             });
-                            streams.push({
-                                msid: rtcStream.getMsid(),
-                                uid: rtcStream.getUid(),
-                                tracks: tracks || [],
+                            tracks.push({
+                                id: rtcTrack.getId(),
+                                kind: rtcTrack.getKind(),
+                                muted: rtcTrack.getMuted(),
+                                stream_id: rtcTrack.getStreamId(),
+                                rid: rtcTrack.getRid(),
+                                simulcasts: simulcasts,
                             });
                         });
-                        this.onstreamevent?.call(this, { state, streams });
+                        this.ontrackevent?.call(this, { state, tracks: tracks, uid});
                     }
                     break;
                 case pb.Signalling.PayloadCase.ERROR:
@@ -240,5 +242,16 @@ class IonSFUGRPCSignal implements Signal {
 
     close(): void {
         this._client?.close();
+    }
+
+    subscribe(trackIds: string[], enabled: boolean){
+        const request = new pb.Signalling();
+        const settings = new pb.UpdateSettings();
+        const subscription = new pb.Subscription();
+        subscription.setTrackidsList(trackIds);
+        subscription.setSubscribe(enabled);
+        settings.setSubcription(subscription);
+        request.setUpdatesettings(settings);
+        this._client.send(request);
     }
 }
