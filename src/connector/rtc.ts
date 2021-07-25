@@ -34,11 +34,6 @@ export interface Track {
     simulcast: Simulcast[];
 }
 
-export interface Track {
-    id: string;
-    tracks: Track[];
-}
-
 export class IonSDKRTC implements IonService {
     name: string;
     connector: IonBaseConnector;
