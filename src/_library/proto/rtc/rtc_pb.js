@@ -336,7 +336,7 @@ proto.rtc.JoinRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     sid: jspb.Message.getFieldWithDefault(msg, 1, ""),
     uid: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : []
+    configMap: (f = msg.getConfigMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -382,7 +382,7 @@ proto.rtc.JoinRequest.deserializeBinaryFromReader = function(msg, reader) {
       msg.setUid(value);
       break;
     case 3:
-      var value = msg.getParametersMap();
+      var value = msg.getConfigMap();
       reader.readMessage(value, function(message, reader) {
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
          });
@@ -430,7 +430,7 @@ proto.rtc.JoinRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getParametersMap(true);
+  f = message.getConfigMap(true);
   if (f && f.getLength() > 0) {
     f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
@@ -474,12 +474,12 @@ proto.rtc.JoinRequest.prototype.setUid = function(value) {
 
 
 /**
- * map<string, string> parameters = 3;
+ * map<string, string> config = 3;
  * @param {boolean=} opt_noLazyCreate Do not create the map if
  * empty, instead returning `undefined`
  * @return {!jspb.Map<string,string>}
  */
-proto.rtc.JoinRequest.prototype.getParametersMap = function(opt_noLazyCreate) {
+proto.rtc.JoinRequest.prototype.getConfigMap = function(opt_noLazyCreate) {
   return /** @type {!jspb.Map<string,string>} */ (
       jspb.Message.getMapField(this, 3, opt_noLazyCreate,
       null));
@@ -490,8 +490,8 @@ proto.rtc.JoinRequest.prototype.getParametersMap = function(opt_noLazyCreate) {
  * Clears values from the map. The map will be non-null.
  * @return {!proto.rtc.JoinRequest} returns this
  */
-proto.rtc.JoinRequest.prototype.clearParametersMap = function() {
-  this.getParametersMap().clear();
+proto.rtc.JoinRequest.prototype.clearConfigMap = function() {
+  this.getConfigMap().clear();
   return this;};
 
 

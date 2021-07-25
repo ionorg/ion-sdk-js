@@ -27,7 +27,7 @@ export interface Signal {
   onnegotiate?: (jsep: RTCSessionDescriptionInit) => void;
   ontrickle?: (trickle: Trickle) => void;
 
-  join(sid: string, uid: null | string): Promise<any>;
+  join(sid: string, uid: null | string, parameters: Map<string, any> | undefined): Promise<any>;
   offer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
   answer(answer: RTCSessionDescriptionInit): void;
   trickle(trickle: Trickle): void;
@@ -109,7 +109,7 @@ export default class Client {
     signal.ontrickle = this.trickle.bind(this);
   }
 
-  async join(sid: string, uid: string) {
+  async join(sid: string, uid: string, config: Map<string, any> | undefined) {
     this.transports = {
       [Role.pub]: new Transport(Role.pub, this.signal, this.config),
       [Role.sub]: new Transport(Role.sub, this.signal, this.config),
@@ -148,7 +148,7 @@ export default class Client {
       };
     });
 
-    const answer = await this.signal.join(sid, uid);
+    const answer = await this.signal.join(sid, uid, config);
     this.transports[Role.pub].candidates.forEach((c) => this.transports![Role.pub].pc.addIceCandidate(c));
     this.transports[Role.pub].pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
 

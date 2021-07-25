@@ -10,8 +10,8 @@ export class JoinRequest extends jspb.Message {
   getUid(): string;
   setUid(value: string): void;
 
-  getParametersMap(): jspb.Map<string, string>;
-  clearParametersMap(): void;
+  getConfigMap(): jspb.Map<string, string>;
+  clearConfigMap(): void;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinRequest.AsObject;
   static toObject(includeInstance: boolean, msg: JoinRequest): JoinRequest.AsObject;
@@ -26,7 +26,7 @@ export namespace JoinRequest {
   export type AsObject = {
     sid: string,
     uid: string,
-    parametersMap: Array<[string, string]>,
+    configMap: Array<[string, string]>,
   }
 }
 

@@ -55,8 +55,8 @@ export class IonSDKRTC implements IonService {
         this.connector.registerService(this);
     }
 
-    async join(sid: string, uid: string) {
-        return this._sfu?.join(sid, uid);
+    async join(sid: string, uid: string, config: Map<string, any> | undefined) {
+        return this._sfu?.join(sid, uid, config);
     }
 
     leave() {
@@ -183,11 +183,14 @@ class IonSFUGRPCSignal implements Signal {
         this._client.start(this.connector.metadata);
     }
 
-    join(sid: string, uid: string) {
+    join(sid: string, uid: string, config: Map<string, string> | undefined) {
         const request = new pb.Signalling();
         const join = new pb.JoinRequest();
         join.setSid(sid);
         join.setUid(uid);
+        config?.forEach((key, value) => {
+            join.getConfigMap().set(key,value);
+        });
         request.setJoin(join);
         this._client.send(request);
         return new Promise<any>((resolve, reject) => {
