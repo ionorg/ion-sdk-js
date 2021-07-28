@@ -332,10 +332,10 @@ export namespace SwitchScalabilityLayer {
 }
 
 export class UpdateSettings extends jspb.Message {
-  hasSubcription(): boolean;
-  clearSubcription(): void;
-  getSubcription(): Subscription | undefined;
-  setSubcription(value?: Subscription): void;
+  hasSubscription(): boolean;
+  clearSubscription(): void;
+  getSubscription(): Subscription | undefined;
+  setSubscription(value?: Subscription): void;
 
   hasSwitchlayer(): boolean;
   clearSwitchlayer(): void;
@@ -360,14 +360,14 @@ export class UpdateSettings extends jspb.Message {
 
 export namespace UpdateSettings {
   export type AsObject = {
-    subcription?: Subscription.AsObject,
+    subscription?: Subscription.AsObject,
     switchlayer?: SwitchScalabilityLayer.AsObject,
     mutetrack?: MuteTrack.AsObject,
   }
 
   export enum CommandCase {
     COMMAND_NOT_SET = 0,
-    SUBCRIPTION = 1,
+    SUBSCRIPTION = 1,
     SWITCHLAYER = 2,
     MUTETRACK = 3,
   }

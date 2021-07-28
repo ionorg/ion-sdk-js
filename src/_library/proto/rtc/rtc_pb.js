@@ -2594,7 +2594,7 @@ proto.rtc.UpdateSettings.oneofGroups_ = [[1,2,3]];
  */
 proto.rtc.UpdateSettings.CommandCase = {
   COMMAND_NOT_SET: 0,
-  SUBCRIPTION: 1,
+  SUBSCRIPTION: 1,
   SWITCHLAYER: 2,
   MUTETRACK: 3
 };
@@ -2637,7 +2637,7 @@ proto.rtc.UpdateSettings.prototype.toObject = function(opt_includeInstance) {
  */
 proto.rtc.UpdateSettings.toObject = function(includeInstance, msg) {
   var f, obj = {
-    subcription: (f = msg.getSubcription()) && proto.rtc.Subscription.toObject(includeInstance, f),
+    subscription: (f = msg.getSubscription()) && proto.rtc.Subscription.toObject(includeInstance, f),
     switchlayer: (f = msg.getSwitchlayer()) && proto.rtc.SwitchScalabilityLayer.toObject(includeInstance, f),
     mutetrack: (f = msg.getMutetrack()) && proto.rtc.MuteTrack.toObject(includeInstance, f)
   };
@@ -2679,7 +2679,7 @@ proto.rtc.UpdateSettings.deserializeBinaryFromReader = function(msg, reader) {
     case 1:
       var value = new proto.rtc.Subscription;
       reader.readMessage(value,proto.rtc.Subscription.deserializeBinaryFromReader);
-      msg.setSubcription(value);
+      msg.setSubscription(value);
       break;
     case 2:
       var value = new proto.rtc.SwitchScalabilityLayer;
@@ -2720,7 +2720,7 @@ proto.rtc.UpdateSettings.prototype.serializeBinary = function() {
  */
 proto.rtc.UpdateSettings.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getSubcription();
+  f = message.getSubscription();
   if (f != null) {
     writer.writeMessage(
       1,
@@ -2748,10 +2748,10 @@ proto.rtc.UpdateSettings.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional Subscription subcription = 1;
+ * optional Subscription subscription = 1;
  * @return {?proto.rtc.Subscription}
  */
-proto.rtc.UpdateSettings.prototype.getSubcription = function() {
+proto.rtc.UpdateSettings.prototype.getSubscription = function() {
   return /** @type{?proto.rtc.Subscription} */ (
     jspb.Message.getWrapperField(this, proto.rtc.Subscription, 1));
 };
@@ -2761,7 +2761,7 @@ proto.rtc.UpdateSettings.prototype.getSubcription = function() {
  * @param {?proto.rtc.Subscription|undefined} value
  * @return {!proto.rtc.UpdateSettings} returns this
 */
-proto.rtc.UpdateSettings.prototype.setSubcription = function(value) {
+proto.rtc.UpdateSettings.prototype.setSubscription = function(value) {
   return jspb.Message.setOneofWrapperField(this, 1, proto.rtc.UpdateSettings.oneofGroups_[0], value);
 };
 
@@ -2770,8 +2770,8 @@ proto.rtc.UpdateSettings.prototype.setSubcription = function(value) {
  * Clears the message field making it undefined.
  * @return {!proto.rtc.UpdateSettings} returns this
  */
-proto.rtc.UpdateSettings.prototype.clearSubcription = function() {
-  return this.setSubcription(undefined);
+proto.rtc.UpdateSettings.prototype.clearSubscription = function() {
+  return this.setSubscription(undefined);
 };
 
 
@@ -2779,7 +2779,7 @@ proto.rtc.UpdateSettings.prototype.clearSubcription = function() {
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.rtc.UpdateSettings.prototype.hasSubcription = function() {
+proto.rtc.UpdateSettings.prototype.hasSubscription = function() {
   return jspb.Message.getField(this, 1) != null;
 };
 

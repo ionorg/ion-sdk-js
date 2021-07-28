@@ -273,7 +273,7 @@ class IonSFUGRPCSignal implements Signal {
         const subscription = new pb.Subscription();
         subscription.setTrackidsList(trackIds);
         subscription.setSubscribe(enabled);
-        settings.setSubcription(subscription);
+        settings.setSubscription(subscription);
         request.setUpdatesettings(settings);
         this._client.send(request);
     }
