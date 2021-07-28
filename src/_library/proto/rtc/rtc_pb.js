@@ -336,7 +336,8 @@ proto.rtc.JoinRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     sid: jspb.Message.getFieldWithDefault(msg, 1, ""),
     uid: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    configMap: (f = msg.getConfigMap()) ? f.toObject(includeInstance, undefined) : []
+    configMap: (f = msg.getConfigMap()) ? f.toObject(includeInstance, undefined) : [],
+    description: (f = msg.getDescription()) && proto.rtc.SessionDescription.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -387,6 +388,11 @@ proto.rtc.JoinRequest.deserializeBinaryFromReader = function(msg, reader) {
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
          });
       break;
+    case 4:
+      var value = new proto.rtc.SessionDescription;
+      reader.readMessage(value,proto.rtc.SessionDescription.deserializeBinaryFromReader);
+      msg.setDescription(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -433,6 +439,14 @@ proto.rtc.JoinRequest.serializeBinaryToWriter = function(message, writer) {
   f = message.getConfigMap(true);
   if (f && f.getLength() > 0) {
     f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+  }
+  f = message.getDescription();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.rtc.SessionDescription.serializeBinaryToWriter
+    );
   }
 };
 
@@ -495,6 +509,43 @@ proto.rtc.JoinRequest.prototype.clearConfigMap = function() {
   return this;};
 
 
+/**
+ * optional SessionDescription description = 4;
+ * @return {?proto.rtc.SessionDescription}
+ */
+proto.rtc.JoinRequest.prototype.getDescription = function() {
+  return /** @type{?proto.rtc.SessionDescription} */ (
+    jspb.Message.getWrapperField(this, proto.rtc.SessionDescription, 4));
+};
+
+
+/**
+ * @param {?proto.rtc.SessionDescription|undefined} value
+ * @return {!proto.rtc.JoinRequest} returns this
+*/
+proto.rtc.JoinRequest.prototype.setDescription = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.rtc.JoinRequest} returns this
+ */
+proto.rtc.JoinRequest.prototype.clearDescription = function() {
+  return this.setDescription(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.rtc.JoinRequest.prototype.hasDescription = function() {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+
 
 
 
@@ -528,7 +579,8 @@ proto.rtc.JoinReply.prototype.toObject = function(opt_includeInstance) {
 proto.rtc.JoinReply.toObject = function(includeInstance, msg) {
   var f, obj = {
     success: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
-    error: (f = msg.getError()) && proto.rtc.Error.toObject(includeInstance, f)
+    error: (f = msg.getError()) && proto.rtc.Error.toObject(includeInstance, f),
+    description: (f = msg.getDescription()) && proto.rtc.SessionDescription.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -574,6 +626,11 @@ proto.rtc.JoinReply.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.rtc.Error.deserializeBinaryFromReader);
       msg.setError(value);
       break;
+    case 3:
+      var value = new proto.rtc.SessionDescription;
+      reader.readMessage(value,proto.rtc.SessionDescription.deserializeBinaryFromReader);
+      msg.setDescription(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -616,6 +673,14 @@ proto.rtc.JoinReply.serializeBinaryToWriter = function(message, writer) {
       2,
       f,
       proto.rtc.Error.serializeBinaryToWriter
+    );
+  }
+  f = message.getDescription();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.rtc.SessionDescription.serializeBinaryToWriter
     );
   }
 };
@@ -673,6 +738,43 @@ proto.rtc.JoinReply.prototype.clearError = function() {
  */
 proto.rtc.JoinReply.prototype.hasError = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional SessionDescription description = 3;
+ * @return {?proto.rtc.SessionDescription}
+ */
+proto.rtc.JoinReply.prototype.getDescription = function() {
+  return /** @type{?proto.rtc.SessionDescription} */ (
+    jspb.Message.getWrapperField(this, proto.rtc.SessionDescription, 3));
+};
+
+
+/**
+ * @param {?proto.rtc.SessionDescription|undefined} value
+ * @return {!proto.rtc.JoinReply} returns this
+*/
+proto.rtc.JoinReply.prototype.setDescription = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.rtc.JoinReply} returns this
+ */
+proto.rtc.JoinReply.prototype.clearDescription = function() {
+  return this.setDescription(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.rtc.JoinReply.prototype.hasDescription = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

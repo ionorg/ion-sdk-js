@@ -1,11 +1,11 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { IonService, IonBaseConnector } from './ion';
-import Client, { Configuration, Trickle, Signal } from './client';
+import Client, { Configuration, Trickle } from '../client';
+import { Signal } from '../signal';
 import { EventEmitter } from 'events';
 import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';
-import { LocalStream, RemoteStream, Constraints } from './stream';
-
+import { LocalStream, RemoteStream } from '../stream';
 
 export enum TrackState {
     NONE = 0,
@@ -19,7 +19,6 @@ export interface TrackEvent {
     tracks: Track[];
 }
 
-
 export interface Simulcast {
     rid: string;
     direction: string;
@@ -32,6 +31,12 @@ export interface Track {
     kind: string;
     muted: boolean;
     simulcast: Simulcast[];
+}
+
+export interface JoinConfig {
+    no_publish: boolean;
+    no_subscribe: boolean;
+    no_auto_subscribe: boolean;
 }
 
 export class IonSDKRTC implements IonService {
@@ -55,8 +60,9 @@ export class IonSDKRTC implements IonService {
         this.connector.registerService(this);
     }
 
-    async join(sid: string, uid: string, config: Map<string, any> | undefined) {
-        return this._sfu?.join(sid, uid, config);
+    async join(sid: string, uid: string, config: JoinConfig | undefined) {
+        this._sig!.config = config;
+        return this._sfu?.join(sid, uid);
     }
 
     leave() {
@@ -76,7 +82,7 @@ export class IonSDKRTC implements IonService {
     }
 
     subscribe(trackIds: string[], enabled: boolean) {
-        this._sig?.subscribe(trackIds,enabled);
+        this._sig?.subscribe(trackIds, enabled);
     }
 
     createDataChannel(label: string) {
@@ -112,6 +118,10 @@ class IonSFUGRPCSignal implements Signal {
     onnegotiate?: ((jsep: RTCSessionDescriptionInit) => void) | undefined;
     ontrickle?: ((trickle: Trickle) => void) | undefined;
     ontrackevent?: (ev: TrackEvent) => void;
+    private _config?: JoinConfig;
+    set config(config: JoinConfig | undefined) {
+        this._config = config;
+    }
     constructor(service: IonService, connector: IonBaseConnector) {
         this.connector = connector;
         const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Signalling, pb.Signalling>;
@@ -172,7 +182,7 @@ class IonSFUGRPCSignal implements Signal {
                                 simulcasts: simulcasts,
                             });
                         });
-                        this.ontrackevent?.call(this, { state, tracks: tracks, uid});
+                        this.ontrackevent?.call(this, { state, tracks: tracks, uid });
                     }
                     break;
                 case pb.Signalling.PayloadCase.ERROR:
@@ -183,19 +193,35 @@ class IonSFUGRPCSignal implements Signal {
         this._client.start(this.connector.metadata);
     }
 
-    join(sid: string, uid: string, config: Map<string, string> | undefined) {
+    join(sid: string, uid: null | string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
         const request = new pb.Signalling();
         const join = new pb.JoinRequest();
         join.setSid(sid);
-        join.setUid(uid);
-        config?.forEach((key, value) => {
-            join.getConfigMap().set(key,value);
-        });
+        join.setUid(uid || '');
+
+        if (this._config) {
+            join.getConfigMap().set('NoPublish', this._config?.no_publish ? 'true' : 'false');
+            join.getConfigMap().set('NoSubscribe', this._config?.no_subscribe ? 'true' : 'false');
+            join.getConfigMap().set('NoAutoSubscribe', this._config?.no_auto_subscribe ? 'true' : 'false');
+        }
+
+        const dest = new pb.SessionDescription();
+        dest.setSdp(offer.sdp || '');
+        dest.setType(offer.type || '');
+        dest.setTarget(pb.Target.PUBLISHER);
+        join.setDescription(dest);
         request.setJoin(join);
         this._client.send(request);
         return new Promise<any>((resolve, reject) => {
             const handler = (result: pb.JoinReply) => {
-                resolve({ success: result.getSuccess(), reason: result.getError()?.toObject() });
+                if (result.getSuccess()) {
+                    resolve({
+                        sdp: result.getDescription()!.getSdp(),
+                        type: result.getDescription()!.getType()
+                    });
+                } else {
+                    reject(result.getError()?.toObject());
+                }
                 this._event.removeListener('join-reply', handler);
             };
             this._event.addListener('join-reply', handler);
@@ -218,7 +244,6 @@ class IonSFUGRPCSignal implements Signal {
         dest.setTarget(pb.Target.PUBLISHER);
         request.setDescription(dest);
         this._client.send(request);
-
         return new Promise<RTCSessionDescriptionInit>((resolve, reject) => {
             const handler = (desc: RTCSessionDescriptionInit) => {
                 resolve(desc);
@@ -242,7 +267,7 @@ class IonSFUGRPCSignal implements Signal {
         this._client?.close();
     }
 
-    subscribe(trackIds: string[], enabled: boolean){
+    subscribe(trackIds: string[], enabled: boolean) {
         const request = new pb.Signalling();
         const settings = new pb.UpdateSettings();
         const subscription = new pb.Subscription();

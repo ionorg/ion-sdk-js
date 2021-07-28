@@ -12,6 +12,11 @@ export class JoinRequest extends jspb.Message {
 
   getConfigMap(): jspb.Map<string, string>;
   clearConfigMap(): void;
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): SessionDescription | undefined;
+  setDescription(value?: SessionDescription): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinRequest.AsObject;
   static toObject(includeInstance: boolean, msg: JoinRequest): JoinRequest.AsObject;
@@ -27,6 +32,7 @@ export namespace JoinRequest {
     sid: string,
     uid: string,
     configMap: Array<[string, string]>,
+    description?: SessionDescription.AsObject,
   }
 }
 
@@ -38,6 +44,11 @@ export class JoinReply extends jspb.Message {
   clearError(): void;
   getError(): Error | undefined;
   setError(value?: Error): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): SessionDescription | undefined;
+  setDescription(value?: SessionDescription): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinReply.AsObject;
@@ -53,6 +64,7 @@ export namespace JoinReply {
   export type AsObject = {
     success: boolean,
     error?: Error.AsObject,
+    description?: SessionDescription.AsObject,
   }
 }
 
