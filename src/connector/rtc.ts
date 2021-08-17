@@ -44,9 +44,9 @@ export class IonSDKRTC implements IonService {
     connector: IonBaseConnector;
     connected: boolean;
     config?: Configuration;
-    protected _rpc?: grpc.Client<pb.Signalling, pb.Signalling>;
-    private _sfu?: Client;
-    private _sig?: IonSFUGRPCSignal;
+    protected _rpc?: grpc.Client<pb.Request, pb.Reply>;
+    private _rtc?: Client;
+    private _sig?: _IonRTCGRPCSignal;
     ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
     ondatachannel?: (ev: RTCDataChannelEvent) => void;
     onspeaker?: (ev: string[]) => void;
@@ -62,23 +62,23 @@ export class IonSDKRTC implements IonService {
 
     async join(sid: string, uid: string, config: JoinConfig | undefined) {
         this._sig!.config = config;
-        return this._sfu?.join(sid, uid);
+        return this._rtc?.join(sid, uid);
     }
 
     leave() {
-        return this._sfu?.leave();
+        return this._rtc?.leave();
     }
 
     getPubStats(selector?: MediaStreamTrack) {
-        return this._sfu?.getPubStats(selector);
+        return this._rtc?.getPubStats(selector);
     }
 
     getSubStats(selector?: MediaStreamTrack) {
-        return this._sfu?.getSubStats(selector);
+        return this._rtc?.getSubStats(selector);
     }
 
     publish(stream: LocalStream) {
-        this._sfu?.publish(stream);
+        this._rtc?.publish(stream);
     }
 
     subscribe(trackIds: string[], enabled: boolean) {
@@ -86,34 +86,34 @@ export class IonSDKRTC implements IonService {
     }
 
     createDataChannel(label: string) {
-        return this._sfu?.createDataChannel(label);
+        return this._rtc?.createDataChannel(label);
     }
 
     connect(): void {
         if (!this._sig) {
-            this._sig = new IonSFUGRPCSignal(this, this.connector);
+            this._sig = new _IonRTCGRPCSignal(this, this.connector);
         }
-        if (!this._sfu) {
-            this._sfu = new Client(this._sig, this?.config);
-            this._sfu.ontrack = (track: MediaStreamTrack, stream: RemoteStream) =>
+        if (!this._rtc) {
+            this._rtc = new Client(this._sig, this?.config);
+            this._rtc.ontrack = (track: MediaStreamTrack, stream: RemoteStream) =>
                 this.ontrack?.call(this, track, stream);
-            this._sfu.ondatachannel = (ev: RTCDataChannelEvent) =>
+            this._rtc.ondatachannel = (ev: RTCDataChannelEvent) =>
                 this.ondatachannel?.call(this, ev);
-            this._sfu.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
+            this._rtc.onspeaker = (ev: string[]) => this.onspeaker?.call(this, ev);
             this._sig.ontrackevent = (ev: TrackEvent) => this.ontrackevent?.call(this, ev);
         }
     }
 
     close(): void {
-        if (this._sfu) {
-            this._sfu.close();
+        if (this._rtc) {
+            this._rtc.close();
         }
     }
 }
 
-class IonSFUGRPCSignal implements Signal {
+class _IonRTCGRPCSignal implements Signal {
     connector: IonBaseConnector;
-    protected _client: grpc.Client<pb.Signalling, pb.Signalling>;
+    protected _client: grpc.Client<pb.Request, pb.Reply>;
     private _event: EventEmitter = new EventEmitter();
     onnegotiate?: ((jsep: RTCSessionDescriptionInit) => void) | undefined;
     ontrickle?: ((trickle: Trickle) => void) | undefined;
@@ -124,17 +124,17 @@ class IonSFUGRPCSignal implements Signal {
     }
     constructor(service: IonService, connector: IonBaseConnector) {
         this.connector = connector;
-        const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Signalling, pb.Signalling>;
+        const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Request, pb.Reply>;
         client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
             connector.onEnd(service, status, statusMessage, trailers));
         client.onHeaders((headers: grpc.Metadata) => connector.onHeaders(service, headers));
-        client.onMessage((reply: pb.Signalling) => {
+        client.onMessage((reply: pb.Reply) => {
             switch (reply.getPayloadCase()) {
-                case pb.Signalling.PayloadCase.REPLY:
-                    const result = reply.getReply();
+                case pb.Reply.PayloadCase.JOIN:
+                    const result = reply.getJoin();
                     this._event.emit('join-reply', result);
                     break;
-                case pb.Signalling.PayloadCase.DESCRIPTION:
+                case pb.Reply.PayloadCase.DESCRIPTION:
                     const desc = reply.getDescription();
                     if (desc?.getType() === 'offer') {
                         if (this.onnegotiate) this.onnegotiate({ sdp: desc.getSdp(), type: 'offer' });
@@ -142,7 +142,7 @@ class IonSFUGRPCSignal implements Signal {
                         this._event.emit('description', { sdp: desc.getSdp(), type: 'answer' });
                     }
                     break;
-                case pb.Signalling.PayloadCase.TRICKLE:
+                case pb.Reply.PayloadCase.TRICKLE:
                     const pbTrickle = reply.getTrickle();
                     if (pbTrickle?.getInit() !== undefined) {
                         const candidate = JSON.parse(pbTrickle.getInit() as string);
@@ -150,7 +150,7 @@ class IonSFUGRPCSignal implements Signal {
                         if (this.ontrickle) this.ontrickle(trickle);
                     }
                     break;
-                case pb.Signalling.PayloadCase.TRACKEVENT:
+                case pb.Reply.PayloadCase.TRACKEVENT:
                     {
                         const evt = reply.getTrackevent();
                         let state = TrackState.NONE;
@@ -185,7 +185,7 @@ class IonSFUGRPCSignal implements Signal {
                         this.ontrackevent?.call(this, { state, tracks: tracks, uid });
                     }
                     break;
-                case pb.Signalling.PayloadCase.ERROR:
+                case pb.Reply.PayloadCase.ERROR:
                     break;
             }
         });
@@ -194,7 +194,7 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     join(sid: string, uid: null | string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
-        const request = new pb.Signalling();
+        const request = new pb.Request();
         const join = new pb.JoinRequest();
         join.setSid(sid);
         join.setUid(uid || '');
@@ -229,7 +229,7 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     trickle(trickle: Trickle) {
-        const request = new pb.Signalling();
+        const request = new pb.Request();
         const pbTrickle = new pb.Trickle();
         pbTrickle.setInit(JSON.stringify(trickle.candidate));
         request.setTrickle(pbTrickle);
@@ -237,7 +237,7 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     offer(offer: RTCSessionDescriptionInit) {
-        const request = new pb.Signalling();
+        const request = new pb.Request();
         const dest = new pb.SessionDescription();
         dest.setSdp(offer.sdp || '');
         dest.setType(offer.type || '');
@@ -254,7 +254,7 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     answer(answer: RTCSessionDescriptionInit) {
-        const request = new pb.Signalling();
+        const request = new pb.Request();
         const desc = new pb.SessionDescription();
         desc.setSdp(answer.sdp || '');
         desc.setType(answer.type || '');
@@ -268,13 +268,11 @@ class IonSFUGRPCSignal implements Signal {
     }
 
     subscribe(trackIds: string[], enabled: boolean) {
-        const request = new pb.Signalling();
-        const settings = new pb.UpdateSettings();
-        const subscription = new pb.Subscription();
+        const request = new pb.Request();
+        const subscription = new pb.SubscriptionRequest();
         subscription.setTrackidsList(trackIds);
         subscription.setSubscribe(enabled);
-        settings.setSubscription(subscription);
-        request.setUpdatesettings(settings);
+        request.setSubscription(subscription);
         this._client.send(request);
     }
 }

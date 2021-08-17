@@ -176,6 +176,9 @@ export class Track extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getType(): MediaTypeMap[keyof MediaTypeMap];
+  setType(value: MediaTypeMap[keyof MediaTypeMap]): void;
+
   getStreamId(): string;
   setStreamId(value: string): void;
 
@@ -206,6 +209,7 @@ export class Track extends jspb.Message {
 export namespace Track {
   export type AsObject = {
     id: string,
+    type: MediaTypeMap[keyof MediaTypeMap],
     streamId: string,
     kind: string,
     muted: boolean,
@@ -245,13 +249,14 @@ export namespace TrackEvent {
 
   export interface StateMap {
     ADD: 0;
-    REMOVE: 1;
+    UPDATE: 1;
+    REMOVE: 2;
   }
 
   export const State: StateMap;
 }
 
-export class Subscription extends jspb.Message {
+export class SubscriptionRequest extends jspb.Message {
   clearTrackidsList(): void;
   getTrackidsList(): Array<string>;
   setTrackidsList(value: Array<string>): void;
@@ -261,133 +266,177 @@ export class Subscription extends jspb.Message {
   setSubscribe(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Subscription.AsObject;
-  static toObject(includeInstance: boolean, msg: Subscription): Subscription.AsObject;
+  toObject(includeInstance?: boolean): SubscriptionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SubscriptionRequest): SubscriptionRequest.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Subscription, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Subscription;
-  static deserializeBinaryFromReader(message: Subscription, reader: jspb.BinaryReader): Subscription;
+  static serializeBinaryToWriter(message: SubscriptionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubscriptionRequest;
+  static deserializeBinaryFromReader(message: SubscriptionRequest, reader: jspb.BinaryReader): SubscriptionRequest;
 }
 
-export namespace Subscription {
+export namespace SubscriptionRequest {
   export type AsObject = {
     trackidsList: Array<string>,
     subscribe: boolean,
   }
 }
 
-export class MuteTrack extends jspb.Message {
-  clearTrackidsList(): void;
-  getTrackidsList(): Array<string>;
-  setTrackidsList(value: Array<string>): void;
-  addTrackids(value: string, index?: number): string;
-
-  getMuted(): boolean;
-  setMuted(value: boolean): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): MuteTrack.AsObject;
-  static toObject(includeInstance: boolean, msg: MuteTrack): MuteTrack.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: MuteTrack, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): MuteTrack;
-  static deserializeBinaryFromReader(message: MuteTrack, reader: jspb.BinaryReader): MuteTrack;
-}
-
-export namespace MuteTrack {
-  export type AsObject = {
-    trackidsList: Array<string>,
-    muted: boolean,
-  }
-}
-
-export class SwitchScalabilityLayer extends jspb.Message {
-  getTrackid(): string;
-  setTrackid(value: string): void;
-
-  getSpatiallayer(): number;
-  setSpatiallayer(value: number): void;
-
-  getTemporallayer(): number;
-  setTemporallayer(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SwitchScalabilityLayer.AsObject;
-  static toObject(includeInstance: boolean, msg: SwitchScalabilityLayer): SwitchScalabilityLayer.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: SwitchScalabilityLayer, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): SwitchScalabilityLayer;
-  static deserializeBinaryFromReader(message: SwitchScalabilityLayer, reader: jspb.BinaryReader): SwitchScalabilityLayer;
-}
-
-export namespace SwitchScalabilityLayer {
-  export type AsObject = {
-    trackid: string,
-    spatiallayer: number,
-    temporallayer: number,
-  }
-}
-
-export class UpdateSettings extends jspb.Message {
-  hasSubscription(): boolean;
-  clearSubscription(): void;
-  getSubscription(): Subscription | undefined;
-  setSubscription(value?: Subscription): void;
-
-  hasSwitchlayer(): boolean;
-  clearSwitchlayer(): void;
-  getSwitchlayer(): SwitchScalabilityLayer | undefined;
-  setSwitchlayer(value?: SwitchScalabilityLayer): void;
-
-  hasMutetrack(): boolean;
-  clearMutetrack(): void;
-  getMutetrack(): MuteTrack | undefined;
-  setMutetrack(value?: MuteTrack): void;
-
-  getCommandCase(): UpdateSettings.CommandCase;
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): UpdateSettings.AsObject;
-  static toObject(includeInstance: boolean, msg: UpdateSettings): UpdateSettings.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: UpdateSettings, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): UpdateSettings;
-  static deserializeBinaryFromReader(message: UpdateSettings, reader: jspb.BinaryReader): UpdateSettings;
-}
-
-export namespace UpdateSettings {
-  export type AsObject = {
-    subscription?: Subscription.AsObject,
-    switchlayer?: SwitchScalabilityLayer.AsObject,
-    mutetrack?: MuteTrack.AsObject,
-  }
-
-  export enum CommandCase {
-    COMMAND_NOT_SET = 0,
-    SUBSCRIPTION = 1,
-    SWITCHLAYER = 2,
-    MUTETRACK = 3,
-  }
-}
-
-export class Signalling extends jspb.Message {
-  hasJoin(): boolean;
-  clearJoin(): void;
-  getJoin(): JoinRequest | undefined;
-  setJoin(value?: JoinRequest): void;
-
-  hasReply(): boolean;
-  clearReply(): void;
-  getReply(): JoinReply | undefined;
-  setReply(value?: JoinReply): void;
+export class SubscriptionReply extends jspb.Message {
+  getSuccess(): boolean;
+  setSuccess(value: boolean): void;
 
   hasError(): boolean;
   clearError(): void;
   getError(): Error | undefined;
   setError(value?: Error): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubscriptionReply.AsObject;
+  static toObject(includeInstance: boolean, msg: SubscriptionReply): SubscriptionReply.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SubscriptionReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubscriptionReply;
+  static deserializeBinaryFromReader(message: SubscriptionReply, reader: jspb.BinaryReader): SubscriptionReply;
+}
+
+export namespace SubscriptionReply {
+  export type AsObject = {
+    success: boolean,
+    error?: Error.AsObject,
+  }
+}
+
+export class AddTrackRequest extends jspb.Message {
+  clearTracksList(): void;
+  getTracksList(): Array<Track>;
+  setTracksList(value: Array<Track>): void;
+  addTracks(value?: Track, index?: number): Track;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AddTrackRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: AddTrackRequest): AddTrackRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AddTrackRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AddTrackRequest;
+  static deserializeBinaryFromReader(message: AddTrackRequest, reader: jspb.BinaryReader): AddTrackRequest;
+}
+
+export namespace AddTrackRequest {
+  export type AsObject = {
+    tracksList: Array<Track.AsObject>,
+  }
+}
+
+export class AddTrackReply extends jspb.Message {
+  getSuccess(): boolean;
+  setSuccess(value: boolean): void;
+
+  hasError(): boolean;
+  clearError(): void;
+  getError(): Error | undefined;
+  setError(value?: Error): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AddTrackReply.AsObject;
+  static toObject(includeInstance: boolean, msg: AddTrackReply): AddTrackReply.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AddTrackReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AddTrackReply;
+  static deserializeBinaryFromReader(message: AddTrackReply, reader: jspb.BinaryReader): AddTrackReply;
+}
+
+export namespace AddTrackReply {
+  export type AsObject = {
+    success: boolean,
+    error?: Error.AsObject,
+  }
+}
+
+export class UpdateTrackRequest extends jspb.Message {
+  clearTracksList(): void;
+  getTracksList(): Array<UpdateTrackRequest.TrackInfo>;
+  setTracksList(value: Array<UpdateTrackRequest.TrackInfo>): void;
+  addTracks(value?: UpdateTrackRequest.TrackInfo, index?: number): UpdateTrackRequest.TrackInfo;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateTrackRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateTrackRequest): UpdateTrackRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateTrackRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateTrackRequest;
+  static deserializeBinaryFromReader(message: UpdateTrackRequest, reader: jspb.BinaryReader): UpdateTrackRequest;
+}
+
+export namespace UpdateTrackRequest {
+  export type AsObject = {
+    tracksList: Array<UpdateTrackRequest.TrackInfo.AsObject>,
+  }
+
+  export class TrackInfo extends jspb.Message {
+    getId(): string;
+    setId(value: string): void;
+
+    getMuted(): boolean;
+    setMuted(value: boolean): void;
+
+    getType(): MediaTypeMap[keyof MediaTypeMap];
+    setType(value: MediaTypeMap[keyof MediaTypeMap]): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): TrackInfo.AsObject;
+    static toObject(includeInstance: boolean, msg: TrackInfo): TrackInfo.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: TrackInfo, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): TrackInfo;
+    static deserializeBinaryFromReader(message: TrackInfo, reader: jspb.BinaryReader): TrackInfo;
+  }
+
+  export namespace TrackInfo {
+    export type AsObject = {
+      id: string,
+      muted: boolean,
+      type: MediaTypeMap[keyof MediaTypeMap],
+    }
+  }
+}
+
+export class UpdateTrackReply extends jspb.Message {
+  getSuccess(): boolean;
+  setSuccess(value: boolean): void;
+
+  hasError(): boolean;
+  clearError(): void;
+  getError(): Error | undefined;
+  setError(value?: Error): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateTrackReply.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateTrackReply): UpdateTrackReply.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateTrackReply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateTrackReply;
+  static deserializeBinaryFromReader(message: UpdateTrackReply, reader: jspb.BinaryReader): UpdateTrackReply;
+}
+
+export namespace UpdateTrackReply {
+  export type AsObject = {
+    success: boolean,
+    error?: Error.AsObject,
+  }
+}
+
+export class Request extends jspb.Message {
+  hasJoin(): boolean;
+  clearJoin(): void;
+  getJoin(): JoinRequest | undefined;
+  setJoin(value?: JoinRequest): void;
 
   hasDescription(): boolean;
   clearDescription(): void;
@@ -399,47 +448,127 @@ export class Signalling extends jspb.Message {
   getTrickle(): Trickle | undefined;
   setTrickle(value?: Trickle): void;
 
-  hasUpdatesettings(): boolean;
-  clearUpdatesettings(): void;
-  getUpdatesettings(): UpdateSettings | undefined;
-  setUpdatesettings(value?: UpdateSettings): void;
+  hasSubscription(): boolean;
+  clearSubscription(): void;
+  getSubscription(): SubscriptionRequest | undefined;
+  setSubscription(value?: SubscriptionRequest): void;
+
+  hasAddtrack(): boolean;
+  clearAddtrack(): void;
+  getAddtrack(): AddTrackRequest | undefined;
+  setAddtrack(value?: AddTrackRequest): void;
+
+  hasUpdatetrack(): boolean;
+  clearUpdatetrack(): void;
+  getUpdatetrack(): UpdateTrackRequest | undefined;
+  setUpdatetrack(value?: UpdateTrackRequest): void;
+
+  getPayloadCase(): Request.PayloadCase;
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Request.AsObject;
+  static toObject(includeInstance: boolean, msg: Request): Request.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: Request, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Request;
+  static deserializeBinaryFromReader(message: Request, reader: jspb.BinaryReader): Request;
+}
+
+export namespace Request {
+  export type AsObject = {
+    join?: JoinRequest.AsObject,
+    description?: SessionDescription.AsObject,
+    trickle?: Trickle.AsObject,
+    subscription?: SubscriptionRequest.AsObject,
+    addtrack?: AddTrackRequest.AsObject,
+    updatetrack?: UpdateTrackRequest.AsObject,
+  }
+
+  export enum PayloadCase {
+    PAYLOAD_NOT_SET = 0,
+    JOIN = 1,
+    DESCRIPTION = 2,
+    TRICKLE = 3,
+    SUBSCRIPTION = 4,
+    ADDTRACK = 5,
+    UPDATETRACK = 6,
+  }
+}
+
+export class Reply extends jspb.Message {
+  hasJoin(): boolean;
+  clearJoin(): void;
+  getJoin(): JoinReply | undefined;
+  setJoin(value?: JoinReply): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): SessionDescription | undefined;
+  setDescription(value?: SessionDescription): void;
+
+  hasTrickle(): boolean;
+  clearTrickle(): void;
+  getTrickle(): Trickle | undefined;
+  setTrickle(value?: Trickle): void;
 
   hasTrackevent(): boolean;
   clearTrackevent(): void;
   getTrackevent(): TrackEvent | undefined;
   setTrackevent(value?: TrackEvent): void;
 
-  getPayloadCase(): Signalling.PayloadCase;
+  hasSubscription(): boolean;
+  clearSubscription(): void;
+  getSubscription(): SubscriptionReply | undefined;
+  setSubscription(value?: SubscriptionReply): void;
+
+  hasAddtrack(): boolean;
+  clearAddtrack(): void;
+  getAddtrack(): AddTrackReply | undefined;
+  setAddtrack(value?: AddTrackReply): void;
+
+  hasUpdatetrack(): boolean;
+  clearUpdatetrack(): void;
+  getUpdatetrack(): UpdateTrackReply | undefined;
+  setUpdatetrack(value?: UpdateTrackReply): void;
+
+  hasError(): boolean;
+  clearError(): void;
+  getError(): Error | undefined;
+  setError(value?: Error): void;
+
+  getPayloadCase(): Reply.PayloadCase;
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Signalling.AsObject;
-  static toObject(includeInstance: boolean, msg: Signalling): Signalling.AsObject;
+  toObject(includeInstance?: boolean): Reply.AsObject;
+  static toObject(includeInstance: boolean, msg: Reply): Reply.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Signalling, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Signalling;
-  static deserializeBinaryFromReader(message: Signalling, reader: jspb.BinaryReader): Signalling;
+  static serializeBinaryToWriter(message: Reply, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Reply;
+  static deserializeBinaryFromReader(message: Reply, reader: jspb.BinaryReader): Reply;
 }
 
-export namespace Signalling {
+export namespace Reply {
   export type AsObject = {
-    join?: JoinRequest.AsObject,
-    reply?: JoinReply.AsObject,
-    error?: Error.AsObject,
+    join?: JoinReply.AsObject,
     description?: SessionDescription.AsObject,
     trickle?: Trickle.AsObject,
-    updatesettings?: UpdateSettings.AsObject,
     trackevent?: TrackEvent.AsObject,
+    subscription?: SubscriptionReply.AsObject,
+    addtrack?: AddTrackReply.AsObject,
+    updatetrack?: UpdateTrackReply.AsObject,
+    error?: Error.AsObject,
   }
 
   export enum PayloadCase {
     PAYLOAD_NOT_SET = 0,
     JOIN = 1,
-    REPLY = 2,
-    ERROR = 3,
-    DESCRIPTION = 4,
-    TRICKLE = 5,
-    UPDATESETTINGS = 6,
-    TRACKEVENT = 7,
+    DESCRIPTION = 2,
+    TRICKLE = 3,
+    TRACKEVENT = 4,
+    SUBSCRIPTION = 5,
+    ADDTRACK = 6,
+    UPDATETRACK = 7,
+    ERROR = 8,
   }
 }
 
@@ -449,4 +578,15 @@ export interface TargetMap {
 }
 
 export const Target: TargetMap;
+
+export interface MediaTypeMap {
+  MEDIAUNKNOWN: 0;
+  USERMEDIA: 1;
+  SCREENCAPTURE: 2;
+  CAVANS: 3;
+  STREAMING: 4;
+  VOIP: 5;
+}
+
+export const MediaType: MediaTypeMap;
 

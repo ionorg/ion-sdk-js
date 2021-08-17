@@ -15,8 +15,8 @@ RTC.Signal = {
   service: RTC,
   requestStream: true,
   responseStream: true,
-  requestType: proto_rtc_rtc_pb.Signalling,
-  responseType: proto_rtc_rtc_pb.Signalling
+  requestType: proto_rtc_rtc_pb.Request,
+  responseType: proto_rtc_rtc_pb.Reply
 };
 
 exports.RTC = RTC;

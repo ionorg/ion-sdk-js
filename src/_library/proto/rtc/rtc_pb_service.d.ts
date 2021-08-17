@@ -9,8 +9,8 @@ type RTCSignal = {
   readonly service: typeof RTC;
   readonly requestStream: true;
   readonly responseStream: true;
-  readonly requestType: typeof proto_rtc_rtc_pb.Signalling;
-  readonly responseType: typeof proto_rtc_rtc_pb.Signalling;
+  readonly requestType: typeof proto_rtc_rtc_pb.Request;
+  readonly responseType: typeof proto_rtc_rtc_pb.Reply;
 };
 
 export class RTC {
@@ -50,6 +50,6 @@ export class RTCClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
-  signal(metadata?: grpc.Metadata): BidirectionalStream<proto_rtc_rtc_pb.Signalling, proto_rtc_rtc_pb.Signalling>;
+  signal(metadata?: grpc.Metadata): BidirectionalStream<proto_rtc_rtc_pb.Request, proto_rtc_rtc_pb.Reply>;
 }
 
