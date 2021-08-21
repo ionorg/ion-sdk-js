@@ -84,8 +84,8 @@
   <script>
     const localVideo = document.getElementById("local-video");
     const remotesDiv = document.getElementById("remotes");
-
-    /* eslint-env browser */
+    hello_world.Init();
+    /*
     const joinBtns = document.getElementById("start-btns");
 
     const connector = new Ion.IonBaseConnector("http://localhost:5551", "token121231231");
@@ -139,30 +139,6 @@
 
     sfu.connect();
     sfu.join(sid, uid);
-
-    /*
-    biz.onjoin = function (success, reason) {
-      console.log("onjoin: ", success, ", ", reason);
-      biz.message(uid, "all", { text: "hello", senderName: "ion sdk ts" });
-      if (success) {
-          sfu.join(sid, uid);
-      }
-    };
-
-    biz.onleave = function (reason) {
-      console.log("onleave: ", reason);
-    };
-
-    biz.onpeerevent = function (ev) {
-      console.log("onpeerevent: state = ", ev.state, ", peer = ", ev.peer.uid, ", name = ", ev.peer.info.name);
-    };
-
-    biz.onmessage = function (msg) {
-      console.log("onmessage: from ", msg.from, ", to ", msg.to, ", text = ", msg.data.text);
-    }
-
-    biz.join(sid, uid, { name: 'ts client' });
-    */
 
     const streams = {};
     let localStream;
@@ -220,7 +196,7 @@
       } else {
         localStream.unmute("audio");
       }
-    };
+    };*/
   </script>
 </body>
 

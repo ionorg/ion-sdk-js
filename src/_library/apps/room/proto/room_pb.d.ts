@@ -234,28 +234,10 @@ export namespace DeleteRoomReply {
 }
 
 export class JoinRequest extends jspb.Message {
-  getSid(): string;
-  setSid(value: string): void;
-
-  getUid(): string;
-  setUid(value: string): void;
-
-  getDisplayname(): string;
-  setDisplayname(value: string): void;
-
-  getExtrainfo(): Uint8Array | string;
-  getExtrainfo_asU8(): Uint8Array;
-  getExtrainfo_asB64(): string;
-  setExtrainfo(value: Uint8Array | string): void;
-
-  getRole(): RoleMap[keyof RoleMap];
-  setRole(value: RoleMap[keyof RoleMap]): void;
-
-  getAvatar(): string;
-  setAvatar(value: string): void;
-
-  getVendor(): string;
-  setVendor(value: string): void;
+  hasPeer(): boolean;
+  clearPeer(): void;
+  getPeer(): Peer | undefined;
+  setPeer(value?: Peer): void;
 
   getPassword(): string;
   setPassword(value: string): void;
@@ -272,13 +254,7 @@ export class JoinRequest extends jspb.Message {
 
 export namespace JoinRequest {
   export type AsObject = {
-    sid: string,
-    uid: string,
-    displayname: string,
-    extrainfo: Uint8Array | string,
-    role: RoleMap[keyof RoleMap],
-    avatar: string,
-    vendor: string,
+    peer?: Peer.AsObject,
     password: string,
   }
 }

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "strict": true,
+    "module": "commonjs",
+    "outDir": "./lib",
+    "declaration": true
+  },
+  "include": [
+    "decs.d.ts",
+    "src"
+  ],
+  "exclude": ["node_modules"]
+}

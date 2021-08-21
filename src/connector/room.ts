@@ -3,12 +3,7 @@ import { IonService, IonBaseConnector } from './ion';
 import * as room from '../_library/apps/room/proto/room_pb';
 import * as room_rpc from '../_library/apps/room/proto/room_pb_service';
 import { EventEmitter } from 'events';
-import { Uint8ArrayToJSONString } from './utils';
 
-export interface JoinResult {
-    success: boolean;
-    reason: string;
-}
 
 export enum PeerState {
     NONE,
@@ -17,37 +12,49 @@ export enum PeerState {
     LEAVE,
 }
 
-export interface Role {
-    HOST: 0;
-    GUEST: 1;
+export enum Role {
+    HOST = 0,
+    GUEST = 1
 }
 
-export interface Protocol {
-    PROTOCOLUNKNOWN: 0;
-    WEBRTC: 1;
-    SIP: 2;
-    RTMP: 3;
-    RTSP: 4;
+export enum Protocol {
+    PROTOCOLUNKNOWN = 0,
+    WEBRTC = 1,
+    SIP = 2,
+    RTMP = 3,
+    RTSP = 4,
 }
 
-export interface ErrorType {
-    NONE: 0;
-    UNKOWNERROR: 1;
-    PERMISSIONDENIED: 2;
-    SERVICEUNAVAILABLE: 3;
-    ROOMLOCKED: 4;
-    PASSWORDREQUIRED: 5;
-    ROOMALREADYEXIST: 6;
-    ROOMNOTEXIST: 7;
-    INVALIDPARAMS: 8;
-    PEERALREADYEXIST: 9;
-    PEERNOTEXIST: 10;
+export enum ErrorType {
+    NONE = 0,
+    UNKOWNERROR = 1,
+    PERMISSIONDENIED = 2,
+    SERVICEUNAVAILABLE = 3,
+    ROOMLOCKED = 4,
+    PASSWORDREQUIRED = 5,
+    ROOMALREADYEXIST = 6,
+    ROOMNOTEXIST = 7,
+    INVALIDPARAMS = 8,
+    PEERALREADYEXIST = 9,
+    PEERNOTEXIST = 10,
 }
 
-export interface Direction {
-    INCOMING: 0;
-    OUTGOING: 1;
-    BILATERAL: 2;
+export interface Error {
+    errType: ErrorType;
+    reason: string;
+}
+
+export interface JoinResult {
+    success: boolean;
+    error: Error;
+    role: Role;
+    room: RoomInfo;
+}
+
+export enum Direction {
+    INCOMING = 0,
+    OUTGOING = 1,
+    BILATERAL = 2,
 }
 
 export interface Peer {
@@ -71,19 +78,36 @@ export interface PeerEvent {
 export interface Message {
     from: string;
     to: string;
-    data: Map<string, any>;
+    type: string;
+    payload: any;
+}
+
+export interface RoomInfo {
+    sid: string,
+    name: string,
+    lock: boolean,
+    password: string,
+    description: string,
+    maxpeers: number,
+}
+
+export interface Disconnect {
+    sid: string,
+    reason: string,
 }
 
 export class IonAppRoom implements IonService {
+    // public
     name: string;
     connector: IonBaseConnector;
     connected: boolean;
-    _rpc?: _IonRoomGRPCClient;
     onerror?: (err: Event) => void;
-    onjoin?: (success: boolean, reason: string) => void;
+    onjoin?: (result: JoinResult) => void;
     onleave?: (reason: string) => void;
     onpeerevent?: (ev: PeerEvent) => void;
     onmessage?: (msg: Message) => void;
+    onroominfo?: (info: RoomInfo) => void;
+    ondisconnect?: (dis: Disconnect) => void;
 
     constructor(connector: IonBaseConnector) {
         this.name = "room";
@@ -92,30 +116,27 @@ export class IonAppRoom implements IonService {
         this.connector.registerService(this);
     }
 
-    async join(
-        sid: string,
-        uid: string,
-        info: Map<string, any>): Promise<JoinResult | undefined> {
-        return this._rpc?.join(sid, uid);
+    async join(peer: Peer, password: string | undefined): Promise<JoinResult | undefined> {
+        return this._rpc?.join(peer, password);
     }
 
     async leave(uid: string): Promise<string | undefined> {
         return this._rpc?.leave(uid);
     }
 
-    async message(from: string, to: string, data: Map<string, any>): Promise<void> {
-        return this._rpc?.sendMessage(from, to, data);
+    async message(sid: string, from: string, to: string, mineType: string, data: Map<string, any>): Promise<void> {
+        return this._rpc?.sendMessage(sid, from, to, mineType, data);
     }
 
     connect(): void {
         if (!this._rpc) {
             this._rpc = new _IonRoomGRPCClient(this, this.connector);
-            this._rpc.on("join-reply", async (success: boolean, reason: string) => {
-                this.onjoin?.call(this, success, reason);
-            });
+            this._rpc.on("join-reply", (result: JoinResult) => { this.onjoin?.call(this, result); });
             this._rpc.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
             this._rpc.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
             this._rpc.on("message", (msg: Message) => this.onmessage?.call(this, msg));
+            this._rpc.on("room-info", (info: RoomInfo) => this.onroominfo?.call(this, info));
+            this._rpc.on("disconnect", (dis: Disconnect) => this.ondisconnect?.call(this, dis));
         }
     }
 
@@ -124,6 +145,9 @@ export class IonAppRoom implements IonService {
             this._rpc.close();
         }
     }
+
+    // private
+    _rpc?: _IonRoomGRPCClient;
 }
 
 class _IonRoomGRPCClient extends EventEmitter {
@@ -141,8 +165,19 @@ class _IonRoomGRPCClient extends EventEmitter {
         client.onMessage((reply: room.Reply) => {
             switch (reply.getPayloadCase()) {
                 case room.Reply.PayloadCase.JOIN:
-                    const result = { success: reply.getJoin()?.getSuccess() || false, reason: reply.getJoin()?.getError()?.getReason() || "unkown reason" };
-                    this.emit('join-reply', result.success, result.reason);
+                    this.emit('join-reply', {
+                        success: reply.getJoin()?.getSuccess() || false,
+                        error: reply.getJoin()?.getError() || { errType: ErrorType.NONE, reason: '' },
+                        role: reply.getJoin()?.getRole() || Role.HOST,
+                        room: reply.getJoin()? {
+                            sid: reply.getJoin()?.getRoom()?.getSid() || '',
+                            name: reply.getJoin()?.getRoom()?.getName() || '',
+                            lock: reply.getJoin()?.getRoom()?.getLock() || false,
+                            password: reply.getJoin()?.getRoom()?.getPassword() || '',
+                            description: reply.getJoin()?.getRoom()?.getDescription() || '',
+                            maxpeers: reply.getJoin()?.getRoom()?.getMaxpeers() || 0,
+                        } : undefined,
+                    });
                     break;
                 case room.Reply.PayloadCase.LEAVE:
                     const reason = reply.getLeave()?.getError()?.getReason() || "unkown reason";
@@ -175,12 +210,30 @@ class _IonRoomGRPCClient extends EventEmitter {
                         vendor: evt?.getPeer()?.getVendor() || "",
                     }
                     this.emit("peer-event", { state, peer });
-
                     break;
                 case room.Reply.PayloadCase.MESSAGE:
-                    const data = JSON.parse(Uint8ArrayToJSONString(reply.getMessage()?.getPayload() as Uint8Array));
-                    const msg = { from: reply.getMessage()?.getFrom() || "", to: reply.getMessage()?.getTo() || "", data: data || {} };
-                    this.emit('message', msg);
+                    const msg = reply.getMessage();
+                    this.emit('message', {
+                        from: msg?.getFrom() || "",
+                        to: msg?.getTo() || "",
+                        type: msg?.getType() || "",
+                        data: msg?.getPayload() || {},
+                    });
+                    break;
+                case room.Reply.PayloadCase.ROOM:
+                    const info = reply.getRoom() || undefined;
+                    this.emit('room-info', {
+                        sid: info?.getSid() || "",
+                        name: info?.getName() || "",
+                        lock: info?.getLock() || false,
+                        password: info?.getPassword() || "",
+                        description: info?.getDescription() || "",
+                        maxpeers: info?.getMaxpeers() || 0,
+                    });
+                    break;
+                case room.Reply.PayloadCase.DISCONNECT:
+                    const dis = reply.getDisconnect() || {};
+                    this.emit('disconnect', dis);
                     break;
             }
         });
@@ -189,16 +242,26 @@ class _IonRoomGRPCClient extends EventEmitter {
         this._client.start(connector.metadata);
     }
 
-    async join(sid: string, uid: string, ): Promise<JoinResult> {
+    async join(peer: Peer, password: string | undefined): Promise<JoinResult> {
         const request = new room.Request();
         const join = new room.JoinRequest();
-        const peer = new room.Peer();
-        peer.setSid(sid);
-        peer.setUid(uid);
-        //TODO: add more info
+        const p = new room.Peer();
 
+        p.setUid(peer.uid);
+        p.setSid(peer.sid);
+        p.setDisplayname(peer.displayname);
+        p.setExtrainfo(peer.extrainfo);
+        p.setDestination(peer.destination);
+        p.setRole(peer.role);
+        p.setProtocol(peer.protocol);
+        p.setAvatar(peer.avatar);
+        p.setDirection(peer.direction);
+        p.setVendor(peer.vendor);
+        join.setPeer(p);
+        if (password) {
+            join.setPassword(password);
+        }
         request.setJoin(join);
-
         this._client.send(request);
 
         return new Promise<JoinResult>((resolve, reject) => {
@@ -221,20 +284,23 @@ class _IonRoomGRPCClient extends EventEmitter {
         return new Promise<string>((resolve, reject) => {
             const handler = (reason: string) => {
                 resolve(reason);
-                this.removeListener('join-reply', handler);
+                this.removeListener('leave-reply', handler);
             };
-            this.addListener('join-reply', handler);
+            this.addListener('leave-reply', handler);
         });
     }
 
-    async sendMessage(from: string, to: string, data: Map<string, any>) {
+    async sendMessage(sid: string, from: string, to: string, mineType: string, data: Map<string, any>) {
         const request = new room.Request();
         const sendMessage = new room.SendMessageRequest();
         const message = new room.Message();
         message.setFrom(from);
         message.setTo(to);
         const buffer = Uint8Array.from(JSON.stringify(data), (c) => c.charCodeAt(0));
+        message.setType(mineType);
         message.setPayload(buffer);
+        sendMessage.setSid(sid);
+        sendMessage.setMessage(message);
         request.setSendmessage(sendMessage);
         this._client.send(request);
     }

@@ -2329,14 +2329,8 @@ proto.room.JoinRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.room.JoinRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    sid: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    uid: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    displayname: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    extrainfo: msg.getExtrainfo_asB64(),
-    role: jspb.Message.getFieldWithDefault(msg, 5, 0),
-    avatar: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    vendor: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    password: jspb.Message.getFieldWithDefault(msg, 8, "")
+    peer: (f = msg.getPeer()) && proto.room.Peer.toObject(includeInstance, f),
+    password: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -2374,34 +2368,11 @@ proto.room.JoinRequest.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setSid(value);
+      var value = new proto.room.Peer;
+      reader.readMessage(value,proto.room.Peer.deserializeBinaryFromReader);
+      msg.setPeer(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setUid(value);
-      break;
-    case 3:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setDisplayname(value);
-      break;
-    case 4:
-      var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setExtrainfo(value);
-      break;
-    case 5:
-      var value = /** @type {!proto.room.Role} */ (reader.readEnum());
-      msg.setRole(value);
-      break;
-    case 6:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setAvatar(value);
-      break;
-    case 7:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setVendor(value);
-      break;
-    case 8:
       var value = /** @type {string} */ (reader.readString());
       msg.setPassword(value);
       break;
@@ -2434,88 +2405,66 @@ proto.room.JoinRequest.prototype.serializeBinary = function() {
  */
 proto.room.JoinRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getSid();
-  if (f.length > 0) {
-    writer.writeString(
+  f = message.getPeer();
+  if (f != null) {
+    writer.writeMessage(
       1,
-      f
+      f,
+      proto.room.Peer.serializeBinaryToWriter
     );
   }
-  f = message.getUid();
+  f = message.getPassword();
   if (f.length > 0) {
     writer.writeString(
       2,
       f
     );
   }
-  f = message.getDisplayname();
-  if (f.length > 0) {
-    writer.writeString(
-      3,
-      f
-    );
-  }
-  f = message.getExtrainfo_asU8();
-  if (f.length > 0) {
-    writer.writeBytes(
-      4,
-      f
-    );
-  }
-  f = message.getRole();
-  if (f !== 0.0) {
-    writer.writeEnum(
-      5,
-      f
-    );
-  }
-  f = message.getAvatar();
-  if (f.length > 0) {
-    writer.writeString(
-      6,
-      f
-    );
-  }
-  f = message.getVendor();
-  if (f.length > 0) {
-    writer.writeString(
-      7,
-      f
-    );
-  }
-  f = message.getPassword();
-  if (f.length > 0) {
-    writer.writeString(
-      8,
-      f
-    );
-  }
 };
 
 
 /**
- * optional string sid = 1;
- * @return {string}
+ * optional Peer peer = 1;
+ * @return {?proto.room.Peer}
  */
-proto.room.JoinRequest.prototype.getSid = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+proto.room.JoinRequest.prototype.getPeer = function() {
+  return /** @type{?proto.room.Peer} */ (
+    jspb.Message.getWrapperField(this, proto.room.Peer, 1));
 };
 
 
 /**
- * @param {string} value
+ * @param {?proto.room.Peer|undefined} value
+ * @return {!proto.room.JoinRequest} returns this
+*/
+proto.room.JoinRequest.prototype.setPeer = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
  * @return {!proto.room.JoinRequest} returns this
  */
-proto.room.JoinRequest.prototype.setSid = function(value) {
-  return jspb.Message.setProto3StringField(this, 1, value);
+proto.room.JoinRequest.prototype.clearPeer = function() {
+  return this.setPeer(undefined);
 };
 
 
 /**
- * optional string uid = 2;
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.room.JoinRequest.prototype.hasPeer = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional string password = 2;
  * @return {string}
  */
-proto.room.JoinRequest.prototype.getUid = function() {
+proto.room.JoinRequest.prototype.getPassword = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
@@ -2524,140 +2473,8 @@ proto.room.JoinRequest.prototype.getUid = function() {
  * @param {string} value
  * @return {!proto.room.JoinRequest} returns this
  */
-proto.room.JoinRequest.prototype.setUid = function(value) {
-  return jspb.Message.setProto3StringField(this, 2, value);
-};
-
-
-/**
- * optional string displayName = 3;
- * @return {string}
- */
-proto.room.JoinRequest.prototype.getDisplayname = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.room.JoinRequest} returns this
- */
-proto.room.JoinRequest.prototype.setDisplayname = function(value) {
-  return jspb.Message.setProto3StringField(this, 3, value);
-};
-
-
-/**
- * optional bytes extraInfo = 4;
- * @return {!(string|Uint8Array)}
- */
-proto.room.JoinRequest.prototype.getExtrainfo = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
-};
-
-
-/**
- * optional bytes extraInfo = 4;
- * This is a type-conversion wrapper around `getExtrainfo()`
- * @return {string}
- */
-proto.room.JoinRequest.prototype.getExtrainfo_asB64 = function() {
-  return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getExtrainfo()));
-};
-
-
-/**
- * optional bytes extraInfo = 4;
- * Note that Uint8Array is not supported on all browsers.
- * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getExtrainfo()`
- * @return {!Uint8Array}
- */
-proto.room.JoinRequest.prototype.getExtrainfo_asU8 = function() {
-  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getExtrainfo()));
-};
-
-
-/**
- * @param {!(string|Uint8Array)} value
- * @return {!proto.room.JoinRequest} returns this
- */
-proto.room.JoinRequest.prototype.setExtrainfo = function(value) {
-  return jspb.Message.setProto3BytesField(this, 4, value);
-};
-
-
-/**
- * optional Role role = 5;
- * @return {!proto.room.Role}
- */
-proto.room.JoinRequest.prototype.getRole = function() {
-  return /** @type {!proto.room.Role} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
-};
-
-
-/**
- * @param {!proto.room.Role} value
- * @return {!proto.room.JoinRequest} returns this
- */
-proto.room.JoinRequest.prototype.setRole = function(value) {
-  return jspb.Message.setProto3EnumField(this, 5, value);
-};
-
-
-/**
- * optional string avatar = 6;
- * @return {string}
- */
-proto.room.JoinRequest.prototype.getAvatar = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.room.JoinRequest} returns this
- */
-proto.room.JoinRequest.prototype.setAvatar = function(value) {
-  return jspb.Message.setProto3StringField(this, 6, value);
-};
-
-
-/**
- * optional string vendor = 7;
- * @return {string}
- */
-proto.room.JoinRequest.prototype.getVendor = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.room.JoinRequest} returns this
- */
-proto.room.JoinRequest.prototype.setVendor = function(value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
-};
-
-
-/**
- * optional string password = 8;
- * @return {string}
- */
-proto.room.JoinRequest.prototype.getPassword = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.room.JoinRequest} returns this
- */
 proto.room.JoinRequest.prototype.setPassword = function(value) {
-  return jspb.Message.setProto3StringField(this, 8, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
