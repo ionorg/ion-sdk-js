@@ -130,7 +130,7 @@ export class IonAppRoom implements IonService {
 
     connect(): void {
         if (!this._rpc) {
-            this._rpc = new _IonRoomGRPCClient(this, this.connector);
+            this._rpc = new IonRoomGRPCClient(this, this.connector);
             this._rpc.on("join-reply", (result: JoinResult) => { this.onjoin?.call(this, result); });
             this._rpc.on("leave-reply", (reason: string) => this.onleave?.call(this, reason));
             this._rpc.on("peer-event", (ev: PeerEvent) => this.onpeerevent?.call(this, ev));
@@ -147,10 +147,10 @@ export class IonAppRoom implements IonService {
     }
 
     // private
-    _rpc?: _IonRoomGRPCClient;
+    _rpc?: IonRoomGRPCClient;
 }
 
-class _IonRoomGRPCClient extends EventEmitter {
+class IonRoomGRPCClient extends EventEmitter {
     connector: IonBaseConnector;
     protected _client: grpc.Client<room.Request, room.Reply>;
     constructor(service: IonService, connector: IonBaseConnector) {
