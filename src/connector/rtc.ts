@@ -16,21 +16,33 @@ export enum TrackState {
 export interface TrackEvent {
     state: TrackState;
     uid: string;
-    tracks: Track[];
+    tracks: TrackInfo[];
 }
 
-export interface Simulcast {
-    rid: string;
-    direction: string;
-    parameters: string;
+export interface VideoInfo {
+    width: number,
+    height: number,
+    framerate: number,
+    simulcast: Map<string, string> | undefined,
+}
+
+export enum MediaType {
+    MEDIAUNKNOWN = 0,
+    USERMEDIA = 1,
+    SCREENCAPTURE = 2,
+    CAVANS = 3,
+    STREAMING = 4,
+    VOIP = 5,
 };
 
-export interface Track {
+export interface TrackInfo {
     id: string;
-    stream_id: string;
     kind: string;
     muted: boolean;
-    simulcast: Simulcast[];
+    type: MediaType;
+    stream_id: string;
+    label: string;
+    videoinfo: VideoInfo | undefined;
 }
 
 export interface JoinConfig {
@@ -162,24 +174,28 @@ class _IonRTCGRPCSignal implements Signal {
                                 state = TrackState.REMOVE;
                                 break;
                         };
-                        const tracks = Array<any>();
+                        const tracks = Array<TrackInfo>();
                         const uid = evt?.getUid() || '';
-                        evt?.getTracksList().forEach((rtcTrack: pb.Track) => {
-                            const simulcasts = Array<any>();
-                            rtcTrack.getSimulcastList().forEach((rtcSimulcast: pb.Simulcast) => {
-                                simulcasts.push({
-                                    rid: rtcSimulcast.getRid(),
-                                    direction: rtcSimulcast.getDirection(),
-                                    parameters: rtcSimulcast.getParameters(),
+                        evt?.getTracksList().forEach((rtcTrack: pb.TrackInfo) => {
+                            const simulcast = new Map<string, string>();
+                            if(rtcTrack.getVideoInfo()?.getSimulcastMap()) {
+                                rtcTrack.getVideoInfo()?.getSimulcastMap().forEach((key: string, value: string) => {
+                                    simulcast.set(key, value);
                                 });
-                            });
+                            }
                             tracks.push({
                                 id: rtcTrack.getId(),
                                 kind: rtcTrack.getKind(),
-                                muted: rtcTrack.getMuted(),
+                                label: rtcTrack.getLabel(),
                                 stream_id: rtcTrack.getStreamId(),
-                                rid: rtcTrack.getRid(),
-                                simulcasts: simulcasts,
+                                muted: rtcTrack.getMuted(),
+                                type:  rtcTrack.getType() || MediaType.MEDIAUNKNOWN,
+                                videoinfo: {
+                                    height: rtcTrack.getVideoInfo()?.getHeight() || 0,
+                                    width: rtcTrack.getVideoInfo()?.getWidth() || 0,
+                                    framerate: rtcTrack.getVideoInfo()?.getFramerate() || 0,
+                                    simulcast: simulcast,
+                                },
                             });
                         });
                         this.ontrackevent?.call(this, { state, tracks: tracks, uid });
@@ -198,13 +214,11 @@ class _IonRTCGRPCSignal implements Signal {
         const join = new pb.JoinRequest();
         join.setSid(sid);
         join.setUid(uid || '');
-
         if (this._config) {
             join.getConfigMap().set('NoPublish', this._config?.no_publish ? 'true' : 'false');
             join.getConfigMap().set('NoSubscribe', this._config?.no_subscribe ? 'true' : 'false');
             join.getConfigMap().set('NoAutoSubscribe', this._config?.no_auto_subscribe ? 'true' : 'false');
         }
-
         const dest = new pb.SessionDescription();
         dest.setSdp(offer.sdp || '');
         dest.setType(offer.type || '');

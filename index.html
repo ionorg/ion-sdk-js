@@ -99,29 +99,11 @@
 
     const uid = uuidv4();
     const sid = "test room";
-
-    const room = new Ion.IonAppRoom(connector);
-    room.connect();
-
-    room.join(
-      {
-        sid: "test room",
-        uid: uid,
-        displayname: "Peer 01",
-        extrainfo: "",
-        destination: "sfu",
-        role: 0,
-        protocol: 1,
-        avatar: "",
-        direction: "",
-        vendor: "",
-      }
-    );
-
     const sfu = new Ion.IonSDKRTC(connector);
 
     sfu.ontrackevent = function (ev) {
       console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
+      /*
       if (ev.state == 1) {
         var trackIds = [];
         ev.tracks.forEach(track => {
@@ -134,7 +116,7 @@
             sfu.subscribe(trackIds, true);
           }, 5000);
         }, 5000);
-      }
+      }*/
     };
 
     sfu.connect();
