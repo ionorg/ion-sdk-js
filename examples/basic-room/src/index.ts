@@ -1,12 +1,12 @@
 
-import * as ion from 'ion-sdk-js/src/connector';
+import * as ion from '../../../src/connector';
 import * as uuid from 'uuid';
 
 export async function Init(): Promise<void> {
     console.log('Hello world!');
     let url = 'http://localhost:5551';
     let token = 'token';
-    let sid = 'test room';
+    let sid = 'ion';
     let uid = uuid.v4();
     const baseConnecotr = new ion.IonBaseConnector(url, token);
 
@@ -60,7 +60,7 @@ export async function Init(): Promise<void> {
         uid: uid,
         displayname: 'new peer',
         extrainfo: '',
-        destination: 'webrtc://testroom1/peer1',
+        destination: 'webrtc://ion/peer1',
         role: ion.Role.HOST,
         protocol: ion.Protocol.WEBRTC ,
         avatar: 'string',
@@ -71,7 +71,7 @@ export async function Init(): Promise<void> {
     console.log('Joined room result, success ' + result?.success + ', room info: ' + JSON.stringify(result?.room));
 
     setTimeout(() => {
-        roomApp.leave(uid);
+        roomApp.leave(sid, uid);
     }, 7000);
 
     const payload = new Map();

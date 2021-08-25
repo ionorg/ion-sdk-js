@@ -3,7 +3,7 @@ const path = require('path');
 const WebpackDevServerOutput = require('webpack-dev-server-output');
 
 module.exports = {
-  entry: "./src/connector/index.ts",
+  entry: "../../src/connector/index.ts",
   mode: "development",
   output: {
     path: path.resolve(__dirname, 'build'),

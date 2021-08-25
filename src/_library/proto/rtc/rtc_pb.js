@@ -2,14 +2,11 @@
 /**
  * @fileoverview
  * @enhanceable
- * @suppress {missingRequire} reports error on implicit type usages.
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
 // GENERATED CODE -- DO NOT EDIT!
-/* eslint-disable */
-// @ts-nocheck
 
 var jspb = require('google-protobuf');
 var goog = jspb;
@@ -988,7 +985,7 @@ proto.rtc.VideoInfo.prototype.setHeight = function(value) {
 
 
 /**
- * optional uint32 framerate = 3;
+ * optional uint32 frameRate = 3;
  * @return {number}
  */
 proto.rtc.VideoInfo.prototype.getFramerate = function() {
@@ -1063,9 +1060,9 @@ proto.rtc.TrackInfo.toObject = function(includeInstance, msg) {
     kind: jspb.Message.getFieldWithDefault(msg, 2, ""),
     muted: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     type: jspb.Message.getFieldWithDefault(msg, 4, 0),
-    streamId: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    streamid: jspb.Message.getFieldWithDefault(msg, 5, ""),
     label: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    videoInfo: (f = msg.getVideoInfo()) && proto.rtc.VideoInfo.toObject(includeInstance, f)
+    videoinfo: (f = msg.getVideoinfo()) && proto.rtc.VideoInfo.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1120,7 +1117,7 @@ proto.rtc.TrackInfo.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 5:
       var value = /** @type {string} */ (reader.readString());
-      msg.setStreamId(value);
+      msg.setStreamid(value);
       break;
     case 6:
       var value = /** @type {string} */ (reader.readString());
@@ -1129,7 +1126,7 @@ proto.rtc.TrackInfo.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = new proto.rtc.VideoInfo;
       reader.readMessage(value,proto.rtc.VideoInfo.deserializeBinaryFromReader);
-      msg.setVideoInfo(value);
+      msg.setVideoinfo(value);
       break;
     default:
       reader.skipField();
@@ -1188,7 +1185,7 @@ proto.rtc.TrackInfo.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getStreamId();
+  f = message.getStreamid();
   if (f.length > 0) {
     writer.writeString(
       5,
@@ -1202,7 +1199,7 @@ proto.rtc.TrackInfo.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getVideoInfo();
+  f = message.getVideoinfo();
   if (f != null) {
     writer.writeMessage(
       7,
@@ -1286,10 +1283,10 @@ proto.rtc.TrackInfo.prototype.setType = function(value) {
 
 
 /**
- * optional string stream_id = 5;
+ * optional string streamId = 5;
  * @return {string}
  */
-proto.rtc.TrackInfo.prototype.getStreamId = function() {
+proto.rtc.TrackInfo.prototype.getStreamid = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
 };
 
@@ -1298,7 +1295,7 @@ proto.rtc.TrackInfo.prototype.getStreamId = function() {
  * @param {string} value
  * @return {!proto.rtc.TrackInfo} returns this
  */
-proto.rtc.TrackInfo.prototype.setStreamId = function(value) {
+proto.rtc.TrackInfo.prototype.setStreamid = function(value) {
   return jspb.Message.setProto3StringField(this, 5, value);
 };
 
@@ -1322,10 +1319,10 @@ proto.rtc.TrackInfo.prototype.setLabel = function(value) {
 
 
 /**
- * optional VideoInfo video_info = 7;
+ * optional VideoInfo videoInfo = 7;
  * @return {?proto.rtc.VideoInfo}
  */
-proto.rtc.TrackInfo.prototype.getVideoInfo = function() {
+proto.rtc.TrackInfo.prototype.getVideoinfo = function() {
   return /** @type{?proto.rtc.VideoInfo} */ (
     jspb.Message.getWrapperField(this, proto.rtc.VideoInfo, 7));
 };
@@ -1335,7 +1332,7 @@ proto.rtc.TrackInfo.prototype.getVideoInfo = function() {
  * @param {?proto.rtc.VideoInfo|undefined} value
  * @return {!proto.rtc.TrackInfo} returns this
 */
-proto.rtc.TrackInfo.prototype.setVideoInfo = function(value) {
+proto.rtc.TrackInfo.prototype.setVideoinfo = function(value) {
   return jspb.Message.setWrapperField(this, 7, value);
 };
 
@@ -1344,8 +1341,8 @@ proto.rtc.TrackInfo.prototype.setVideoInfo = function(value) {
  * Clears the message field making it undefined.
  * @return {!proto.rtc.TrackInfo} returns this
  */
-proto.rtc.TrackInfo.prototype.clearVideoInfo = function() {
-  return this.setVideoInfo(undefined);
+proto.rtc.TrackInfo.prototype.clearVideoinfo = function() {
+  return this.setVideoinfo(undefined);
 };
 
 
@@ -1353,7 +1350,7 @@ proto.rtc.TrackInfo.prototype.clearVideoInfo = function() {
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.rtc.TrackInfo.prototype.hasVideoInfo = function() {
+proto.rtc.TrackInfo.prototype.hasVideoinfo = function() {
   return jspb.Message.getField(this, 7) != null;
 };
 
@@ -1571,7 +1568,7 @@ proto.rtc.SessionDescription.prototype.setSdp = function(value) {
 
 
 /**
- * repeated TrackInfo trackinfos = 4;
+ * repeated TrackInfo trackInfos = 4;
  * @return {!Array<!proto.rtc.TrackInfo>}
  */
 proto.rtc.SessionDescription.prototype.getTrackinfosList = function() {
@@ -2874,7 +2871,7 @@ proto.rtc.UpdateTrackReply.prototype.hasError = function() {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.rtc.Request.oneofGroups_ = [[1,2,3,5,6]];
+proto.rtc.Request.oneofGroups_ = [[1,2,3,4,5]];
 
 /**
  * @enum {number}
@@ -2884,8 +2881,8 @@ proto.rtc.Request.PayloadCase = {
   JOIN: 1,
   DESCRIPTION: 2,
   TRICKLE: 3,
-  SUBSCRIPTION: 5,
-  UPDATETRACK: 6
+  SUBSCRIPTION: 4,
+  UPDATETRACK: 5
 };
 
 /**
@@ -2982,12 +2979,12 @@ proto.rtc.Request.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.rtc.Trickle.deserializeBinaryFromReader);
       msg.setTrickle(value);
       break;
-    case 5:
+    case 4:
       var value = new proto.rtc.SubscriptionRequest;
       reader.readMessage(value,proto.rtc.SubscriptionRequest.deserializeBinaryFromReader);
       msg.setSubscription(value);
       break;
-    case 6:
+    case 5:
       var value = new proto.rtc.UpdateTrackRequest;
       reader.readMessage(value,proto.rtc.UpdateTrackRequest.deserializeBinaryFromReader);
       msg.setUpdatetrack(value);
@@ -3048,7 +3045,7 @@ proto.rtc.Request.serializeBinaryToWriter = function(message, writer) {
   f = message.getSubscription();
   if (f != null) {
     writer.writeMessage(
-      5,
+      4,
       f,
       proto.rtc.SubscriptionRequest.serializeBinaryToWriter
     );
@@ -3056,7 +3053,7 @@ proto.rtc.Request.serializeBinaryToWriter = function(message, writer) {
   f = message.getUpdatetrack();
   if (f != null) {
     writer.writeMessage(
-      6,
+      5,
       f,
       proto.rtc.UpdateTrackRequest.serializeBinaryToWriter
     );
@@ -3176,12 +3173,12 @@ proto.rtc.Request.prototype.hasTrickle = function() {
 
 
 /**
- * optional SubscriptionRequest subscription = 5;
+ * optional SubscriptionRequest subscription = 4;
  * @return {?proto.rtc.SubscriptionRequest}
  */
 proto.rtc.Request.prototype.getSubscription = function() {
   return /** @type{?proto.rtc.SubscriptionRequest} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.SubscriptionRequest, 5));
+    jspb.Message.getWrapperField(this, proto.rtc.SubscriptionRequest, 4));
 };
 
 
@@ -3190,7 +3187,7 @@ proto.rtc.Request.prototype.getSubscription = function() {
  * @return {!proto.rtc.Request} returns this
 */
 proto.rtc.Request.prototype.setSubscription = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 5, proto.rtc.Request.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 4, proto.rtc.Request.oneofGroups_[0], value);
 };
 
 
@@ -3208,17 +3205,17 @@ proto.rtc.Request.prototype.clearSubscription = function() {
  * @return {boolean}
  */
 proto.rtc.Request.prototype.hasSubscription = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional UpdateTrackRequest updateTrack = 6;
+ * optional UpdateTrackRequest updateTrack = 5;
  * @return {?proto.rtc.UpdateTrackRequest}
  */
 proto.rtc.Request.prototype.getUpdatetrack = function() {
   return /** @type{?proto.rtc.UpdateTrackRequest} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.UpdateTrackRequest, 6));
+    jspb.Message.getWrapperField(this, proto.rtc.UpdateTrackRequest, 5));
 };
 
 
@@ -3227,7 +3224,7 @@ proto.rtc.Request.prototype.getUpdatetrack = function() {
  * @return {!proto.rtc.Request} returns this
 */
 proto.rtc.Request.prototype.setUpdatetrack = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 6, proto.rtc.Request.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 5, proto.rtc.Request.oneofGroups_[0], value);
 };
 
 
@@ -3245,7 +3242,7 @@ proto.rtc.Request.prototype.clearUpdatetrack = function() {
  * @return {boolean}
  */
 proto.rtc.Request.prototype.hasUpdatetrack = function() {
-  return jspb.Message.getField(this, 6) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
@@ -3258,7 +3255,7 @@ proto.rtc.Request.prototype.hasUpdatetrack = function() {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.rtc.Reply.oneofGroups_ = [[1,2,3,4,5,7,8]];
+proto.rtc.Reply.oneofGroups_ = [[1,2,3,4,5,6,7]];
 
 /**
  * @enum {number}
@@ -3270,8 +3267,8 @@ proto.rtc.Reply.PayloadCase = {
   TRICKLE: 3,
   TRACKEVENT: 4,
   SUBSCRIPTION: 5,
-  UPDATETRACK: 7,
-  ERROR: 8
+  UPDATETRACK: 6,
+  ERROR: 7
 };
 
 /**
@@ -3380,12 +3377,12 @@ proto.rtc.Reply.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.rtc.SubscriptionReply.deserializeBinaryFromReader);
       msg.setSubscription(value);
       break;
-    case 7:
+    case 6:
       var value = new proto.rtc.UpdateTrackReply;
       reader.readMessage(value,proto.rtc.UpdateTrackReply.deserializeBinaryFromReader);
       msg.setUpdatetrack(value);
       break;
-    case 8:
+    case 7:
       var value = new proto.rtc.Error;
       reader.readMessage(value,proto.rtc.Error.deserializeBinaryFromReader);
       msg.setError(value);
@@ -3462,7 +3459,7 @@ proto.rtc.Reply.serializeBinaryToWriter = function(message, writer) {
   f = message.getUpdatetrack();
   if (f != null) {
     writer.writeMessage(
-      7,
+      6,
       f,
       proto.rtc.UpdateTrackReply.serializeBinaryToWriter
     );
@@ -3470,7 +3467,7 @@ proto.rtc.Reply.serializeBinaryToWriter = function(message, writer) {
   f = message.getError();
   if (f != null) {
     writer.writeMessage(
-      8,
+      7,
       f,
       proto.rtc.Error.serializeBinaryToWriter
     );
@@ -3664,12 +3661,12 @@ proto.rtc.Reply.prototype.hasSubscription = function() {
 
 
 /**
- * optional UpdateTrackReply updateTrack = 7;
+ * optional UpdateTrackReply updateTrack = 6;
  * @return {?proto.rtc.UpdateTrackReply}
  */
 proto.rtc.Reply.prototype.getUpdatetrack = function() {
   return /** @type{?proto.rtc.UpdateTrackReply} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.UpdateTrackReply, 7));
+    jspb.Message.getWrapperField(this, proto.rtc.UpdateTrackReply, 6));
 };
 
 
@@ -3678,7 +3675,7 @@ proto.rtc.Reply.prototype.getUpdatetrack = function() {
  * @return {!proto.rtc.Reply} returns this
 */
 proto.rtc.Reply.prototype.setUpdatetrack = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 7, proto.rtc.Reply.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 6, proto.rtc.Reply.oneofGroups_[0], value);
 };
 
 
@@ -3696,17 +3693,17 @@ proto.rtc.Reply.prototype.clearUpdatetrack = function() {
  * @return {boolean}
  */
 proto.rtc.Reply.prototype.hasUpdatetrack = function() {
-  return jspb.Message.getField(this, 7) != null;
+  return jspb.Message.getField(this, 6) != null;
 };
 
 
 /**
- * optional Error error = 8;
+ * optional Error error = 7;
  * @return {?proto.rtc.Error}
  */
 proto.rtc.Reply.prototype.getError = function() {
   return /** @type{?proto.rtc.Error} */ (
-    jspb.Message.getWrapperField(this, proto.rtc.Error, 8));
+    jspb.Message.getWrapperField(this, proto.rtc.Error, 7));
 };
 
 
@@ -3715,7 +3712,7 @@ proto.rtc.Reply.prototype.getError = function() {
  * @return {!proto.rtc.Reply} returns this
 */
 proto.rtc.Reply.prototype.setError = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 8, proto.rtc.Reply.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 7, proto.rtc.Reply.oneofGroups_[0], value);
 };
 
 
@@ -3733,7 +3730,7 @@ proto.rtc.Reply.prototype.clearError = function() {
  * @return {boolean}
  */
 proto.rtc.Reply.prototype.hasError = function() {
-  return jspb.Message.getField(this, 8) != null;
+  return jspb.Message.getField(this, 7) != null;
 };
 
 
