@@ -237,128 +237,6 @@ export namespace rtc {
             return JoinReply.deserialize(bytes);
         }
     }
-    export class VideoInfo extends pb_1.Message {
-        constructor(data?: any[] | {
-            width?: number;
-            height?: number;
-            frameRate?: number;
-            simulcast?: Map<string, string>;
-        }) {
-            super();
-            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], []);
-            if (!Array.isArray(data) && typeof data == "object") {
-                if ("width" in data && data.width != undefined) {
-                    this.width = data.width;
-                }
-                if ("height" in data && data.height != undefined) {
-                    this.height = data.height;
-                }
-                if ("frameRate" in data && data.frameRate != undefined) {
-                    this.frameRate = data.frameRate;
-                }
-                if ("simulcast" in data && data.simulcast != undefined) {
-                    this.simulcast = data.simulcast;
-                }
-            }
-            if (!this.simulcast)
-                this.simulcast = new Map()
-        }
-        get width() {
-            return pb_1.Message.getField(this, 1) as number;
-        }
-        set width(value: number) {
-            pb_1.Message.setField(this, 1, value);
-        }
-        get height() {
-            return pb_1.Message.getField(this, 2) as number;
-        }
-        set height(value: number) {
-            pb_1.Message.setField(this, 2, value);
-        }
-        get frameRate() {
-            return pb_1.Message.getField(this, 3) as number;
-        }
-        set frameRate(value: number) {
-            pb_1.Message.setField(this, 3, value);
-        }
-        get simulcast() {
-            return pb_1.Message.getField(this, 4) as any as Map<string, string>;
-        }
-        set simulcast(value: Map<string, string>) {
-            pb_1.Message.setField(this, 4, value as any);
-        }
-        toObject() {
-            const data: {
-                width?: number;
-                height?: number;
-                frameRate?: number;
-                simulcast?: {
-                    [key: string]: string;
-                };
-            } = {};
-            if (this.width != null) {
-                data.width = this.width;
-            }
-            if (this.height != null) {
-                data.height = this.height;
-            }
-            if (this.frameRate != null) {
-                data.frameRate = this.frameRate;
-            }
-            if (this.simulcast.size > 0) {
-                data.simulcast = Object.fromEntries(this.simulcast);
-            }
-            return data;
-        }
-        serialize(): Uint8Array;
-        serialize(w: pb_1.BinaryWriter): void;
-        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
-            const writer = w || new pb_1.BinaryWriter();
-            if (this.width !== undefined)
-                writer.writeUint32(1, this.width);
-            if (this.height !== undefined)
-                writer.writeUint32(2, this.height);
-            if (this.frameRate !== undefined)
-                writer.writeUint32(3, this.frameRate);
-            for (const [key, value] of this.simulcast) {
-                writer.writeMessage(4, this.simulcast, () => {
-                    writer.writeString(1, key);
-                    writer.writeString(2, value);
-                })
-            }
-            if (!w)
-                return writer.getResultBuffer();
-        }
-        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): VideoInfo {
-            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new VideoInfo();
-            while (reader.nextField()) {
-                if (reader.isEndGroup())
-                    break;
-                switch (reader.getFieldNumber()) {
-                    case 1:
-                        message.width = reader.readUint32();
-                        break;
-                    case 2:
-                        message.height = reader.readUint32();
-                        break;
-                    case 3:
-                        message.frameRate = reader.readUint32();
-                        break;
-                    case 4:
-                        reader.readMessage(message, () => (pb_1.Map as any).deserializeBinary(message.simulcast, reader, reader.readString, reader.readString));
-                        break;
-                    default: reader.skipField();
-                }
-            }
-            return message;
-        }
-        serializeBinary(): Uint8Array {
-            return this.serialize();
-        }
-        static deserializeBinary(bytes: Uint8Array): VideoInfo {
-            return VideoInfo.deserialize(bytes);
-        }
-    }
     export class TrackInfo extends pb_1.Message {
         constructor(data?: any[] | {
             id?: string;
@@ -367,7 +245,12 @@ export namespace rtc {
             type?: MediaType;
             streamId?: string;
             label?: string;
-            videoInfo?: VideoInfo;
+            subscribe?: boolean;
+            layer?: string;
+            direction?: string;
+            width?: number;
+            height?: number;
+            frameRate?: number;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], []);
@@ -390,8 +273,23 @@ export namespace rtc {
                 if ("label" in data && data.label != undefined) {
                     this.label = data.label;
                 }
-                if ("videoInfo" in data && data.videoInfo != undefined) {
-                    this.videoInfo = data.videoInfo;
+                if ("subscribe" in data && data.subscribe != undefined) {
+                    this.subscribe = data.subscribe;
+                }
+                if ("layer" in data && data.layer != undefined) {
+                    this.layer = data.layer;
+                }
+                if ("direction" in data && data.direction != undefined) {
+                    this.direction = data.direction;
+                }
+                if ("width" in data && data.width != undefined) {
+                    this.width = data.width;
+                }
+                if ("height" in data && data.height != undefined) {
+                    this.height = data.height;
+                }
+                if ("frameRate" in data && data.frameRate != undefined) {
+                    this.frameRate = data.frameRate;
                 }
             }
         }
@@ -431,11 +329,41 @@ export namespace rtc {
         set label(value: string) {
             pb_1.Message.setField(this, 6, value);
         }
-        get videoInfo() {
-            return pb_1.Message.getWrapperField(this, VideoInfo, 7) as VideoInfo;
+        get subscribe() {
+            return pb_1.Message.getField(this, 7) as boolean;
         }
-        set videoInfo(value: VideoInfo) {
-            pb_1.Message.setWrapperField(this, 7, value);
+        set subscribe(value: boolean) {
+            pb_1.Message.setField(this, 7, value);
+        }
+        get layer() {
+            return pb_1.Message.getField(this, 8) as string;
+        }
+        set layer(value: string) {
+            pb_1.Message.setField(this, 8, value);
+        }
+        get direction() {
+            return pb_1.Message.getField(this, 9) as string;
+        }
+        set direction(value: string) {
+            pb_1.Message.setField(this, 9, value);
+        }
+        get width() {
+            return pb_1.Message.getField(this, 10) as number;
+        }
+        set width(value: number) {
+            pb_1.Message.setField(this, 10, value);
+        }
+        get height() {
+            return pb_1.Message.getField(this, 11) as number;
+        }
+        set height(value: number) {
+            pb_1.Message.setField(this, 11, value);
+        }
+        get frameRate() {
+            return pb_1.Message.getField(this, 12) as number;
+        }
+        set frameRate(value: number) {
+            pb_1.Message.setField(this, 12, value);
         }
         toObject() {
             const data: {
@@ -445,7 +373,12 @@ export namespace rtc {
                 type?: MediaType;
                 streamId?: string;
                 label?: string;
-                videoInfo?: ReturnType<typeof VideoInfo.prototype.toObject>;
+                subscribe?: boolean;
+                layer?: string;
+                direction?: string;
+                width?: number;
+                height?: number;
+                frameRate?: number;
             } = {};
             if (this.id != null) {
                 data.id = this.id;
@@ -465,8 +398,23 @@ export namespace rtc {
             if (this.label != null) {
                 data.label = this.label;
             }
-            if (this.videoInfo != null) {
-                data.videoInfo = this.videoInfo.toObject();
+            if (this.subscribe != null) {
+                data.subscribe = this.subscribe;
+            }
+            if (this.layer != null) {
+                data.layer = this.layer;
+            }
+            if (this.direction != null) {
+                data.direction = this.direction;
+            }
+            if (this.width != null) {
+                data.width = this.width;
+            }
+            if (this.height != null) {
+                data.height = this.height;
+            }
+            if (this.frameRate != null) {
+                data.frameRate = this.frameRate;
             }
             return data;
         }
@@ -486,8 +434,18 @@ export namespace rtc {
                 writer.writeString(5, this.streamId);
             if (typeof this.label === "string" && this.label.length)
                 writer.writeString(6, this.label);
-            if (this.videoInfo !== undefined)
-                writer.writeMessage(7, this.videoInfo, () => this.videoInfo.serialize(writer));
+            if (this.subscribe !== undefined)
+                writer.writeBool(7, this.subscribe);
+            if (typeof this.layer === "string" && this.layer.length)
+                writer.writeString(8, this.layer);
+            if (typeof this.direction === "string" && this.direction.length)
+                writer.writeString(9, this.direction);
+            if (this.width !== undefined)
+                writer.writeUint32(10, this.width);
+            if (this.height !== undefined)
+                writer.writeUint32(11, this.height);
+            if (this.frameRate !== undefined)
+                writer.writeUint32(12, this.frameRate);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -516,7 +474,22 @@ export namespace rtc {
                         message.label = reader.readString();
                         break;
                     case 7:
-                        reader.readMessage(message.videoInfo, () => message.videoInfo = VideoInfo.deserialize(reader));
+                        message.subscribe = reader.readBool();
+                        break;
+                    case 8:
+                        message.layer = reader.readString();
+                        break;
+                    case 9:
+                        message.direction = reader.readString();
+                        break;
+                    case 10:
+                        message.width = reader.readUint32();
+                        break;
+                    case 11:
+                        message.height = reader.readUint32();
+                        break;
+                    case 12:
+                        message.frameRate = reader.readUint32();
                         break;
                     default: reader.skipField();
                 }
@@ -900,42 +873,28 @@ export namespace rtc {
     }
     export class SubscriptionRequest extends pb_1.Message {
         constructor(data?: any[] | {
-            trackIds?: string[];
-            subscribe?: boolean;
+            trackInfos?: TrackInfo[];
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [1], []);
             if (!Array.isArray(data) && typeof data == "object") {
-                if ("trackIds" in data && data.trackIds != undefined) {
-                    this.trackIds = data.trackIds;
-                }
-                if ("subscribe" in data && data.subscribe != undefined) {
-                    this.subscribe = data.subscribe;
+                if ("trackInfos" in data && data.trackInfos != undefined) {
+                    this.trackInfos = data.trackInfos;
                 }
             }
         }
-        get trackIds() {
-            return pb_1.Message.getField(this, 1) as string[];
+        get trackInfos() {
+            return pb_1.Message.getRepeatedWrapperField(this, TrackInfo, 1) as TrackInfo[];
         }
-        set trackIds(value: string[]) {
-            pb_1.Message.setField(this, 1, value);
-        }
-        get subscribe() {
-            return pb_1.Message.getField(this, 2) as boolean;
-        }
-        set subscribe(value: boolean) {
-            pb_1.Message.setField(this, 2, value);
+        set trackInfos(value: TrackInfo[]) {
+            pb_1.Message.setRepeatedWrapperField(this, 1, value);
         }
         toObject() {
             const data: {
-                trackIds?: string[];
-                subscribe?: boolean;
+                trackInfos?: ReturnType<typeof TrackInfo.prototype.toObject>[];
             } = {};
-            if (this.trackIds != null) {
-                data.trackIds = this.trackIds;
-            }
-            if (this.subscribe != null) {
-                data.subscribe = this.subscribe;
+            if (this.trackInfos != null) {
+                data.trackInfos = this.trackInfos.map((item: TrackInfo) => item.toObject());
             }
             return data;
         }
@@ -943,10 +902,8 @@ export namespace rtc {
         serialize(w: pb_1.BinaryWriter): void;
         serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
             const writer = w || new pb_1.BinaryWriter();
-            if (this.trackIds !== undefined)
-                writer.writeRepeatedString(1, this.trackIds);
-            if (this.subscribe !== undefined)
-                writer.writeBool(2, this.subscribe);
+            if (this.trackInfos !== undefined)
+                writer.writeRepeatedMessage(1, this.trackInfos, (item: TrackInfo) => item.serialize(writer));
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -957,10 +914,7 @@ export namespace rtc {
                     break;
                 switch (reader.getFieldNumber()) {
                     case 1:
-                        pb_1.Message.addToRepeatedField(message, 1, reader.readString());
-                        break;
-                    case 2:
-                        message.subscribe = reader.readBool();
+                        reader.readMessage(message.trackInfos, () => pb_1.Message.addToRepeatedWrapperField(message, 1, TrackInfo.deserialize(reader), TrackInfo));
                         break;
                     default: reader.skipField();
                 }
@@ -1181,6 +1135,158 @@ export namespace rtc {
         }
         static deserializeBinary(bytes: Uint8Array): UpdateTrackReply {
             return UpdateTrackReply.deserialize(bytes);
+        }
+    }
+    export class ActiveSpeaker extends pb_1.Message {
+        constructor(data?: any[] | {
+            speakers?: AudioLevel[];
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [1], []);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("speakers" in data && data.speakers != undefined) {
+                    this.speakers = data.speakers;
+                }
+            }
+        }
+        get speakers() {
+            return pb_1.Message.getRepeatedWrapperField(this, AudioLevel, 1) as AudioLevel[];
+        }
+        set speakers(value: AudioLevel[]) {
+            pb_1.Message.setRepeatedWrapperField(this, 1, value);
+        }
+        toObject() {
+            const data: {
+                speakers?: ReturnType<typeof AudioLevel.prototype.toObject>[];
+            } = {};
+            if (this.speakers != null) {
+                data.speakers = this.speakers.map((item: AudioLevel) => item.toObject());
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.speakers !== undefined)
+                writer.writeRepeatedMessage(1, this.speakers, (item: AudioLevel) => item.serialize(writer));
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ActiveSpeaker {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ActiveSpeaker();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        reader.readMessage(message.speakers, () => pb_1.Message.addToRepeatedWrapperField(message, 1, AudioLevel.deserialize(reader), AudioLevel));
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): ActiveSpeaker {
+            return ActiveSpeaker.deserialize(bytes);
+        }
+    }
+    export class AudioLevel extends pb_1.Message {
+        constructor(data?: any[] | {
+            sid?: string;
+            level?: number;
+            active?: boolean;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], []);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("sid" in data && data.sid != undefined) {
+                    this.sid = data.sid;
+                }
+                if ("level" in data && data.level != undefined) {
+                    this.level = data.level;
+                }
+                if ("active" in data && data.active != undefined) {
+                    this.active = data.active;
+                }
+            }
+        }
+        get sid() {
+            return pb_1.Message.getField(this, 1) as string;
+        }
+        set sid(value: string) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        get level() {
+            return pb_1.Message.getField(this, 2) as number;
+        }
+        set level(value: number) {
+            pb_1.Message.setField(this, 2, value);
+        }
+        get active() {
+            return pb_1.Message.getField(this, 3) as boolean;
+        }
+        set active(value: boolean) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        toObject() {
+            const data: {
+                sid?: string;
+                level?: number;
+                active?: boolean;
+            } = {};
+            if (this.sid != null) {
+                data.sid = this.sid;
+            }
+            if (this.level != null) {
+                data.level = this.level;
+            }
+            if (this.active != null) {
+                data.active = this.active;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (typeof this.sid === "string" && this.sid.length)
+                writer.writeString(1, this.sid);
+            if (this.level !== undefined)
+                writer.writeFloat(2, this.level);
+            if (this.active !== undefined)
+                writer.writeBool(3, this.active);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): AudioLevel {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new AudioLevel();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.sid = reader.readString();
+                        break;
+                    case 2:
+                        message.level = reader.readFloat();
+                        break;
+                    case 3:
+                        message.active = reader.readBool();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): AudioLevel {
+            return AudioLevel.deserialize(bytes);
         }
     }
     export class Request extends pb_1.Message {

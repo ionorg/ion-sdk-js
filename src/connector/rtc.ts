@@ -6,6 +6,7 @@ import { EventEmitter } from 'events';
 import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream } from '../stream';
+import { rtc } from '../_library/proto/rtc/rtc';
 
 export enum TrackState {
     NONE = 0,
@@ -42,7 +43,13 @@ export interface TrackInfo {
     type: MediaType;
     stream_id: string;
     label: string;
-    videoinfo: VideoInfo | undefined;
+    // videoinfo: VideoInfo | undefined;
+    subscribe: boolean;
+    layer: string,
+    direction: string,
+    width: number,
+    height: number,
+    frame_rate: number,
 }
 
 export interface JoinConfig {
@@ -177,25 +184,19 @@ class _IonRTCGRPCSignal implements Signal {
                         const tracks = Array<TrackInfo>();
                         const uid = evt?.getUid() || '';
                         evt?.getTracksList().forEach((rtcTrack: pb.TrackInfo) => {
-                            const simulcast = new Map<string, string>();
-                            if(rtcTrack.getVideoInfo()?.getSimulcastMap()) {
-                                rtcTrack.getVideoInfo()?.getSimulcastMap().forEach((key: string, value: string) => {
-                                    simulcast.set(key, value);
-                                });
-                            }
                             tracks.push({
                                 id: rtcTrack.getId(),
                                 kind: rtcTrack.getKind(),
                                 label: rtcTrack.getLabel(),
-                                stream_id: rtcTrack.getStreamId(),
+                                stream_id: rtcTrack.getStreamid(),
                                 muted: rtcTrack.getMuted(),
                                 type:  rtcTrack.getType() || MediaType.MEDIAUNKNOWN,
-                                videoinfo: {
-                                    height: rtcTrack.getVideoInfo()?.getHeight() || 0,
-                                    width: rtcTrack.getVideoInfo()?.getWidth() || 0,
-                                    framerate: rtcTrack.getVideoInfo()?.getFramerate() || 0,
-                                    simulcast: simulcast,
-                                },
+                                layer:rtcTrack.getLayer(),
+                                direction:rtcTrack.getDirection(),
+                                width:rtcTrack.getWidth()|| 0,
+                                height:rtcTrack.getHeight()|| 0,
+                                frame_rate:rtcTrack.getFramerate()|| 0,
+                                subscribe:rtcTrack.getSubscribe()
                             });
                         });
                         this.ontrackevent?.call(this, { state, tracks: tracks, uid });
@@ -281,11 +282,29 @@ class _IonRTCGRPCSignal implements Signal {
         this._client?.close();
     }
 
-    subscribe(trackIds: string[], enabled: boolean) {
+    subscribe(infos: TrackInfo[]) {
         const request = new pb.Request();
         const subscription = new pb.SubscriptionRequest();
-        subscription.setTrackidsList(trackIds);
-        subscription.setSubscribe(enabled);
+        // subscription.setTrackidsList(trackIds);
+        const tracksInfos = Array<pb.TrackInfo>();
+              
+        infos.forEach((t: TrackInfo) => {
+            tracksInfos.push({
+                // id: t.id,
+                // kind: t.kind,
+                // label: t.label,
+                // stream_id: t.stream_id,
+                // muted: t.muted,
+                // type:  t.getType() || MediaType.MEDIAUNKNOWN,
+                // layer:t.getLayer(),
+                // direction:t.getDirection(),
+                // width:rtcTrack.getWidth()|| 0,
+                // height:rtcTrack.getHeight()|| 0,
+                // frame_rate:rtcTrack.getFramerate()|| 0,
+                // subscribe:rtcTrack.getSubscribe()
+            });
+        });
+        subscription.setTrackinfosList(tracksInfos);
         request.setSubscription(subscription);
         this._client.send(request);
     }
