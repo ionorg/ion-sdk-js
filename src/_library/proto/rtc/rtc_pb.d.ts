@@ -87,14 +87,11 @@ export class TrackInfo extends jspb.Message {
   getLabel(): string;
   setLabel(value: string): void;
 
-  getSubscribe(): boolean;
-  setSubscribe(value: boolean): void;
+  getSubscribed(): boolean;
+  setSubscribed(value: boolean): void;
 
   getLayer(): string;
   setLayer(value: string): void;
-
-  getDirection(): string;
-  setDirection(value: string): void;
 
   getWidth(): number;
   setWidth(value: number): void;
@@ -123,9 +120,8 @@ export namespace TrackInfo {
     type: MediaTypeMap[keyof MediaTypeMap],
     streamid: string,
     label: string,
-    subscribe: boolean,
+    subscribed: boolean,
     layer: string,
-    direction: string,
     width: number,
     height: number,
     framerate: number,
@@ -252,11 +248,43 @@ export namespace TrackEvent {
   export const State: StateMap;
 }
 
+export class Subscription extends jspb.Message {
+  getTrackid(): string;
+  setTrackid(value: string): void;
+
+  getMute(): boolean;
+  setMute(value: boolean): void;
+
+  getSubscribe(): boolean;
+  setSubscribe(value: boolean): void;
+
+  getLayer(): string;
+  setLayer(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Subscription.AsObject;
+  static toObject(includeInstance: boolean, msg: Subscription): Subscription.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: Subscription, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Subscription;
+  static deserializeBinaryFromReader(message: Subscription, reader: jspb.BinaryReader): Subscription;
+}
+
+export namespace Subscription {
+  export type AsObject = {
+    trackid: string,
+    mute: boolean,
+    subscribe: boolean,
+    layer: string,
+  }
+}
+
 export class SubscriptionRequest extends jspb.Message {
-  clearTrackinfosList(): void;
-  getTrackinfosList(): Array<TrackInfo>;
-  setTrackinfosList(value: Array<TrackInfo>): void;
-  addTrackinfos(value?: TrackInfo, index?: number): TrackInfo;
+  clearSubscriptionsList(): void;
+  getSubscriptionsList(): Array<Subscription>;
+  setSubscriptionsList(value: Array<Subscription>): void;
+  addSubscriptions(value?: Subscription, index?: number): Subscription;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionRequest.AsObject;
@@ -270,7 +298,7 @@ export class SubscriptionRequest extends jspb.Message {
 
 export namespace SubscriptionRequest {
   export type AsObject = {
-    trackinfosList: Array<TrackInfo.AsObject>,
+    subscriptionsList: Array<Subscription.AsObject>,
   }
 }
 

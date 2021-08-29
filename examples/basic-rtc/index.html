@@ -103,8 +103,7 @@
 
     sfu.ontrackevent = function (ev) {
       console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
-      /*
-      if (ev.state == 1) {
+      /*if (ev.state == 1) {
         var trackIds = [];
         ev.tracks.forEach(track => {
           trackIds.push(track.id);
@@ -117,6 +116,16 @@
           }, 5000);
         }, 5000);
       }*/
+      var infos = [];
+      ev.tracks.forEach(t => {
+          const info = new Ion.Subscription;
+          info.track_id = t.track_id;
+          info.mute = t.muted;
+          info.layer = t.layer;
+          info.subscribe = t.subscribe;
+          infos.push(info);
+      });
+      sfu.subscribe(infos);
     };
 
     sfu.connect();

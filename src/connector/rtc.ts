@@ -43,13 +43,18 @@ export interface TrackInfo {
     type: MediaType;
     stream_id: string;
     label: string;
-    // videoinfo: VideoInfo | undefined;
-    subscribe: boolean;
+    subscribed: boolean;
     layer: string,
-    direction: string,
     width: number,
     height: number,
     frame_rate: number,
+}
+
+export interface Subscription {
+    track_id: string;
+    muted: boolean;
+    subscribe: boolean;
+    layer: string;
 }
 
 export interface JoinConfig {
@@ -111,7 +116,7 @@ export class IonSDKRTC implements IonService {
         this._rtc?.publish(stream);
     }
 
-    subscribe(trackInfos: TrackInfo[]): Promise<Result> | undefined {
+    subscribe(trackInfos: Subscription[]): Promise<Result> | undefined {
         return this._sig?.subscribe(trackInfos);
     }
 
@@ -216,11 +221,10 @@ class IonRTCGRPCSignal implements Signal {
                                 muted: rtcTrack.getMuted(),
                                 type:  rtcTrack.getType() || MediaType.MEDIAUNKNOWN,
                                 layer:rtcTrack.getLayer(),
-                                direction:rtcTrack.getDirection(),
                                 width:rtcTrack.getWidth()|| 0,
                                 height:rtcTrack.getHeight()|| 0,
                                 frame_rate:rtcTrack.getFramerate()|| 0,
-                                subscribe:rtcTrack.getSubscribe()
+                                subscribed:rtcTrack.getSubscribed()
                             });
                         });
                         this.ontrackevent?.call(this, { state, tracks, uid });
@@ -325,29 +329,21 @@ class IonRTCGRPCSignal implements Signal {
         this._client?.close();
     }
 
-    subscribe(infos: TrackInfo[]): Promise<Result> {
+    subscribe(infos: Subscription[]): Promise<Result> {
         const request = new pb.Request();
         const subscription = new pb.SubscriptionRequest();
         // subscription.setTrackidsList(trackIds);
-        const tracksInfos = Array<pb.TrackInfo>();
+        const tracksInfos = Array<pb.Subscription>();
               
-        infos.forEach((t: TrackInfo) => {
-            const trackInfo = new pb.TrackInfo();
-            trackInfo.setId(t.id);
-            trackInfo.setKind(t.kind);
-            trackInfo.setLabel(t.label);
-            trackInfo.setStreamid(t.stream_id);
-            trackInfo.setMuted(t.muted);
-            trackInfo.setType(t.type);
+        infos.forEach((t: Subscription) => {
+            const trackInfo = new pb.Subscription();
+            trackInfo.setTrackid(t.track_id);
+            trackInfo.setMute(t.muted);
             trackInfo.setLayer(t.layer);
-            trackInfo.setDirection(t.direction);
-            trackInfo.setWidth(t.width);
-            trackInfo.setHeight(t.height);
-            trackInfo.setFramerate(t.frame_rate);
             trackInfo.setSubscribe(t.subscribe);
             tracksInfos.push(trackInfo);
         });
-        subscription.setTrackinfosList(tracksInfos);
+        subscription.setSubscriptionsList(tracksInfos);
         request.setSubscription(subscription);
         this._client.send(request);
 
