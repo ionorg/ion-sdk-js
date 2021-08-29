@@ -68,37 +68,6 @@ export namespace JoinReply {
   }
 }
 
-export class VideoInfo extends jspb.Message {
-  getWidth(): number;
-  setWidth(value: number): void;
-
-  getHeight(): number;
-  setHeight(value: number): void;
-
-  getFramerate(): number;
-  setFramerate(value: number): void;
-
-  getSimulcastMap(): jspb.Map<string, string>;
-  clearSimulcastMap(): void;
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): VideoInfo.AsObject;
-  static toObject(includeInstance: boolean, msg: VideoInfo): VideoInfo.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: VideoInfo, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): VideoInfo;
-  static deserializeBinaryFromReader(message: VideoInfo, reader: jspb.BinaryReader): VideoInfo;
-}
-
-export namespace VideoInfo {
-  export type AsObject = {
-    width: number,
-    height: number,
-    framerate: number,
-    simulcastMap: Array<[string, string]>,
-  }
-}
-
 export class TrackInfo extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -112,16 +81,29 @@ export class TrackInfo extends jspb.Message {
   getType(): MediaTypeMap[keyof MediaTypeMap];
   setType(value: MediaTypeMap[keyof MediaTypeMap]): void;
 
-  getStreamId(): string;
-  setStreamId(value: string): void;
+  getStreamid(): string;
+  setStreamid(value: string): void;
 
   getLabel(): string;
   setLabel(value: string): void;
 
-  hasVideoInfo(): boolean;
-  clearVideoInfo(): void;
-  getVideoInfo(): VideoInfo | undefined;
-  setVideoInfo(value?: VideoInfo): void;
+  getSubscribe(): boolean;
+  setSubscribe(value: boolean): void;
+
+  getLayer(): string;
+  setLayer(value: string): void;
+
+  getDirection(): string;
+  setDirection(value: string): void;
+
+  getWidth(): number;
+  setWidth(value: number): void;
+
+  getHeight(): number;
+  setHeight(value: number): void;
+
+  getFramerate(): number;
+  setFramerate(value: number): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TrackInfo.AsObject;
@@ -139,9 +121,14 @@ export namespace TrackInfo {
     kind: string,
     muted: boolean,
     type: MediaTypeMap[keyof MediaTypeMap],
-    streamId: string,
+    streamid: string,
     label: string,
-    videoInfo?: VideoInfo.AsObject,
+    subscribe: boolean,
+    layer: string,
+    direction: string,
+    width: number,
+    height: number,
+    framerate: number,
   }
 }
 
@@ -266,13 +253,10 @@ export namespace TrackEvent {
 }
 
 export class SubscriptionRequest extends jspb.Message {
-  clearTrackidsList(): void;
-  getTrackidsList(): Array<string>;
-  setTrackidsList(value: Array<string>): void;
-  addTrackids(value: string, index?: number): string;
-
-  getSubscribe(): boolean;
-  setSubscribe(value: boolean): void;
+  clearTrackinfosList(): void;
+  getTrackinfosList(): Array<TrackInfo>;
+  setTrackinfosList(value: Array<TrackInfo>): void;
+  addTrackinfos(value?: TrackInfo, index?: number): TrackInfo;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionRequest.AsObject;
@@ -286,8 +270,7 @@ export class SubscriptionRequest extends jspb.Message {
 
 export namespace SubscriptionRequest {
   export type AsObject = {
-    trackidsList: Array<string>,
-    subscribe: boolean,
+    trackinfosList: Array<TrackInfo.AsObject>,
   }
 }
 
@@ -365,6 +348,56 @@ export namespace UpdateTrackReply {
   }
 }
 
+export class ActiveSpeaker extends jspb.Message {
+  clearSpeakersList(): void;
+  getSpeakersList(): Array<AudioLevel>;
+  setSpeakersList(value: Array<AudioLevel>): void;
+  addSpeakers(value?: AudioLevel, index?: number): AudioLevel;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ActiveSpeaker.AsObject;
+  static toObject(includeInstance: boolean, msg: ActiveSpeaker): ActiveSpeaker.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ActiveSpeaker, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ActiveSpeaker;
+  static deserializeBinaryFromReader(message: ActiveSpeaker, reader: jspb.BinaryReader): ActiveSpeaker;
+}
+
+export namespace ActiveSpeaker {
+  export type AsObject = {
+    speakersList: Array<AudioLevel.AsObject>,
+  }
+}
+
+export class AudioLevel extends jspb.Message {
+  getSid(): string;
+  setSid(value: string): void;
+
+  getLevel(): number;
+  setLevel(value: number): void;
+
+  getActive(): boolean;
+  setActive(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AudioLevel.AsObject;
+  static toObject(includeInstance: boolean, msg: AudioLevel): AudioLevel.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AudioLevel, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AudioLevel;
+  static deserializeBinaryFromReader(message: AudioLevel, reader: jspb.BinaryReader): AudioLevel;
+}
+
+export namespace AudioLevel {
+  export type AsObject = {
+    sid: string,
+    level: number,
+    active: boolean,
+  }
+}
+
 export class Request extends jspb.Message {
   hasJoin(): boolean;
   clearJoin(): void;
@@ -416,8 +449,8 @@ export namespace Request {
     JOIN = 1,
     DESCRIPTION = 2,
     TRICKLE = 3,
-    SUBSCRIPTION = 5,
-    UPDATETRACK = 6,
+    SUBSCRIPTION = 4,
+    UPDATETRACK = 5,
   }
 }
 
@@ -486,8 +519,8 @@ export namespace Reply {
     TRICKLE = 3,
     TRACKEVENT = 4,
     SUBSCRIPTION = 5,
-    UPDATETRACK = 7,
-    ERROR = 8,
+    UPDATETRACK = 6,
+    ERROR = 7,
   }
 }
 

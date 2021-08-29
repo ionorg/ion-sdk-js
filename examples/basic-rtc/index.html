@@ -98,7 +98,7 @@
     };
 
     const uid = uuidv4();
-    const sid = "test room";
+    const sid = "ion";
     const sfu = new Ion.IonSDKRTC(connector);
 
     sfu.ontrackevent = function (ev) {
@@ -152,7 +152,7 @@
       Ion.LocalStream.getUserMedia({
         resolution: "hd",
         audio: true,
-        simulcast: false,
+        simulcast: true,
       })
         .then((media) => {
           localStream = media;

@@ -120,8 +120,8 @@ export class IonAppRoom implements IonService {
         return this._rpc?.join(peer, password);
     }
 
-    async leave(uid: string): Promise<string | undefined> {
-        return this._rpc?.leave(uid);
+    async leave(sid: string, uid: string): Promise<string | undefined> {
+        return this._rpc?.leave(sid, uid);
     }
 
     async message(sid: string, from: string, to: string, mineType: string, data: Map<string, any>): Promise<void> {
@@ -273,9 +273,10 @@ class IonRoomGRPCClient extends EventEmitter {
         });
     }
 
-    async leave(uid: string) {
+    async leave(sid: string, uid: string) {
         const request = new room.Request();
         const leave = new room.LeaveRequest();
+        leave.setSid(sid);
         leave.setUid(uid);
         request.setLeave(leave);
 

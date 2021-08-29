@@ -6,6 +6,7 @@ import { EventEmitter } from 'events';
 import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream } from '../stream';
+import { rtc } from '../_library/proto/rtc/rtc';
 
 export enum TrackState {
     NONE = 0,
@@ -42,7 +43,13 @@ export interface TrackInfo {
     type: MediaType;
     stream_id: string;
     label: string;
-    videoinfo: VideoInfo | undefined;
+    // videoinfo: VideoInfo | undefined;
+    subscribe: boolean;
+    layer: string,
+    direction: string,
+    width: number,
+    height: number,
+    frame_rate: number,
 }
 
 export interface JoinConfig {
@@ -104,8 +111,8 @@ export class IonSDKRTC implements IonService {
         this._rtc?.publish(stream);
     }
 
-    subscribe(trackIds: string[], enabled: boolean): Promise<Result> | undefined {
-        return this._sig?.subscribe(trackIds, enabled);
+    subscribe(trackInfos: TrackInfo[]): Promise<Result> | undefined {
+        return this._sig?.subscribe(trackInfos);
     }
 
     updatetrack(tracks: TrackInfo[]): Promise<Result> | undefined {
@@ -201,25 +208,19 @@ class IonRTCGRPCSignal implements Signal {
                         const tracks = Array<TrackInfo>();
                         const uid = evt?.getUid() || '';
                         evt?.getTracksList().forEach((rtcTrack: pb.TrackInfo) => {
-                            const simulcast = new Map<string, string>();
-                            if (rtcTrack.getVideoInfo()?.getSimulcastMap()) {
-                                rtcTrack.getVideoInfo()?.getSimulcastMap().forEach((key: string, value: string) => {
-                                    simulcast.set(key, value);
-                                });
-                            }
                             tracks.push({
                                 id: rtcTrack.getId(),
                                 kind: rtcTrack.getKind(),
                                 label: rtcTrack.getLabel(),
-                                stream_id: rtcTrack.getStreamId(),
+                                stream_id: rtcTrack.getStreamid(),
                                 muted: rtcTrack.getMuted(),
-                                type: rtcTrack.getType() || MediaType.MEDIAUNKNOWN,
-                                videoinfo: {
-                                    height: rtcTrack.getVideoInfo()?.getHeight() || 0,
-                                    width: rtcTrack.getVideoInfo()?.getWidth() || 0,
-                                    framerate: rtcTrack.getVideoInfo()?.getFramerate() || 0,
-                                    simulcast
-                                },
+                                type:  rtcTrack.getType() || MediaType.MEDIAUNKNOWN,
+                                layer:rtcTrack.getLayer(),
+                                direction:rtcTrack.getDirection(),
+                                width:rtcTrack.getWidth()|| 0,
+                                height:rtcTrack.getHeight()|| 0,
+                                frame_rate:rtcTrack.getFramerate()|| 0,
+                                subscribe:rtcTrack.getSubscribe()
                             });
                         });
                         this.ontrackevent?.call(this, { state, tracks, uid });
@@ -324,11 +325,29 @@ class IonRTCGRPCSignal implements Signal {
         this._client?.close();
     }
 
-    subscribe(trackIds: string[], enabled: boolean): Promise<Result> {
+    subscribe(infos: TrackInfo[]): Promise<Result> {
         const request = new pb.Request();
         const subscription = new pb.SubscriptionRequest();
-        subscription.setTrackidsList(trackIds);
-        subscription.setSubscribe(enabled);
+        // subscription.setTrackidsList(trackIds);
+        const tracksInfos = Array<pb.TrackInfo>();
+              
+        infos.forEach((t: TrackInfo) => {
+            const trackInfo = new pb.TrackInfo();
+            trackInfo.setId(t.id);
+            trackInfo.setKind(t.kind);
+            trackInfo.setLabel(t.label);
+            trackInfo.setStreamid(t.stream_id);
+            trackInfo.setMuted(t.muted);
+            trackInfo.setType(t.type);
+            trackInfo.setLayer(t.layer);
+            trackInfo.setDirection(t.direction);
+            trackInfo.setWidth(t.width);
+            trackInfo.setHeight(t.height);
+            trackInfo.setFramerate(t.frame_rate);
+            trackInfo.setSubscribe(t.subscribe);
+            tracksInfos.push(trackInfo);
+        });
+        subscription.setTrackinfosList(tracksInfos);
         request.setSubscription(subscription);
         this._client.send(request);
 
@@ -350,17 +369,10 @@ class IonRTCGRPCSignal implements Signal {
             t.setId(track.id);
             t.setKind(track.kind);
             t.setLabel(track.label);
-            t.setStreamId(track.stream_id);
+            t.setStreamid(track.stream_id);
             t.setMuted(track.muted);
             t.setType(track.type);
-            const vinfo = new pb.VideoInfo();
-            vinfo.setWidth(track?.videoinfo?.width || 0);
-            vinfo.setHeight(track?.videoinfo?.height || 0);
-            vinfo.setFramerate(track?.videoinfo?.framerate || 0);
-            track?.videoinfo?.simulcast?.forEach((key: string, value: string) => {
-                vinfo.getSimulcastMap().set(key, value);
-            });
-            t.setVideoInfo(vinfo);
+            t.setLayer(track.layer);
             tracksInfo.push(t);
         });
         update.setTracksList(tracksInfo);
@@ -384,17 +396,9 @@ class IonRTCGRPCSignal implements Signal {
             trackInfo.setId(track.id);
             trackInfo.setKind(track.kind);
             trackInfo.setLabel(track.label);
-            trackInfo.setStreamId(stream.id);
+            trackInfo.setStreamid(stream.id);
             trackInfo.setMuted(!track.enabled);
             trackInfo.setType(MediaType.USERMEDIA);
-            const videoInfo = new pb.VideoInfo;
-            videoInfo.setWidth(track?.getSettings().width || 0);
-            videoInfo.setHeight(track?.getSettings().height || 0);
-            videoInfo.setFramerate(track?.getSettings().frameRate || 0);
-            videoInfo.getSimulcastMap().set('f', 'send');
-            videoInfo.getSimulcastMap().set('h', 'send');
-            videoInfo.getSimulcastMap().set('q', 'send');
-            trackInfo.setVideoInfo(videoInfo);
             trackInfos.push(trackInfo);
         }
         this._tracksInfos = trackInfos;
