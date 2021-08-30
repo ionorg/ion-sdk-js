@@ -43,7 +43,6 @@ export interface TrackInfo {
     type: MediaType;
     stream_id: string;
     label: string;
-    subscribed: boolean;
     layer: string,
     width: number,
     height: number,
@@ -120,9 +119,6 @@ export class IonSDKRTC implements IonService {
         return this._sig?.subscribe(trackInfos);
     }
 
-    updatetrack(tracks: TrackInfo[]): Promise<Result> | undefined {
-        return this._sig?.updatetrack(tracks);
-    }
 
     createDataChannel(label: string) {
         return this._rtc?.createDataChannel(label);
@@ -223,19 +219,11 @@ class IonRTCGRPCSignal implements Signal {
                                 layer:rtcTrack.getLayer(),
                                 width:rtcTrack.getWidth()|| 0,
                                 height:rtcTrack.getHeight()|| 0,
-                                frame_rate:rtcTrack.getFramerate()|| 0,
-                                subscribed:rtcTrack.getSubscribed()
+                                frame_rate:rtcTrack.getFramerate()|| 0
                             });
                         });
                         this.ontrackevent?.call(this, { state, tracks, uid });
                     }
-                    break;
-                case pb.Reply.PayloadCase.UPDATETRACK:
-                    const updateTrack = reply.getUpdatetrack();
-                    this._event.emit('updatetrack', {
-                        success: updateTrack?.getSuccess() || false,
-                        error: updateTrack?.getError(),
-                    });
                     break;
                 case pb.Reply.PayloadCase.SUBSCRIPTION:
                     const subscription = reply.getSubscription();
@@ -332,7 +320,6 @@ class IonRTCGRPCSignal implements Signal {
     subscribe(infos: Subscription[]): Promise<Result> {
         const request = new pb.Request();
         const subscription = new pb.SubscriptionRequest();
-        // subscription.setTrackidsList(trackIds);
         const tracksInfos = Array<pb.Subscription>();
               
         infos.forEach((t: Subscription) => {
@@ -356,33 +343,6 @@ class IonRTCGRPCSignal implements Signal {
         });
     }
 
-    updatetrack(tracks: TrackInfo[]) {
-        const request = new pb.Request();
-        const update = new pb.UpdateTrackRequest();
-        const tracksInfo: pb.TrackInfo[] = [];
-        tracks.forEach((track: TrackInfo) => {
-            const t = new pb.TrackInfo();
-            t.setId(track.id);
-            t.setKind(track.kind);
-            t.setLabel(track.label);
-            t.setStreamid(track.stream_id);
-            t.setMuted(track.muted);
-            t.setType(track.type);
-            t.setLayer(track.layer);
-            tracksInfo.push(t);
-        });
-        update.setTracksList(tracksInfo);
-        request.setUpdatetrack(update);
-        this._client.send(request);
-
-        return new Promise<Result>((resolve, reject) => {
-            const handler = (res: Result) => {
-                resolve(res);
-                this._event.removeListener('updatetrack', handler);
-            };
-            this._event.addListener('updatetrack', handler);
-        });
-    }
 
     buildTrackInfos(stream: LocalStream): void {
         const tracks = stream.getTracks();

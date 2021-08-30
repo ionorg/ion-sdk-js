@@ -87,9 +87,6 @@ export class TrackInfo extends jspb.Message {
   getLabel(): string;
   setLabel(value: string): void;
 
-  getSubscribed(): boolean;
-  setSubscribed(value: boolean): void;
-
   getLayer(): string;
   setLayer(value: string): void;
 
@@ -120,7 +117,6 @@ export namespace TrackInfo {
     type: MediaTypeMap[keyof MediaTypeMap],
     streamid: string,
     label: string,
-    subscribed: boolean,
     layer: string,
     width: number,
     height: number,
@@ -328,28 +324,6 @@ export namespace SubscriptionReply {
   }
 }
 
-export class UpdateTrackRequest extends jspb.Message {
-  clearTracksList(): void;
-  getTracksList(): Array<TrackInfo>;
-  setTracksList(value: Array<TrackInfo>): void;
-  addTracks(value?: TrackInfo, index?: number): TrackInfo;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): UpdateTrackRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: UpdateTrackRequest): UpdateTrackRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: UpdateTrackRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): UpdateTrackRequest;
-  static deserializeBinaryFromReader(message: UpdateTrackRequest, reader: jspb.BinaryReader): UpdateTrackRequest;
-}
-
-export namespace UpdateTrackRequest {
-  export type AsObject = {
-    tracksList: Array<TrackInfo.AsObject>,
-  }
-}
-
 export class UpdateTrackReply extends jspb.Message {
   getSuccess(): boolean;
   setSuccess(value: boolean): void;
@@ -378,9 +352,9 @@ export namespace UpdateTrackReply {
 
 export class ActiveSpeaker extends jspb.Message {
   clearSpeakersList(): void;
-  getSpeakersList(): Array<AudioLevel>;
-  setSpeakersList(value: Array<AudioLevel>): void;
-  addSpeakers(value?: AudioLevel, index?: number): AudioLevel;
+  getSpeakersList(): Array<AudioLevelSpeaker>;
+  setSpeakersList(value: Array<AudioLevelSpeaker>): void;
+  addSpeakers(value?: AudioLevelSpeaker, index?: number): AudioLevelSpeaker;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ActiveSpeaker.AsObject;
@@ -394,11 +368,11 @@ export class ActiveSpeaker extends jspb.Message {
 
 export namespace ActiveSpeaker {
   export type AsObject = {
-    speakersList: Array<AudioLevel.AsObject>,
+    speakersList: Array<AudioLevelSpeaker.AsObject>,
   }
 }
 
-export class AudioLevel extends jspb.Message {
+export class AudioLevelSpeaker extends jspb.Message {
   getSid(): string;
   setSid(value: string): void;
 
@@ -409,16 +383,16 @@ export class AudioLevel extends jspb.Message {
   setActive(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AudioLevel.AsObject;
-  static toObject(includeInstance: boolean, msg: AudioLevel): AudioLevel.AsObject;
+  toObject(includeInstance?: boolean): AudioLevelSpeaker.AsObject;
+  static toObject(includeInstance: boolean, msg: AudioLevelSpeaker): AudioLevelSpeaker.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AudioLevel, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AudioLevel;
-  static deserializeBinaryFromReader(message: AudioLevel, reader: jspb.BinaryReader): AudioLevel;
+  static serializeBinaryToWriter(message: AudioLevelSpeaker, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AudioLevelSpeaker;
+  static deserializeBinaryFromReader(message: AudioLevelSpeaker, reader: jspb.BinaryReader): AudioLevelSpeaker;
 }
 
-export namespace AudioLevel {
+export namespace AudioLevelSpeaker {
   export type AsObject = {
     sid: string,
     level: number,
@@ -447,11 +421,6 @@ export class Request extends jspb.Message {
   getSubscription(): SubscriptionRequest | undefined;
   setSubscription(value?: SubscriptionRequest): void;
 
-  hasUpdatetrack(): boolean;
-  clearUpdatetrack(): void;
-  getUpdatetrack(): UpdateTrackRequest | undefined;
-  setUpdatetrack(value?: UpdateTrackRequest): void;
-
   getPayloadCase(): Request.PayloadCase;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Request.AsObject;
@@ -469,7 +438,6 @@ export namespace Request {
     description?: SessionDescription.AsObject,
     trickle?: Trickle.AsObject,
     subscription?: SubscriptionRequest.AsObject,
-    updatetrack?: UpdateTrackRequest.AsObject,
   }
 
   export enum PayloadCase {
@@ -478,7 +446,6 @@ export namespace Request {
     DESCRIPTION = 2,
     TRICKLE = 3,
     SUBSCRIPTION = 4,
-    UPDATETRACK = 5,
   }
 }
 
@@ -508,11 +475,6 @@ export class Reply extends jspb.Message {
   getSubscription(): SubscriptionReply | undefined;
   setSubscription(value?: SubscriptionReply): void;
 
-  hasUpdatetrack(): boolean;
-  clearUpdatetrack(): void;
-  getUpdatetrack(): UpdateTrackReply | undefined;
-  setUpdatetrack(value?: UpdateTrackReply): void;
-
   hasError(): boolean;
   clearError(): void;
   getError(): Error | undefined;
@@ -536,7 +498,6 @@ export namespace Reply {
     trickle?: Trickle.AsObject,
     trackevent?: TrackEvent.AsObject,
     subscription?: SubscriptionReply.AsObject,
-    updatetrack?: UpdateTrackReply.AsObject,
     error?: Error.AsObject,
   }
 
@@ -547,7 +508,6 @@ export namespace Reply {
     TRICKLE = 3,
     TRACKEVENT = 4,
     SUBSCRIPTION = 5,
-    UPDATETRACK = 6,
     ERROR = 7,
   }
 }

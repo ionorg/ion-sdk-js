@@ -118,7 +118,8 @@
       }*/
       var infos = [];
       ev.tracks.forEach(t => {
-          const info = new Ion.Subscription;
+          let info = Ion.Subscription;
+          console.log(info)
           info.track_id = t.track_id;
           info.mute = t.muted;
           info.layer = t.layer;
