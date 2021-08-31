@@ -6,7 +6,6 @@ import { EventEmitter } from 'events';
 import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream } from '../stream';
-import { rtc } from '../_library/proto/rtc/rtc';
 
 export enum TrackState {
     NONE = 0,
@@ -18,13 +17,6 @@ export interface TrackEvent {
     state: TrackState;
     uid: string;
     tracks: TrackInfo[];
-}
-
-export interface VideoInfo {
-    width: number,
-    height: number,
-    framerate: number,
-    simulcast: Map<string, string> | undefined,
 }
 
 export enum MediaType {
