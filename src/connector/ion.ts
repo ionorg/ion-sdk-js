@@ -2,7 +2,7 @@ import { grpc } from '@improbable-eng/grpc-web';
 
 export interface Service {
     name: string;
-    connect(): void;
+    // connect(): void;
     connected: boolean;
     close(): void;
 }

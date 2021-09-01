@@ -83,6 +83,7 @@ export class IonSDKRTC implements Service {
         this.connected = false;
         this.connector = connector;
         this.connector.registerService(this);
+        this.connect();
     }
 
     async join(sid: string, uid: string, config: JoinConfig | undefined) {

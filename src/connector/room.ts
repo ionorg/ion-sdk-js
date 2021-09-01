@@ -114,6 +114,7 @@ export class Room implements Service {
         this.connected = false;
         this.connector = connector;
         this.connector.registerService(this);
+        this.connect();
     }
 
     async join(peer: Peer, password: string | undefined): Promise<JoinResult | undefined> {
