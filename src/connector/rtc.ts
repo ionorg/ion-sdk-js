@@ -1,5 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { IonService, IonBaseConnector } from './ion';
+import { Service, Connector } from './ion';
 import Client, { Configuration, Trickle } from '../client';
 import { Signal } from '../signal';
 import { EventEmitter } from 'events';
@@ -64,9 +64,9 @@ export interface Result {
     error: Error | undefined;
 }
 
-export class IonSDKRTC implements IonService {
+export class IonSDKRTC implements Service {
     name: string;
-    connector: IonBaseConnector;
+    connector: Connector;
     connected: boolean;
     config?: Configuration;
     protected _rpc?: grpc.Client<pb.Request, pb.Reply>;
@@ -77,7 +77,7 @@ export class IonSDKRTC implements IonService {
     onspeaker?: (ev: string[]) => void;
     ontrackevent?: (ev: TrackEvent) => void;
 
-    constructor(connector: IonBaseConnector, config?: Configuration) {
+    constructor(connector: Connector, config?: Configuration) {
         this.name = "rtc";
         this.config = config;
         this.connected = false;
@@ -144,7 +144,7 @@ export class IonSDKRTC implements IonService {
 }
 
 class IonRTCGRPCSignal implements Signal {
-    connector: IonBaseConnector;
+    connector: Connector;
     protected _client: grpc.Client<pb.Request, pb.Reply>;
     private _event: EventEmitter = new EventEmitter();
     private _tracksInfos?: pb.TrackInfo[];
@@ -155,7 +155,7 @@ class IonRTCGRPCSignal implements Signal {
     set config(config: JoinConfig | undefined) {
         this._config = config;
     }
-    constructor(service: IonService, connector: IonBaseConnector) {
+    constructor(service: Service, connector: Connector) {
         this.connector = connector;
         const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Request, pb.Reply>;
         client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>

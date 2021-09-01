@@ -1,5 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { IonService, IonBaseConnector } from './ion';
+import { Service, Connector } from './ion';
 import * as room from '../_library/apps/room/proto/room_pb';
 import * as room_rpc from '../_library/apps/room/proto/room_pb_service';
 import { EventEmitter } from 'events';
@@ -96,10 +96,10 @@ export interface Disconnect {
     reason: string,
 }
 
-export class IonAppRoom implements IonService {
+export class Room implements Service {
     // public
     name: string;
-    connector: IonBaseConnector;
+    connector: Connector;
     connected: boolean;
     onerror?: (err: Event) => void;
     onjoin?: (result: JoinResult) => void;
@@ -109,7 +109,7 @@ export class IonAppRoom implements IonService {
     onroominfo?: (info: RoomInfo) => void;
     ondisconnect?: (dis: Disconnect) => void;
 
-    constructor(connector: IonBaseConnector) {
+    constructor(connector: Connector) {
         this.name = "room";
         this.connected = false;
         this.connector = connector;
@@ -151,9 +151,9 @@ export class IonAppRoom implements IonService {
 }
 
 class IonRoomGRPCClient extends EventEmitter {
-    connector: IonBaseConnector;
+    connector: Connector;
     protected _client: grpc.Client<room.Request, room.Reply>;
-    constructor(service: IonService, connector: IonBaseConnector) {
+    constructor(service: Service, connector: Connector) {
         super();
         this.connector = connector;
         const client = grpc.client(room_rpc.RoomSignal.Signal, connector.grpcClientRpcOptions()) as grpc.Client<room.Request, room.Reply>;

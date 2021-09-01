@@ -1,18 +1,18 @@
 import { Configuration } from '../client';
 import { LocalStream, RemoteStream, Constraints } from '../stream';
-import { IonBaseConnector, IonService } from './ion';
+import { Connector, Service } from './ion';
 import { IonSDKRTC, Subscription } from './rtc';
-import { IonAppRoom, JoinResult, Peer, PeerState, PeerEvent, Role, Protocol, Direction, Message, RoomInfo, Disconnect } from './room';
+import { Room, JoinResult, Peer, PeerState, PeerEvent, Role, Protocol, Direction, Message, RoomInfo, Disconnect } from './room';
 
 export {
     Configuration,
     LocalStream,
     RemoteStream,
     Constraints,
-    IonBaseConnector,
-    IonService,
+    Connector,
+    Service,
     IonSDKRTC,
-    IonAppRoom,
+    Room,
     JoinResult,
     Peer,
     PeerState,

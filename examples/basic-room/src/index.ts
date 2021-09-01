@@ -8,17 +8,17 @@ export async function Init(): Promise<void> {
     let token = 'token';
     let sid = 'ion';
     let uid = uuid.v4();
-    const baseConnecotr = new ion.IonBaseConnector(url, token);
+    const connector = new ion.Connector(url, token);
 
-    baseConnecotr.onopen = function (service: ion.IonService): void {
+    connector.onopen = function (service: ion.Service): void {
         console.log('Connected to ' + service.name);
     };
 
-    baseConnecotr.onclose = function (service: ion.IonService): void {
+    connector.onclose = function (service: ion.Service): void {
         console.log('Disconnected from ' + service.name);
     };
 
-    const roomApp = new ion.IonAppRoom(baseConnecotr);
+    const roomApp = new ion.Room(connector);
 
     roomApp.onjoin = function (result: ion.JoinResult): void {
         console.log('on room join , success ' + result.success + ', room info: ' + JSON.stringify(result.room));

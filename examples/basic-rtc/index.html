@@ -88,7 +88,7 @@
     /* eslint-env browser */
     const joinBtns = document.getElementById("start-btns");
 
-    const connector = new Ion.IonBaseConnector("http://localhost:5551", "token121231231");
+    const connector = new Ion.Connector("http://localhost:5551", "token121231231");
     connector.onopen = function (svc) {
       console.log("onopen: service = ", svc.name);
     };

@@ -1,23 +1,23 @@
 import { grpc } from '@improbable-eng/grpc-web';
 
-export interface IonService {
+export interface Service {
     name: string;
     connect(): void;
     connected: boolean;
     close(): void;
 }
 
-export class IonBaseConnector {
+export class Connector {
     public metadata: grpc.Metadata;
     public uri: string;
-    public services: Map<string, IonService>;
-    onopen?: (service: IonService) => void;
-    onclose?: (service: IonService, ev: Event) => void;
+    public services: Map<string, Service>;
+    onopen?: (service: Service) => void;
+    onclose?: (service: Service, ev: Event) => void;
 
     constructor(uri: string, token?: string) {
         this.uri = uri;
         this.metadata = new grpc.Metadata();
-        this.services = new Map<string, IonService>();
+        this.services = new Map<string, Service>();
 
         if (token) {
             this.metadata.append("authorization", token);
@@ -32,14 +32,14 @@ export class IonBaseConnector {
     }
 
     public close(): void {
-        this.services.forEach((service: IonService) => {
+        this.services.forEach((service: Service) => {
             if (service.connected) {
                 service.close();
             }
         });
     }
 
-    public onHeaders(service: IonService, headers: grpc.Metadata): void {
+    public onHeaders(service: Service, headers: grpc.Metadata): void {
         // Merge metadata.
         headers.forEach((key, value) => {
             if (key.toLowerCase() !== "trailer" && key.toLowerCase() !== "content-type") {
@@ -50,12 +50,12 @@ export class IonBaseConnector {
         this.onopen?.call(this, service);
     }
 
-    public onEnd(service: IonService, status: grpc.Code, statusMessage: string, trailers: grpc.Metadata): void {
+    public onEnd(service: Service, status: grpc.Code, statusMessage: string, trailers: grpc.Metadata): void {
         service.connected = false;
         this.onclose?.call(this, service, new CustomEvent(service.name, { "detail": { status, statusMessage, trailers } }));
     }
 
-    registerService(service: IonService) {
+    registerService(service: Service) {
         this.services.set(service.name, service);
     }
 }
