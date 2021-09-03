@@ -64,14 +64,14 @@ export interface Result {
     error: Error | undefined;
 }
 
-export class IonSDKRTC implements Service {
+export class RTC implements Service {
     name: string;
     connector: Connector;
     connected: boolean;
     config?: Configuration;
     protected _rpc?: grpc.Client<pb.Request, pb.Reply>;
     private _rtc?: Client;
-    private _sig?: IonRTCGRPCSignal;
+    private _sig?: RTCGRPCSignal;
     ontrack?: (track: MediaStreamTrack, stream: RemoteStream) => void;
     ondatachannel?: (ev: RTCDataChannelEvent) => void;
     onspeaker?: (ev: string[]) => void;
@@ -119,7 +119,7 @@ export class IonSDKRTC implements Service {
 
     connect(): void {
         if (!this._sig) {
-            this._sig = new IonRTCGRPCSignal(this, this.connector);
+            this._sig = new RTCGRPCSignal(this, this.connector);
         }
         if (!this._rtc) {
             this._rtc = new Client(this._sig, this?.config);
@@ -144,7 +144,7 @@ export class IonSDKRTC implements Service {
     }
 }
 
-class IonRTCGRPCSignal implements Signal {
+class RTCGRPCSignal implements Signal {
     connector: Connector;
     protected _client: grpc.Client<pb.Request, pb.Reply>;
     private _event: EventEmitter = new EventEmitter();

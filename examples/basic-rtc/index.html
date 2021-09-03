@@ -99,7 +99,7 @@
 
     const uid = uuidv4();
     const sid = "ion";
-    const sfu = new Ion.IonSDKRTC(connector);
+    const sfu = new Ion.RTC(connector);
 
     sfu.ontrackevent = function (ev) {
       console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));

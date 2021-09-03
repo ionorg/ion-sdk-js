@@ -18,21 +18,21 @@ export async function Init(): Promise<void> {
         console.log('Disconnected from ' + service.name);
     };
 
-    const roomApp = new ion.Room(connector);
+    const room = new ion.Room(connector);
 
-    roomApp.onjoin = function (result: ion.JoinResult): void {
+    room.onjoin = function (result: ion.JoinResult): void {
         console.log('on room join , success ' + result.success + ', room info: ' + JSON.stringify(result.room));
     };
 
-    roomApp.onleave = function (reason: string): void {
+    room.onleave = function (reason: string): void {
         console.log('Left room, reason ' + reason);
     };
 
-    roomApp.onmessage = function (msg: ion.Message): void {
+    room.onmessage = function (msg: ion.Message): void {
         console.log('Received from: ' + msg.from + ', to: ' + msg.to + ', type: ' + msg.type);
     };
 
-    roomApp.onpeerevent = function (event: ion.PeerEvent): void {
+    room.onpeerevent = function (event: ion.PeerEvent): void {
         switch(event.state) {
             case ion.PeerState.JOIN:
                 console.log('Peer ' + event.peer.uid + ' joined');
@@ -46,16 +46,16 @@ export async function Init(): Promise<void> {
         }
     };
 
-    roomApp.onroominfo = function (info: ion.RoomInfo): void {
+    room.onroominfo = function (info: ion.RoomInfo): void {
         console.log('on Room info update: ' + JSON.stringify(info));
     };
 
-    roomApp.ondisconnect = function (dis: ion.Disconnect): void {
+    room.ondisconnect = function (dis: ion.Disconnect): void {
         console.log('Disconnected from server, reason: ' + dis.reason);
     };
 
-    roomApp.connect();
-    const result = await roomApp.join({
+    //room.connect();
+    const result = await room.join({
         sid: sid,
         uid: uid,
         displayname: 'new peer',
@@ -71,11 +71,11 @@ export async function Init(): Promise<void> {
     console.log('Joined room result, success ' + result?.success + ', room info: ' + JSON.stringify(result?.room));
 
     setTimeout(() => {
-        roomApp.leave(sid, uid);
+        room.leave(sid, uid);
     }, 7000);
 
     const payload = new Map();
     payload.set('key1', 'value1');
     payload.set('key2', 'value2');
-    roomApp.message(sid,'peer122', uid, 'Map', payload);
+    room.message(sid,'peer122', uid, 'Map', payload);
 }
