@@ -8,8 +8,8 @@ import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream } from '../stream';
 
 export enum TrackState {
-    NONE = 0,
-    ADD,
+    ADD = 0,
+    UPDATE,
     REMOVE,
 }
 
@@ -190,10 +190,13 @@ class RTCGRPCSignal implements Signal {
                 case pb.Reply.PayloadCase.TRACKEVENT:
                     {
                         const evt = reply.getTrackevent();
-                        let state = TrackState.NONE;
+                        let state = TrackState.ADD;
                         switch (evt?.getState()) {
                             case pb.TrackEvent.State.ADD:
                                 state = TrackState.ADD;
+                                break;
+                            case pb.TrackEvent.State.UPDATE:
+                                state = TrackState.UPDATE;
                                 break;
                             case pb.TrackEvent.State.REMOVE:
                                 state = TrackState.REMOVE;
