@@ -56,11 +56,7 @@
         <input type="checkbox" id = "check-box">Simulcast
       </div>
     </div>
-    <!-- <div class="row" >
-      <div class="col-12">
-        <input type="checkbox" id = "check-box">Simulcast
-      </div>
-    </div> -->
+
     <div class="row">
       <div class="col-6 pt-2">
         <span style="position: absolute; margin-left: 5px; margin-top: 5px" class="badge badge-primary">Local</span>
@@ -98,8 +94,64 @@
         <span style="position: absolute; margin-left: 5px; margin-top: 5px" class="badge badge-primary">Remotes</span>
       </div>
     </div>
-  </div>
 
+      <div class="row">
+        <div class="col-12 pt-4">Event</div>
+      </div>
+      <div class="row">
+        <div class="col-6 pt-2">
+          <pre
+            id="remote-signal"
+            class="d-block border"
+            style="
+              background-color: #f8f9fa;
+              height: 117px;
+              width: 800px;
+              margin: 5px 0;
+              word-break;
+              break-all;
+              word-wrap:break-word;
+            "
+          ></pre>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12 pt-4">DataChannel</div>
+      </div>
+      <div class="row">
+        <div class="col-6 pt-2">
+          <textarea
+            id="local-data"
+            class="d-block border"
+            style="
+              background-color: #f8f9fa;
+              height: 117px;
+              width: 320px;
+              margin: 5px 0;
+              padding: 5px;
+            "
+            placeholder="Send a message"
+          ></textarea>
+          <button type="button" class="btn btn-primary" onclick="send()">
+            send
+          </button>
+        </div>
+        <div class="col-6 pt-2">
+          <pre
+            id="remote-data"
+            class="d-block border"
+            style="
+              background-color: #f8f9fa;
+              height: 117px;
+              width: 320px;
+              margin: 5px 0;
+            "
+          ></pre>
+        </div>
+      </div>
+
+  </div>
   <!-- Optional JavaScript -->
   <script src="build/bundle.js"></script>
   <script>
@@ -112,6 +164,10 @@
     const codecBox = document.getElementById("select-box1");
     const resolutionBox = document.getElementById("select-box2");
     const simulcastBox = document.getElementById("check-box");
+    const localData = document.getElementById("local-data");
+    const remoteData = document.getElementById("remote-data");
+    const remoteSignal= document.getElementById("remote-signal");
+    let localDataChannel;
     connector.onopen = function (svc) {
       console.log("onopen: service = ", svc.name);
     };
@@ -138,9 +194,17 @@
       });
       sfu.subscribe(infos);
       */
+      remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev.tracks) + '\n';
     };
 
-    sfu.connect();
+    sfu.ondatachannel = ({ channel }) => {
+      console.log("sfu.ondatachannel channel=", channel)
+      channel.onmessage = ({ data }) => {
+        remoteData.innerHTML = remoteData.innerHTML + data + '\n';
+      };
+    };
+
+    <!-- sfu.connect(); -->
 
     sfu.join(sid, uid);
 
@@ -163,8 +227,21 @@
           localVideo.muted = true;
           joinBtns.style.display = "none";
           sfu.publish(media);
+          localDataChannel = sfu.createDataChannel(uid);
         })
         .catch(console.error);
+    };
+
+    const send = () => {
+        if (!localDataChannel) {
+            alert('click "start" first!', '', {
+            confirmButtonText: 'OK',
+          });
+          return
+        }
+      if (localDataChannel.readyState === "open") {
+        localDataChannel.send(localData.value);
+      }
     };
 
     sfu.ontrack = (track, stream) => {
@@ -204,6 +281,7 @@
         localStream.unmute("audio");
       }
     };
+
   </script>
 </body>
 
