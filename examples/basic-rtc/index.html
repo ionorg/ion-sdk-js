@@ -39,7 +39,28 @@
         </button>
       </div>
     </div>
-
+    <div class="row" >
+      <div class="col-12">
+        <select id="select-box1">
+          <option value="vp8" selected="selected" >vp8</option>
+          <option value="h264">h264</option>
+        </select>
+        <select id="select-box2">
+          <option value="qvga">qvga_320_180</option>
+          <option value="vga" selected="selected" >vga_640_360</option>
+          <option value="shd">shd_960_540</option>
+          <option value="hd">hd_1280_720</option>
+          <option value="fhd">qvga_1980_1080</option>
+          <option value="fhd">qvga_2560_1440</option>
+        </select>
+        <input type="checkbox" id = "check-box">Simulcast
+      </div>
+    </div>
+    <!-- <div class="row" >
+      <div class="col-12">
+        <input type="checkbox" id = "check-box">Simulcast
+      </div>
+    </div> -->
     <div class="row">
       <div class="col-6 pt-2">
         <span style="position: absolute; margin-left: 5px; margin-top: 5px" class="badge badge-primary">Local</span>
@@ -87,8 +108,10 @@
 
     /* eslint-env browser */
     const joinBtns = document.getElementById("start-btns");
-
     const connector = new Ion.Connector("http://localhost:5551");
+    const codecBox = document.getElementById("select-box1");
+    const resolutionBox = document.getElementById("select-box2");
+    const simulcastBox = document.getElementById("check-box");
     connector.onopen = function (svc) {
       console.log("onopen: service = ", svc.name);
     };
@@ -124,11 +147,14 @@
     const streams = {};
     let localStream;
     const start = () => {
-      Ion.LocalStream.getUserMedia({
-        resolution: "hd",
+      let constraints = {
+        resolution: resolutionBox.options[resolutionBox.selectedIndex].value,
+        codec: codecBox.options[codecBox.selectedIndex].value,
         audio: true,
-        simulcast: true,
-      })
+        simulcast: simulcastBox.checked,
+      }
+      console.log("getUserMedia constraints=", constraints)
+      Ion.LocalStream.getUserMedia(constraints)
         .then((media) => {
           localStream = media;
           localVideo.srcObject = media;
