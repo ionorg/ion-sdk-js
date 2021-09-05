@@ -54,6 +54,11 @@
           <option value="fhd">qvga_2560_1440</option>
         </select>
         <input type="checkbox" id = "check-box">Simulcast
+          <select id="select-box3" style="position: absolute ;margin-right: 5px;">
+          <option value="q" selected="selected" onchange="subscribe()" >Simulcast_q</option>
+          <option value="h" onchange="subscribe()" >Simulcast_h</option>
+          <option value="f" onchange="subscribe()" >Simulcast_f</option>
+          </select>
       </div>
     </div>
 
@@ -92,6 +97,7 @@
       </div>
       <div id="remotes" class="col-6 pt-2">
         <span style="position: absolute; margin-left: 5px; margin-top: 5px" class="badge badge-primary">Remotes</span>
+
       </div>
     </div>
 
@@ -115,7 +121,6 @@
           ></pre>
         </div>
       </div>
-
       <div class="row">
         <div class="col-12 pt-4">DataChannel</div>
       </div>
@@ -167,7 +172,9 @@
     const localData = document.getElementById("local-data");
     const remoteData = document.getElementById("remote-data");
     const remoteSignal= document.getElementById("remote-signal");
+    const subscribeBox = document.getElementById("select-box3");
     let localDataChannel;
+    let event;
     connector.onopen = function (svc) {
       console.log("onopen: service = ", svc.name);
     };
@@ -182,6 +189,7 @@
 
     sfu.ontrackevent = function (ev) {
       console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
+      event = ev;
       /*
       var infos = [];
       ev.tracks.forEach(t => {
@@ -194,7 +202,7 @@
       });
       sfu.subscribe(infos);
       */
-      remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev.tracks) + '\n';
+      remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev) + '\n';
     };
 
     sfu.ondatachannel = ({ channel }) => {
@@ -243,6 +251,24 @@
         localDataChannel.send(localData.value);
       }
     };
+
+    const subscribe = () => {
+        let layer = subscribe.value
+        console.log("subscribe event=", event, "layer=", layer)
+        var infos = [];
+        event.tracks.forEach(t => {
+            if (t.layer === layer){
+              infos.push({
+                track_id: t.id,
+                mute: t.muted,
+                layer: t.layer,
+                subscribe: true
+              });
+            }
+        });
+        console.log("subscribe infos=", infos)
+        sfu.subscribe(infos);
+    }
 
     sfu.ontrack = (track, stream) => {
       console.log("got ", track.kind, " track", track.id, "for stream", stream.id);
