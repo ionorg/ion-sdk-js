@@ -189,7 +189,7 @@ remoteRTC.ontrack = (track, stream) => {
     remoteStream = stream;
     remoteVideo.srcObject = stream;
     remoteVideo.autoplay = true;
-
+    remoteVideo.muted = true;
     getStats();
 
     document.querySelectorAll(".controls")
