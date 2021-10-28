@@ -22,12 +22,12 @@ export class BizClient extends EventEmitter {
         case biz.SignalReply.PayloadCase.JOINREPLY:
           const result = {
             success: reply.getJoinreply()?.getSuccess() || false,
-            reason: reply.getJoinreply()?.getReason() || 'unkown reason',
+            reason: reply.getJoinreply()?.getReason() || 'unknown reason',
           };
           this.emit('join-reply', result.success, result.reason);
           break;
         case biz.SignalReply.PayloadCase.LEAVEREPLY:
-          const reason = reply.getLeavereply()?.getReason() || 'unkown reason';
+          const reason = reply.getLeavereply()?.getReason() || 'unknown reason';
           this.emit('leave-reply', reason);
           break;
         case biz.SignalReply.PayloadCase.PEEREVENT:
@@ -135,9 +135,9 @@ export class BizClient extends EventEmitter {
     return new Promise<string>((resolve, reject) => {
       const handler = (reason: string) => {
         resolve(reason);
-        this.removeListener('join-reply', handler);
+        this.removeListener('leave-reply', handler);
       };
-      this.addListener('join-reply', handler);
+      this.addListener('leave-reply', handler);
     });
   }
 
