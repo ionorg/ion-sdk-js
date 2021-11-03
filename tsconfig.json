@@ -14,5 +14,8 @@
     "decs.d.ts",
     "src"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "src/_library"
+  ]
 }
