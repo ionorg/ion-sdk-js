@@ -4,7 +4,9 @@ import * as room from '../_library/apps/room/proto/room_pb';
 import * as room_rpc from '../_library/apps/room/proto/room_pb_service';
 import { EventEmitter } from 'events';
 
-
+/**
+ * PeerState: The state of a peer
+ */
 export enum PeerState {
     NONE,
     JOIN,
@@ -12,11 +14,16 @@ export enum PeerState {
     LEAVE,
 }
 
+/**
+ * Role: Role of the peer
+ */
 export enum Role {
     HOST = 0,
     GUEST = 1
 }
-
+/**
+ * Protocol: The protocol of the peer
+ */
 export enum Protocol {
     PROTOCOLUNKNOWN = 0,
     WEBRTC = 1,
@@ -25,6 +32,9 @@ export enum Protocol {
     RTSP = 4,
 }
 
+/**
+ * ErrorType: The type of error
+ */
 export enum ErrorType {
     NONE = 0,
     UNKOWNERROR = 1,
@@ -39,11 +49,17 @@ export enum ErrorType {
     PEERNOTEXIST = 10,
 }
 
+/**
+ * Error: The error
+ */
 export interface Error {
     errType: ErrorType;
     reason: string;
 }
 
+/**
+ * JoinResult: The result of join
+ */
 export interface JoinResult {
     success: boolean;
     error: Error;
@@ -51,12 +67,18 @@ export interface JoinResult {
     room: RoomInfo;
 }
 
+/**
+ * Direction: The direction of the stream
+ */
 export enum Direction {
     INCOMING = 0,
     OUTGOING = 1,
     BILATERAL = 2,
 }
 
+/**
+ * Peer: The peer interface
+ */
 export interface Peer {
     sid: string,
     uid: string,
@@ -70,11 +92,17 @@ export interface Peer {
     vendor: string,
 }
 
+/**
+ * PeerEvent: The event of peer
+ */
 export interface PeerEvent {
     state: PeerState;
     peer: Peer;
 }
 
+/**
+ * Message: The message interface
+ */
 export interface Message {
     from: string;
     to: string;
@@ -82,6 +110,9 @@ export interface Message {
     payload: any;
 }
 
+/**
+ * RoomInfo: The room info interface
+ */
 export interface RoomInfo {
     sid: string,
     name: string,
@@ -91,11 +122,17 @@ export interface RoomInfo {
     maxpeers: number,
 }
 
+/**
+ * Disconnect: The disconnect interface
+ */
 export interface Disconnect {
     sid: string,
     reason: string,
 }
 
+/**
+ * Room: The room class
+ */
 export class Room implements Service {
     // public
     name: string;
@@ -150,7 +187,9 @@ export class Room implements Service {
     // private
     _rpc?: RoomGRPCClient;
 }
-
+/**
+ * RoomGRPCClient: The room grpc client
+ */
 class RoomGRPCClient extends EventEmitter {
     connector: Connector;
     protected _client: grpc.Client<room.Request, room.Reply>;
@@ -243,6 +282,13 @@ class RoomGRPCClient extends EventEmitter {
         this._client.start(connector.metadata);
     }
 
+    /**
+     * join a session/room
+     * @date 2021-11-03
+     * @param {any} peer:Peer
+     * @param {any} password:string|undefined
+     * @returns {any}
+     */
     async join(peer: Peer, password: string | undefined): Promise<JoinResult> {
         const request = new room.Request();
         const join = new room.JoinRequest();
@@ -274,6 +320,13 @@ class RoomGRPCClient extends EventEmitter {
         });
     }
 
+    /**
+     * leave a session/room
+     * @date 2021-11-03
+     * @param {any} sid:string
+     * @param {any} uid:string
+     * @returns
+     */
     async leave(sid: string, uid: string) {
         const request = new room.Request();
         const leave = new room.LeaveRequest();
@@ -292,6 +345,17 @@ class RoomGRPCClient extends EventEmitter {
         });
     }
 
+    /**
+     * send a message to a session/room
+     * @date 2021-11-03
+     * @param {any} sid:string
+     * @param {any} from:string
+     * @param {any} to:string
+     * @param {any} mineType:string
+     * @param {any} data:Map<string
+     * @param {any} any>
+     * @returns
+     */
     async sendMessage(sid: string, from: string, to: string, mineType: string, data: Map<string, any>) {
         const request = new room.Request();
         const sendMessage = new room.SendMessageRequest();
@@ -307,6 +371,11 @@ class RoomGRPCClient extends EventEmitter {
         this._client.send(request);
     }
 
+    /**
+     * close client
+     * @date 2021-11-03
+     * @returns
+     */
     close() {
         this._client.finishSend();
     }
