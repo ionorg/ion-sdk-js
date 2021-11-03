@@ -1,12 +1,18 @@
 import { grpc } from '@improbable-eng/grpc-web';
 
+/**
+ * Service interface
+ */
 export interface Service {
     name: string;
     // connect(): void;
     connected: boolean;
     close(): void;
 }
-
+/**
+ * Connector class
+ * support multiple services
+ */
 export class Connector {
     public metadata: grpc.Metadata;
     public uri: string;
@@ -55,6 +61,12 @@ export class Connector {
         this.onclose?.call(this, service, new CustomEvent(service.name, { "detail": { status, statusMessage, trailers } }));
     }
 
+    /**
+     * register service to connector
+     * @date 2021-11-03
+     * @param {any} service:Service
+     * @returns {any}
+     */
     registerService(service: Service) {
         this.services.set(service.name, service);
     }
