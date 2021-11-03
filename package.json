@@ -1,7 +1,7 @@
 {
   "name": "ion-sdk-js",
-  "version": "1.7.2",
-  "description": "A js sdk for ion sfu",
+  "version": "1.8.0",
+  "description": "A js sdk for ion-sfu or ion",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [

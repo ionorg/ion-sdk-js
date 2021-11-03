@@ -176,6 +176,10 @@ export default class Client {
     stream.publish(this.transports[Role.pub]);
   }
 
+  restartIce() {
+    this.renegotiate(true)
+  }
+
   createDataChannel(label: string) {
     if (!this.transports) {
       throw Error(ERR_NO_SESSION);
@@ -221,7 +225,11 @@ export default class Client {
     }
   }
 
-  private async onNegotiationNeeded() {
+  private onNegotiationNeeded() {
+    this.renegotiate(false)
+  }
+
+  private async renegotiate(iceRestart: boolean) {
     if (!this.transports) {
       throw Error(ERR_NO_SESSION);
     }
@@ -229,7 +237,7 @@ export default class Client {
     let offer: RTCSessionDescriptionInit | undefined;
     let answer: RTCSessionDescriptionInit | undefined;
     try {
-      offer = await this.transports[Role.pub].pc.createOffer();
+      offer = await this.transports[Role.pub].pc.createOffer({ iceRestart });
       await this.transports[Role.pub].pc.setLocalDescription(offer);
       answer = await this.signal.offer(offer);
       await this.transports[Role.pub].pc.setRemoteDescription(answer);
