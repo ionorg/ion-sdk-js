@@ -7,18 +7,27 @@ import * as sfu_rpc from '../_library/proto/rtc/rtc_pb_service';
 import * as pb from '../_library/proto/rtc/rtc_pb';
 import { LocalStream, RemoteStream } from '../stream';
 
+/**
+ * TrackState: track state
+ */
 export enum TrackState {
     ADD = 0,
     UPDATE,
     REMOVE,
 }
 
+/**
+ * TrackEvent: track event
+ */
 export interface TrackEvent {
     state: TrackState;
     uid: string;
     tracks: TrackInfo[];
 }
 
+/**
+ * MediaType: media type
+ */
 export enum MediaType {
     MEDIAUNKNOWN = 0,
     USERMEDIA = 1,
@@ -28,6 +37,9 @@ export enum MediaType {
     VOIP = 5,
 };
 
+/**
+ * TrackInfo: track info
+ */
 export interface TrackInfo {
     id: string;
     kind: string;
@@ -41,6 +53,9 @@ export interface TrackInfo {
     frame_rate: number,
 }
 
+/**
+ * Subscription: subscription
+ */
 export interface Subscription {
     track_id: string;
     muted: boolean;
@@ -48,22 +63,34 @@ export interface Subscription {
     layer: string;
 }
 
+/**
+ * JoinConfig: join config
+ */
 export interface JoinConfig {
     no_publish: boolean;
     no_subscribe: boolean;
     no_auto_subscribe: boolean;
 }
 
+/**
+ * Error: error interface
+ */
 export interface Error {
     code: number;
     reason: string;
 }
 
+/**
+ * Result: result interface
+ */
 export interface Result {
     success: boolean;
     error: Error | undefined;
 }
 
+/**
+ * RTC: rtc class
+ */
 export class RTC implements Service {
     name: string;
     connector: Connector;
@@ -77,6 +104,13 @@ export class RTC implements Service {
     onspeaker?: (ev: string[]) => void;
     ontrackevent?: (ev: TrackEvent) => void;
 
+    /**
+     * constructor
+     * @date 2021-11-03
+     * @param {any} connector:Connector
+     * @param {any} config?:Configuration
+     * @returns 
+     */
     constructor(connector: Connector, config?: Configuration) {
         this.name = "rtc";
         this.config = config;
@@ -86,37 +120,86 @@ export class RTC implements Service {
         this.connect();
     }
 
+    
+    /**
+     * join rtc session
+     * @date 2021-11-03
+     * @param {any} sid:string
+     * @param {any} uid:string
+     * @param {any} config:JoinConfig|undefined
+     * @returns
+     */
     async join(sid: string, uid: string, config: JoinConfig | undefined) {
         this._sig!.config = config;
         return this._rtc?.join(sid, uid);
     }
 
+    /**
+     * leave session
+     * @date 2021-11-03
+     * @returns
+     */
     leave() {
         return this._rtc?.leave();
     }
 
+    /**
+     * get pub stats
+     * @date 2021-11-03
+     * @param {any} selector?:MediaStreamTrack
+     * @returns {any}
+     */
     getPubStats(selector?: MediaStreamTrack) {
         return this._rtc?.getPubStats(selector);
     }
 
+    /**
+     * get sub stats
+     * @date 2021-11-03
+     * @param {any} selector?:MediaStreamTrack
+     * @returns {any}
+     */
     getSubStats(selector?: MediaStreamTrack) {
         return this._rtc?.getSubStats(selector);
     }
 
+    /**
+     * publish local stream
+     * @date 2021-11-03
+     * @param {any} stream:LocalStream
+     * @returns {any}
+     */
     publish(stream: LocalStream) {
         this._sig!.buildTrackInfos(stream);
         this._rtc?.publish(stream);
     }
 
+    /**
+     * subscribe
+     * @date 2021-11-03
+     * @param {any} trackInfos:Subscription[]
+     * @returns {any}
+     */
     subscribe(trackInfos: Subscription[]): Promise<Result> | undefined {
         return this._sig?.subscribe(trackInfos);
     }
 
 
+    /**
+     * createDataChannel
+     * @date 2021-11-03
+     * @param {any} label:string
+     * @returns {any}
+     */
     createDataChannel(label: string) {
         return this._rtc?.createDataChannel(label);
     }
 
+    /**
+     * connect to signal
+     * @date 2021-11-03
+     * @returns {any}
+     */
     connect(): void {
         if (!this._sig) {
             this._sig = new RTCGRPCSignal(this, this.connector);
@@ -137,6 +220,11 @@ export class RTC implements Service {
         }
     }
 
+    /**
+     * close rtc
+     * @date 2021-11-03
+     * @returns {any}
+     */
     close(): void {
         if (this._rtc) {
             this._rtc.close();
@@ -144,6 +232,9 @@ export class RTC implements Service {
     }
 }
 
+/**
+ * RTCGRPCSignal: rtc grpc signal
+ */
 class RTCGRPCSignal implements Signal {
     connector: Connector;
     protected _client: grpc.Client<pb.Request, pb.Reply>;
@@ -235,6 +326,14 @@ class RTCGRPCSignal implements Signal {
         this._client.start(this.connector.metadata);
     }
 
+    /**
+     * join a session
+     * @date 2021-11-03
+     * @param {any} sid:string
+     * @param {any} uid:null|string
+     * @param {any} offer:RTCSessionDescriptionInit
+     * @returns {any}
+     */
     join(sid: string, uid: null | string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
         const request = new pb.Request();
         const join = new pb.JoinRequest();
@@ -271,6 +370,12 @@ class RTCGRPCSignal implements Signal {
         });
     }
 
+    /**
+     * send trickle
+     * @date 2021-11-03
+     * @param {any} trickle:Trickle
+     * @returns {any}
+     */
     trickle(trickle: Trickle) {
         const request = new pb.Request();
         const pbTrickle = new pb.Trickle();
@@ -279,6 +384,12 @@ class RTCGRPCSignal implements Signal {
         this._client.send(request);
     }
 
+    /**
+     * send offer request
+     * @date 2021-11-03
+     * @param {any} offer:RTCSessionDescriptionInit
+     * @returns {any}
+     */
     offer(offer: RTCSessionDescriptionInit) {
         const request = new pb.Request();
         const dest = new pb.SessionDescription();
@@ -299,6 +410,12 @@ class RTCGRPCSignal implements Signal {
         });
     }
 
+    /**
+     * send answer request
+     * @date 2021-11-03
+     * @param {any} answer:RTCSessionDescriptionInit
+     * @returns {any}
+     */
     answer(answer: RTCSessionDescriptionInit) {
         const request = new pb.Request();
         const desc = new pb.SessionDescription();
@@ -309,10 +426,21 @@ class RTCGRPCSignal implements Signal {
         this._client.send(request);
     }
 
+    /**
+     * close client
+     * @date 2021-11-03
+     * @returns {any}
+     */
     close(): void {
         this._client?.close();
     }
 
+    /**
+     * subscribe
+     * @date 2021-11-03
+     * @param {any} infos:Subscription[]
+     * @returns {any}
+     */
     subscribe(infos: Subscription[]): Promise<Result> {
         const request = new pb.Request();
         const subscription = new pb.SubscriptionRequest();
@@ -340,6 +468,12 @@ class RTCGRPCSignal implements Signal {
     }
 
 
+    /**
+     * build TrackInfos
+     * @date 2021-11-03
+     * @param {any} stream:LocalStream
+     * @returns {any}
+     */
     buildTrackInfos(stream: LocalStream): void {
         const tracks = stream.getTracks();
         const trackInfos = new Array<pb.TrackInfo>();
