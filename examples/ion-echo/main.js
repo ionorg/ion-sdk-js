@@ -37,13 +37,20 @@ const joinRoom = async () => {
         console.log('[onleave]: leave room, reason ' + reason);
     };
     
+    function Uint8ArrayToString(fileData){
+      var dataString = "";
+      for (var i = 0; i < fileData.byteLength; i++) {
+        dataString += String.fromCharCode(fileData[i]);
+      }
+      return dataString;
+    }
+
     room.onmessage = function (msg){
-        console.log('[onmessage]: Received from: ' + msg.from + ', to: ' + msg.to + ', type: ' + msg.type +', payload: ', msg.payload);
-        let uint8Arr = new Uint8Array(msg.payload)
-        decodedString = decodeURIComponent(escape(String.fromCharCode.apply(null, uint8Arr)));
-        console.log("[onmessage]:", decodedString);
-        console.log("[onmessage]:", String.fromCharCode.apply(null, uint8Arr));
-        remoteData.innerHTML = remoteData.innerHTML + msg.payload+ '\n';
+        console.log('[onmessage]: Received msg:',  msg)
+        const uint8Arr = new Uint8Array(msg.data);
+        const decodedString = String.fromCharCode.apply(null, uint8Arr);
+        const json  = JSON.parse(decodedString);
+        remoteData.innerHTML = remoteData.innerHTML + json.msg+ '\n';
     };
     
     room.onpeerevent = function (event){
@@ -82,7 +89,7 @@ const joinRoom = async () => {
         vendor: 'string',
     }, '')
         .then((result) => {
-             console.log('join room result: success ' + result?.success + ', room info: ' + JSON.stringify(result?.room));
+             console.log('[joinRoom] result: success ' + result?.success + ', room info: ' + JSON.stringify(result?.room));
     });
     
 
@@ -97,13 +104,13 @@ const sendMsg = () => {
     }
     const payload = new Map();
     payload.set('msg', localData.value);
-    console.log("sendMsg: sid=", sid, "from=", 'sender', "to=", uid, "payload=", payload)
+    console.log("[sendMsg]: sid=", sid, "from=", 'sender', "to=", uid, "payload=", payload);
     room.message(sid,'sender', uid, 'Map', payload);
 }
 
 
 const leaveRoom = () => {
-    console.log("leave room: sid="+sid+" uid=", uid)
+    console.log("[leaveRoom]: sid="+sid+" uid=", uid)
     room.leave(sid, uid);
 }
 

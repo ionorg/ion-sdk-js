@@ -345,6 +345,14 @@ class RoomGRPCClient extends EventEmitter {
         });
     }
 
+    mapToObj(map: Map<string, any>){
+        const obj: {[key: string]: any} = {};
+        map.forEach((value: any, key: string) => {
+            obj[key] = value;
+        });
+        return obj;
+    }
+      
     /**
      * send a message to a session/room
      * @date 2021-11-03
@@ -362,7 +370,8 @@ class RoomGRPCClient extends EventEmitter {
         const message = new room.Message();
         message.setFrom(from);
         message.setTo(to);
-        const buffer = Uint8Array.from(JSON.stringify(data), (c) => c.charCodeAt(0));
+        const obj = this.mapToObj(data);
+        const buffer = Uint8Array.from(JSON.stringify(obj), (c) => c.charCodeAt(0));
         message.setType(mineType);
         message.setPayload(buffer);
         sendMessage.setSid(sid);
