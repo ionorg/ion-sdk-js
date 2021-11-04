@@ -170,11 +170,11 @@ export default class Client {
     return this.transports[Role.sub].pc.getStats(selector);
   }
 
-  publish(stream: LocalStream) {
+  publish(stream: LocalStream, encodingParams?: RTCRtpEncodingParameters[]) {
     if (!this.transports) {
       throw Error(ERR_NO_SESSION);
     }
-    stream.publish(this.transports[Role.pub]);
+    stream.publish(this.transports[Role.pub], encodingParams);
   }
 
   restartIce() {
