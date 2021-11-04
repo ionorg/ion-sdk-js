@@ -210,7 +210,7 @@ export class LocalStream extends MediaStream {
       };
       if (track.kind === 'video') {
         if (this.encodingParams) {
-          init.sendEncodings = this.encodingParams
+          init.sendEncodings = this.encodingParams;
         } else if (this.constraints.simulcast) {
           const idx = resolutions.indexOf(this.constraints.resolution);
           const encodings: RTCRtpEncodingParameters[] = [
@@ -238,7 +238,7 @@ export class LocalStream extends MediaStream {
               maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
             });
           }
-          init.sendEncodings = encodings
+          init.sendEncodings = encodings;
         } else {
           init.sendEncodings = [VideoConstraints[this.constraints.resolution].encodings];
         }
