@@ -169,15 +169,15 @@ export default class Client {
     return this.transports[Role.sub].pc.getStats(selector);
   }
 
-  publish(stream: LocalStream) {
+  publish(stream: LocalStream, encodingParams?: RTCRtpEncodingParameters[]) {
     if (!this.transports) {
       throw Error(ERR_NO_SESSION);
     }
-    stream.publish(this.transports[Role.pub]);
+    stream.publish(this.transports[Role.pub], encodingParams);
   }
 
   restartIce() {
-    this.renegotiate(true)
+    this.renegotiate(true);
   }
 
   createDataChannel(label: string) {
@@ -226,7 +226,7 @@ export default class Client {
   }
 
   private onNegotiationNeeded() {
-    this.renegotiate(false)
+    this.renegotiate(false);
   }
 
   private async renegotiate(iceRestart: boolean) {
