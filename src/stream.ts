@@ -159,6 +159,7 @@ export class LocalStream extends MediaStream {
   constraints: Constraints;
   pc?: RTCPeerConnection;
   api?: RTCDataChannel;
+  encodingParams?: RTCRtpEncodingParameters[];
 
   constructor(stream: MediaStream, constraints: Constraints) {
     super(stream);
@@ -203,50 +204,47 @@ export class LocalStream extends MediaStream {
 
   private publishTrack(track: MediaStreamTrack) {
     if (this.pc) {
-      if (track.kind === 'video' && this.constraints.simulcast) {
-        const idx = resolutions.indexOf(this.constraints.resolution);
-        const encodings: RTCRtpEncodingParameters[] = [
-          {
-            rid: 'f',
-            maxBitrate: VideoConstraints[resolutions[idx]].encodings.maxBitrate,
-            maxFramerate: VideoConstraints[resolutions[idx]].encodings.maxFramerate,
-          },
-        ];
+      const init: RTCRtpTransceiverInit = {
+        streams: [this],
+        direction: 'sendonly',
+      };
+      if (track.kind === 'video') {
+        if (this.encodingParams) {
+          init.sendEncodings = this.encodingParams;
+        } else if (this.constraints.simulcast) {
+          const idx = resolutions.indexOf(this.constraints.resolution);
+          const encodings: RTCRtpEncodingParameters[] = [
+            {
+              rid: 'f',
+              maxBitrate: VideoConstraints[resolutions[idx]].encodings.maxBitrate,
+              maxFramerate: VideoConstraints[resolutions[idx]].encodings.maxFramerate,
+            },
+          ];
 
-        if (idx - 1 >= 0) {
-          encodings.push({
-            rid: 'h',
-            scaleResolutionDownBy: 2.0,
-            maxBitrate: VideoConstraints[resolutions[idx - 1]].encodings.maxBitrate,
-            maxFramerate: VideoConstraints[resolutions[idx - 1]].encodings.maxFramerate,
-          });
-        }
+          if (idx - 1 >= 0) {
+            encodings.push({
+              rid: 'h',
+              scaleResolutionDownBy: 2.0,
+              maxBitrate: VideoConstraints[resolutions[idx - 1]].encodings.maxBitrate,
+              maxFramerate: VideoConstraints[resolutions[idx - 1]].encodings.maxFramerate,
+            });
+          }
 
-        if (idx - 2 >= 0) {
-          encodings.push({
-            rid: 'q',
-            scaleResolutionDownBy: 4.0,
-            maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
-            maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
-          });
-        }
-        const transceiver = this.pc.addTransceiver(track, {
-          streams: [this],
-          direction: 'sendonly',
-          sendEncodings: encodings,
-        });
-        this.setPreferredCodec(transceiver, track.kind);
-      } else {
-        const init: RTCRtpTransceiverInit = {
-          streams: [this],
-          direction: 'sendonly',
-        };
-        if (track.kind === 'video') {
+          if (idx - 2 >= 0) {
+            encodings.push({
+              rid: 'q',
+              scaleResolutionDownBy: 4.0,
+              maxBitrate: VideoConstraints[resolutions[idx - 2]].encodings.maxBitrate,
+              maxFramerate: VideoConstraints[resolutions[idx - 2]].encodings.maxFramerate,
+            });
+          }
+          init.sendEncodings = encodings;
+        } else {
           init.sendEncodings = [VideoConstraints[this.constraints.resolution].encodings];
         }
-        const transceiver = this.pc.addTransceiver(track, init);
-        this.setPreferredCodec(transceiver, track.kind);
       }
+      const transceiver = this.pc.addTransceiver(track, init);
+      this.setPreferredCodec(transceiver, track.kind);
     }
   }
 
@@ -330,9 +328,10 @@ export class LocalStream extends MediaStream {
     return stream.getVideoTracks()[0];
   }
 
-  publish(transport: Transport) {
+  publish(transport: Transport, encodingParams?: RTCRtpEncodingParameters[]) {
     this.pc = transport.pc;
     this.api = transport.api;
+    this.encodingParams = encodingParams;
     this.getTracks().forEach(this.publishTrack.bind(this));
   }
 
