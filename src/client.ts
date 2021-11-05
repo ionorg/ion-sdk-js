@@ -56,7 +56,7 @@ export class Transport {
 
     this.pc.oniceconnectionstatechange = async (e) => {
       if (this.pc.iceConnectionState === 'disconnected') {
-        if (this.pc.restartIce) {
+        if (this.pc.restartIce !== undefined) {
           // this will trigger onNegotiationNeeded
           this.pc.restartIce();
         }
@@ -141,7 +141,6 @@ export default class Client {
     const offer = await this.transports[Role.pub].pc.createOffer();
     await this.transports[Role.pub].pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, uid, offer);
-
     await this.transports[Role.pub].pc.setRemoteDescription(answer);
     this.transports[Role.pub].candidates.forEach((c) => this.transports![Role.pub].pc.addIceCandidate(c));
     this.transports[Role.pub].pc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
