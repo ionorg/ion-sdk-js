@@ -51,7 +51,7 @@
     "browser-headers": "^0.4.1",
     "events": "^3.0.0",
     "google-protobuf": "^3.6.1",
-    "protoc-gen-ts": "^0.4.0",
+    "protoc-gen-ts": "^0.6.0",
     "sdp-transform": "^2.14.0",
     "uuid": "^8.0.0",
     "webpack-cli": "^4.8.0"
