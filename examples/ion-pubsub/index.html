@@ -35,7 +35,10 @@
     <div class="row" id="start-btns">
       <div class="col-12">
         <button type="button" class="btn btn-primary" onclick="start(false)">
-          start
+          publish
+        </button>
+        <button type="button" class="btn btn-primary" onclick="start(true)">
+          publish(simulcast)
         </button>
       </div>
     </div>
@@ -53,12 +56,6 @@
           <option value="fhd">qvga_1980_1080</option>
           <option value="fhd">qvga_2560_1440</option>
         </select>
-        <input type="checkbox" id = "check-box">Simulcast
-          <select id="select-box3" style="position: absolute ;margin-right: 5px;" onchange="subscribe()">
-          <option value="q" selected="selected"" >Simulcast_q</option>
-          <option value="h" >Simulcast_h</option>
-          <option value="f" >Simulcast_f</option>
-          </select>
       </div>
     </div>
 
@@ -97,6 +94,13 @@
       </div>
       <div id="remotes" class="col-6 pt-2">
         <span style="position: absolute; margin-left: 5px; margin-top: 5px" class="badge badge-primary">Remotes</span>
+        <div class="col-6 pt-2">
+          <select id="select-box3" style="position: absolute ; top: -17px; z-index:9999" onchange="subscribe()">
+            <option value="f" selected="selected">Simulcast_f</option>
+            <option value="h" " >Simulcast_h</option>
+            <option value="q" >Simulcast_q</option>
+            </select>
+        </div>
         <span
            id="size-tag"
            style="position: absolute; margin-left: 5px; top: 225px"
@@ -108,6 +112,7 @@
            class="badge badge-primary"
         ></span>
       </div>
+
     </div>
 
       <div class="row">

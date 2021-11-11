@@ -29,7 +29,10 @@ const rtc = new Ion.RTC(connector);
 
 rtc.ontrackevent = function (ev) {
   console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
-  event = ev;
+  if (event === undefined) {
+    console.log("store event=", ev)
+    event = ev;
+  }
   remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev) + '\n';
 };
 
@@ -44,12 +47,12 @@ rtc.join(sid, uid);
 
 const streams = {};
 let localStream;
-const start = () => {
+const start = (sc) => {
   let constraints = {
     resolution: resolutionBox.options[resolutionBox.selectedIndex].value,
     codec: codecBox.options[codecBox.selectedIndex].value,
     audio: true,
-    simulcast: simulcastBox.checked,
+    simulcast: sc,
   }
   console.log("getUserMedia constraints=", constraints)
   Ion.LocalStream.getUserMedia(constraints)
@@ -106,12 +109,12 @@ rtc.ontrack = (track, stream) => {
         remoteVideo.autoplay = true;
         remoteVideo.muted = true;
         remoteVideo.addEventListener("loadedmetadata", function () {
-sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
-});
+          sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
+        });
 
-       remoteVideo.onresize = function () {
-sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
-};
+        remoteVideo.onresize = function () {
+          sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
+        };
         remotesDiv.appendChild(remoteVideo);
         streams[stream.id] = stream;
         stream.onremovetrack = () => {
@@ -170,3 +173,28 @@ const getStats = () => {
     });
   }, 1000);
 };
+
+function syntaxHighlight(json) {
+  json = json
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return json.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    function (match) {
+      let cls = "number";
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = "key";
+        } else {
+          cls = "string";
+        }
+      } else if (/true|false/.test(match)) {
+        cls = "boolean";
+      } else if (/null/.test(match)) {
+        cls = "null";
+      }
+      return '<span class="' + cls + '">' + match + "</span>";
+    }
+  );
+}
