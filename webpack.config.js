@@ -27,7 +27,12 @@ module.exports = [{
     extensions: ['.webpack.js', '.web.js', '.ts', '.js'],
   },
   module: {
-    rules: [{ test: /\.ts$/, loader: 'ts-loader' }],
+    rules: [{
+      test: /\.ts$/,
+      include: /src/,
+      exclude: /node_modules/,
+      loader: "ts-loader"
+     }],
   },
   optimization: {
     minimizer: [new UglifyJsPlugin({

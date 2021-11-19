@@ -346,6 +346,9 @@ class RoomGRPCClient extends EventEmitter {
     }
 
     mapToObj(map: Map<string, any>){
+        if (!map) {
+            return {};
+        }
         const obj: {[key: string]: any} = {};
         map.forEach((value: any, key: string) => {
             obj[key] = value;

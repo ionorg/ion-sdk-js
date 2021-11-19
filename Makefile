@@ -1,4 +1,4 @@
-all: download proto
+all: download proto build
 
 proto-gen-from-docker:
 	docker build -t ts-protoc .
@@ -10,9 +10,15 @@ proto:
 	protoc ./ion/proto/ion/ion.proto -I./ion --plugin=protoc-gen-ts=/usr/local/bin/protoc-gen-ts --js_out=import_style=commonjs,binary:./src/_library --ts_out=service=grpc-web:./src/_library
 	protoc ./ion/proto/rtc/rtc.proto -I./ion --plugin=protoc-gen-ts=/usr/local/bin/protoc-gen-ts --js_out=import_style=commonjs,binary:./src/_library --ts_out=service=grpc-web:./src/_library
 	protoc ./ion/apps/room/proto/room.proto -I./ion --plugin=protoc-gen-ts=/usr/local/bin/protoc-gen-ts --js_out=import_style=commonjs,binary:./src/_library --ts_out=service=grpc-web:./src/_library
+	mkdir -p lib
+	cp -rf ./src/_library lib
 
 download:
 	git clone https://github.com/pion/ion --depth=1
 
 clean:
 	rm -rf src/_library
+
+build:
+	npm run build
+
