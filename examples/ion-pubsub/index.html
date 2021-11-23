@@ -34,12 +34,20 @@
   <div class="container pt-4">
     <div class="row" id="start-btns">
       <div class="col-12">
-        <button type="button" class="btn btn-primary" onclick="start(false)">
-          publish
-        </button>
-        <button type="button" class="btn btn-primary" onclick="start(true)">
-          publish(simulcast)
-        </button>
+        <div class="btn-group" role="group" aria-label="...">
+          <button id="join-btn" type="button" class="btn btn-primary" onclick="join()">
+            join
+          </button>
+          <button id="publish-btn" type="button" class="btn btn-primary" onclick="start(false)" disabled=true>
+            publish
+          </button>
+          <button id="publish-simulcast-btn" type="button" class="btn btn-primary" onclick="start(true)" disabled=true>
+            publish(simulcast)
+          </button>
+          <button id="leave-btn" type="button" class="btn btn-primary" onclick="leave()" disabled=true>
+            leave
+          </button>
+      </div>
       </div>
     </div>
     <div class="row" >
@@ -136,7 +144,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-12 pt-4">DataChannel</div>
+        <div class="col-12 pt-4">Message</div>
       </div>
       <div class="row">
         <div class="col-6 pt-2">

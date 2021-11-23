@@ -2,8 +2,13 @@ const localVideo = document.getElementById("local-video");
 const remotesDiv = document.getElementById("remotes");
 
 /* eslint-env browser */
-const joinBtns = document.getElementById("start-btns");
-const connector = new Ion.Connector("http://localhost:5551");
+const joinBtn = document.getElementById("join-btn");
+const leaveBtn = document.getElementById("leave-btn");
+const publishBtn = document.getElementById("publish-btn");
+const publishSBtn = document.getElementById("publish-simulcast-btn");
+
+// const joinBtns = document.getElementById("start-btns");
+// const connector = new Ion.Connector("http://localhost:5551");
 const codecBox = document.getElementById("select-box1");
 const resolutionBox = document.getElementById("select-box2");
 const simulcastBox = document.getElementById("check-box");
@@ -14,79 +19,209 @@ const subscribeBox = document.getElementById("select-box3");
 const sizeTag = document.getElementById("size-tag");
 const brTag = document.getElementById("br-tag");
 let localDataChannel;
-let event;
-connector.onopen = function (svc) {
-  console.log("onopen: service = ", svc.name);
-};
+let trackEvent;
 
-connector.onclose = function (svc, err) {
-  console.log("onclose: service = ", svc.name, ", err = ", JSON.stringify(err.detail));
-};
-
+const url = 'http://localhost:5551';
 const uid = uuidv4();
 const sid = "ion";
-const rtc = new Ion.RTC(connector);
-
-rtc.ontrackevent = function (ev) {
-  console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
-  if (event === undefined) {
-    console.log("store event=", ev)
-    event = ev;
-  }
-  remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev) + '\n';
-};
-
-rtc.ondatachannel = ({ channel }) => {
-  console.log("rtc.ondatachannel channel=", channel)
-  channel.onmessage = ({ data }) => {
-    remoteData.innerHTML = remoteData.innerHTML + data + '\n';
-  };
-};
-
-rtc.join(sid, uid);
-
-const streams = {};
+let room;
+let rtc;
 let localStream;
-const start = (sc) => {
-  let constraints = {
-    resolution: resolutionBox.options[resolutionBox.selectedIndex].value,
-    codec: codecBox.options[codecBox.selectedIndex].value,
-    audio: true,
-    simulcast: sc,
-  }
-  console.log("getUserMedia constraints=", constraints)
-  Ion.LocalStream.getUserMedia(constraints)
-    .then((media) => {
-      localStream = media;
-      localVideo.srcObject = media;
-      localVideo.autoplay = true;
-      localVideo.controls = true;
-      localVideo.muted = true;
-      joinBtns.style.display = "none";
-      rtc.publish(media);
-      localDataChannel = rtc.createDataChannel(uid);
-    })
-    .catch(console.error);
-};
+let start;
+
+const join = async () => {
+    console.log("[join]: sid="+sid+" uid=", uid)
+    const connector = new Ion.Connector(url, "token");
+    
+    connector.onopen = function (service){
+        console.log("[onopen]: service = ", service.name);
+    };
+
+    connector.onclose = function (service){
+        console.log('[onclose]: service = ' + service.name);
+    };
+
+
+    room = new Ion.Room(connector);
+    
+    room.onjoin = function (result){
+        console.log('[onjoin]: success ' + result.success + ', room info: ' + JSON.stringify(result.room));
+    };
+    
+    room.onleave = function (reason){
+        console.log('[onleave]: leave room, reason ' + reason);
+    };
+    
+    function Uint8ArrayToString(fileData){
+      var dataString = "";
+      for (var i = 0; i < fileData.byteLength; i++) {
+        dataString += String.fromCharCode(fileData[i]);
+      }
+      return dataString;
+    }
+
+    room.onmessage = function (msg){
+        console.log('[onmessage]: Received msg:',  msg)
+        const uint8Arr = new Uint8Array(msg.data);
+        const decodedString = String.fromCharCode.apply(null, uint8Arr);
+        const json  = JSON.parse(decodedString);
+        remoteData.innerHTML = remoteData.innerHTML + json.msg+ '\n';
+    };
+    
+    room.onpeerevent = function (event){
+        switch(event.state) {
+            case Ion.PeerState.JOIN:
+                console.log('[onpeerevent]: Peer ' + event.peer.uid + ' joined');
+                break;
+            case Ion.PeerState.LEAVE:
+                console.log('[onpeerevent]: Peer ' + event.peer.uid + ' left');
+                break;
+            case Ion.PeerState.UPDATE:
+                console.log('[onpeerevent]: Peer ' + event.peer.uid + ' updated');
+                break;
+        }
+    };
+    
+    room.onroominfo = function (info){
+        console.log('[onroominfo]: ' + JSON.stringify(info));
+    };
+    
+    room.ondisconnect = function (dis){
+        console.log('[ondisconnect]: Disconnected from server ' + dis);
+    };
+    
+    const result = await room.join({
+        sid: sid,
+        uid: uid,
+        displayname: 'new peer',
+        extrainfo: '',
+        destination: 'webrtc://ion/peer1',
+        role: Ion.Role.HOST,
+        protocol: Ion.Protocol.WEBRTC ,
+        avatar: 'string',
+        direction: Ion.Direction.INCOMING,
+        vendor: 'string',
+    }, '')
+        .then((result) => {
+            console.log('[join] result: success ' + result?.success + ', room info: ' + JSON.stringify(result?.room));
+            joinBtn.disabled = "true";
+            remoteData.innerHTML = remoteData.innerHTML + JSON.stringify(result) + '\n';
+            leaveBtn.removeAttribute('disabled');
+            publishBtn.removeAttribute('disabled');
+            publishSBtn.removeAttribute('disabled');
+
+            rtc = new Ion.RTC(connector);
+
+            rtc.ontrack = (track, stream) => {
+              console.log("got ", track.kind, " track", track.id, "for stream", stream.id);
+              if (track.kind === "video") {
+                track.onunmute = () => {
+                  if (!streams[stream.id]) {
+                    const remoteVideo = document.createElement("video");
+                    remoteVideo.srcObject = stream;
+                    remoteVideo.autoplay = true;
+                    remoteVideo.muted = true;
+                    remoteVideo.addEventListener("loadedmetadata", function () {
+                      sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
+                    });
+            
+                    remoteVideo.onresize = function () {
+                      sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
+                    };
+                    remotesDiv.appendChild(remoteVideo);
+                    streams[stream.id] = stream;
+                    stream.onremovetrack = () => {
+                      if (streams[stream.id]) {
+                        remotesDiv.removeChild(remoteVideo);
+                        streams[stream.id] = null;
+                      }
+                    };
+                    getStats();
+                  }
+                };
+              }
+            };
+
+            rtc.ontrackevent = function (ev) {
+              console.log("ontrackevent: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
+              if (trackEvent === undefined) {
+                console.log("store trackEvent=", ev)
+                trackEvent = ev;
+              }
+              remoteSignal.innerHTML = remoteSignal.innerHTML + JSON.stringify(ev) + '\n';
+            };
+
+            rtc.join(sid, uid);
+
+            const streams = {};
+
+            start = (sc) => {
+              publishSBtn.disabled = "true";
+              publishBtn.disabled = "true";
+
+              let constraints = {
+                resolution: resolutionBox.options[resolutionBox.selectedIndex].value,
+                codec: codecBox.options[codecBox.selectedIndex].value,
+                audio: true,
+                simulcast: sc,
+              }
+              console.log("getUserMedia constraints=", constraints)
+              Ion.LocalStream.getUserMedia(constraints)
+                .then((media) => {
+                  localStream = media;
+                  localVideo.srcObject = media;
+                  localVideo.autoplay = true;
+                  localVideo.controls = true;
+                  localVideo.muted = true;
+
+                  rtc.publish(media);
+                  localDataChannel = rtc.createDataChannel(uid);
+                })
+                .catch(console.error);
+            };
+            
+    });
+}
 
 const send = () => {
-    if (!localDataChannel) {
-        alert('click "start" first!', '', {
+    if (!room) {
+        alert('join room first!', '', {
         confirmButtonText: 'OK',
       });
       return
     }
-  if (localDataChannel.readyState === "open") {
-    localDataChannel.send(localData.value);
-  }
-};
+    const payload = new Map();
+    payload.set('msg', localData.value);
+    console.log("[send]: sid=", sid, "from=", 'sender', "to=", uid, "payload=", payload);
+    room.message(sid, uid, "all", 'Map', payload);
+}
+
+
+const leave = () => {
+    console.log("[leave]: sid=" + sid + " uid=", uid)
+    room.leave(sid, uid);
+    joinBtn.removeAttribute('disabled');
+    leaveBtn.disabled = "true";
+    publishBtn.disabled = "true";
+    publishSBtn.disabled = "true";
+    location.reload();
+}
 
 const subscribe = () => {
     let layer = subscribeBox.value
-    console.log("subscribe event=", event, "layer=", layer)
+    console.log("subscribe trackEvent=", trackEvent, "layer=", layer)
     var infos = [];
-    event.tracks.forEach(t => {
-        if (t.layer === layer){
+    trackEvent.tracks.forEach(t => {
+        if (t.layer === layer && t.kind === "video"){
+          infos.push({
+            track_id: t.id,
+            mute: t.muted,
+            layer: t.layer,
+            subscribe: true
+          });
+        }
+        
+        if (t.kind === "audio"){
           infos.push({
             track_id: t.id,
             mute: t.muted,
@@ -99,35 +234,7 @@ const subscribe = () => {
     rtc.subscribe(infos);
 }
 
-rtc.ontrack = (track, stream) => {
-  console.log("got ", track.kind, " track", track.id, "for stream", stream.id);
-  if (track.kind === "video") {
-    track.onunmute = () => {
-      if (!streams[stream.id]) {
-        const remoteVideo = document.createElement("video");
-        remoteVideo.srcObject = stream;
-        remoteVideo.autoplay = true;
-        remoteVideo.muted = true;
-        remoteVideo.addEventListener("loadedmetadata", function () {
-          sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
-        });
 
-        remoteVideo.onresize = function () {
-          sizeTag.innerHTML = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`;
-        };
-        remotesDiv.appendChild(remoteVideo);
-        streams[stream.id] = stream;
-        stream.onremovetrack = () => {
-          if (streams[stream.id]) {
-            remotesDiv.removeChild(remoteVideo);
-            streams[stream.id] = null;
-          }
-        };
-        getStats();
-      }
-    };
-  }
-};
 
 const controlLocalVideo = (radio) => {
   if (radio.value === "false") {

@@ -19,7 +19,7 @@ let localDataChannel;
 let url = 'http://localhost:5551';
 let sid = 'ion';
 let uid = "local-user";
-
+let connector;
 let room;
 const join = async () => {
     console.log("[join]: sid="+sid+" uid=", uid)
@@ -32,7 +32,6 @@ const join = async () => {
     connector.onclose = function (service){
         console.log('[onclose]: service = ' + service.name);
     };
-
 
     room = new Ion.Room(connector);
     
@@ -115,8 +114,8 @@ const sendMsg = () => {
     }
     const payload = new Map();
     payload.set('msg', localData.value);
-    console.log("[sendMsg]: sid=", sid, "from=", 'sender', "to=", uid, "payload=", payload);
-    room.message(sid,'sender', uid, 'Map', payload);
+    console.log("[sendMsg]: sid=", sid, "from=", uid, "to=", "all", "payload=", payload);
+    room.message(sid, "sender", "all", 'Map', payload);
 }
 
 
@@ -153,12 +152,15 @@ local.onclose = function (service, err) {
 
 const localRTC = new Ion.RTC(local);
 const remoteRTC = new Ion.RTC(remote);
+let trackEvent;
 
 localRTC.join(sid, uid);
 
 remoteRTC.ontrackevent = function (ev) {
   console.log("[ontrackevent]: \nuid = ", ev.uid, " \nstate = ", ev.state, ", \ntracks = ", JSON.stringify(ev.tracks));
-  event = ev;
+  if (!trackEvent) {
+    trackEvent = ev;
+  }
   remoteData.innerHTML = remoteData.innerHTML + JSON.stringify(ev) + '\n';
 };
 
