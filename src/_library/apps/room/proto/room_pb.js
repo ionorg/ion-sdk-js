@@ -2,15 +2,24 @@
 /**
  * @fileoverview
  * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
 // GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global = (function() {
+  if (this) { return this; }
+  if (typeof window !== 'undefined') { return window; }
+  if (typeof global !== 'undefined') { return global; }
+  if (typeof self !== 'undefined') { return self; }
+  return Function('return this')();
+}.call(null));
 
 goog.exportSymbol('proto.room.AddPeerReply', null, global);
 goog.exportSymbol('proto.room.AddPeerRequest', null, global);
@@ -892,7 +901,7 @@ proto.room.Error.prototype.setReason = function(value) {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.room.Request.oneofGroups_ = [[1,2,3]];
+proto.room.Request.oneofGroups_ = [[1,2,3,4]];
 
 /**
  * @enum {number}
@@ -901,7 +910,8 @@ proto.room.Request.PayloadCase = {
   PAYLOAD_NOT_SET: 0,
   JOIN: 1,
   LEAVE: 2,
-  SENDMESSAGE: 3
+  SENDMESSAGE: 3,
+  UPDATEROOM: 4
 };
 
 /**
@@ -944,7 +954,8 @@ proto.room.Request.toObject = function(includeInstance, msg) {
   var f, obj = {
     join: (f = msg.getJoin()) && proto.room.JoinRequest.toObject(includeInstance, f),
     leave: (f = msg.getLeave()) && proto.room.LeaveRequest.toObject(includeInstance, f),
-    sendmessage: (f = msg.getSendmessage()) && proto.room.SendMessageRequest.toObject(includeInstance, f)
+    sendmessage: (f = msg.getSendmessage()) && proto.room.SendMessageRequest.toObject(includeInstance, f),
+    updateroom: (f = msg.getUpdateroom()) && proto.room.UpdateRoomRequest.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -995,6 +1006,11 @@ proto.room.Request.deserializeBinaryFromReader = function(msg, reader) {
       var value = new proto.room.SendMessageRequest;
       reader.readMessage(value,proto.room.SendMessageRequest.deserializeBinaryFromReader);
       msg.setSendmessage(value);
+      break;
+    case 4:
+      var value = new proto.room.UpdateRoomRequest;
+      reader.readMessage(value,proto.room.UpdateRoomRequest.deserializeBinaryFromReader);
+      msg.setUpdateroom(value);
       break;
     default:
       reader.skipField();
@@ -1047,6 +1063,14 @@ proto.room.Request.serializeBinaryToWriter = function(message, writer) {
       3,
       f,
       proto.room.SendMessageRequest.serializeBinaryToWriter
+    );
+  }
+  f = message.getUpdateroom();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.room.UpdateRoomRequest.serializeBinaryToWriter
     );
   }
 };
@@ -1160,6 +1184,43 @@ proto.room.Request.prototype.clearSendmessage = function() {
  */
 proto.room.Request.prototype.hasSendmessage = function() {
   return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional UpdateRoomRequest updateRoom = 4;
+ * @return {?proto.room.UpdateRoomRequest}
+ */
+proto.room.Request.prototype.getUpdateroom = function() {
+  return /** @type{?proto.room.UpdateRoomRequest} */ (
+    jspb.Message.getWrapperField(this, proto.room.UpdateRoomRequest, 4));
+};
+
+
+/**
+ * @param {?proto.room.UpdateRoomRequest|undefined} value
+ * @return {!proto.room.Request} returns this
+*/
+proto.room.Request.prototype.setUpdateroom = function(value) {
+  return jspb.Message.setOneofWrapperField(this, 4, proto.room.Request.oneofGroups_[0], value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.room.Request} returns this
+ */
+proto.room.Request.prototype.clearUpdateroom = function() {
+  return this.setUpdateroom(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.room.Request.prototype.hasUpdateroom = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

@@ -166,6 +166,10 @@ export class Room implements Service {
         return this._rpc?.sendMessage(sid, from, to, mineType, data);
     }
 
+    async updateRoom(roomInfo: RoomInfo) : Promise<void> {
+        return this._rpc?.updateRoom(roomInfo);
+    }
+
     connect(): void {
         if (!this._rpc) {
             this._rpc = new RoomGRPCClient(this, this.connector);
@@ -343,6 +347,27 @@ class RoomGRPCClient extends EventEmitter {
             };
             this.addListener('leave-reply', handler);
         });
+    }
+
+    async updateRoom(rinfo: RoomInfo) {
+        const request = new room.Request();
+        const updateRoom = new room.UpdateRoomRequest();
+
+        const r = new room.Room();
+        r.setSid(rinfo.sid);
+        r.setName(rinfo.name);
+        r.setLock(rinfo.lock);
+        r.setPassword(rinfo.password);
+        r.setDescription(rinfo.description);
+        r.setMaxpeers(rinfo.maxpeers);
+        updateRoom.setRoom(r);
+        request.setUpdateroom(updateRoom);
+        this._client.send(request);
+
+        return new Promise<void>((resolve, reject) => {
+            // TODO: handle reply
+            resolve();
+        });        
     }
 
     mapToObj(map: Map<string, any>){
