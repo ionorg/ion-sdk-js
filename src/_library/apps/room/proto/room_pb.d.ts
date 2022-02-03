@@ -43,6 +43,11 @@ export class Request extends jspb.Message {
   getSendmessage(): SendMessageRequest | undefined;
   setSendmessage(value?: SendMessageRequest): void;
 
+  hasUpdateroom(): boolean;
+  clearUpdateroom(): void;
+  getUpdateroom(): UpdateRoomRequest | undefined;
+  setUpdateroom(value?: UpdateRoomRequest): void;
+
   getPayloadCase(): Request.PayloadCase;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Request.AsObject;
@@ -59,6 +64,7 @@ export namespace Request {
     join?: JoinRequest.AsObject,
     leave?: LeaveRequest.AsObject,
     sendmessage?: SendMessageRequest.AsObject,
+    updateroom?: UpdateRoomRequest.AsObject,
   }
 
   export enum PayloadCase {
@@ -66,6 +72,7 @@ export namespace Request {
     JOIN = 1,
     LEAVE = 2,
     SENDMESSAGE = 3,
+    UPDATEROOM = 4,
   }
 }
 
