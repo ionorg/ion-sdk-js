@@ -253,10 +253,6 @@ export class LocalStream extends MediaStream {
       const cap = RTCRtpSender.getCapabilities(kind);
       if (!cap) return;
       let selCodec: RTCRtpCodecCapability | undefined;
-      // 42e01f for safari/chrome/firefox cross-browser compatibility
-      if (kind === 'video' && this.constraints.codec && this.constraints.codec.toLowerCase() === 'h264') {
-        this.constraints.preferredCodecProfile = '42e01f'
-      }
       if (this.constraints.preferredCodecProfile && kind === 'video') {
         const allCodecProfiles = cap.codecs.filter(
           (c) => c.mimeType.toLowerCase() === `video/${this.constraints.codec.toLowerCase()}`,
@@ -302,8 +298,6 @@ export class LocalStream extends MediaStream {
         });
       }
     } else {
-      this.addTrack(next);
-
       if (this.pc) {
         this.publishTrack(next);
       }
@@ -359,6 +353,8 @@ export class LocalStream extends MediaStream {
     };
 
     const prev = this.getTrack(kind);
+    // Firefox/Safari have issues when multiple input devices are used by same origin. We need to stop previous track before creating new one.
+    if (prev) prev.stop()
     const next = await this.getNewTrack(kind);
 
     this.updateTrack(next, prev);
