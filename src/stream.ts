@@ -354,7 +354,7 @@ export class LocalStream extends MediaStream {
 
     const prev = this.getTrack(kind);
     // Firefox/Safari have issues when multiple input devices are used by same origin. We need to stop previous track before creating new one.
-    if (prev) prev.stop()
+    if (prev) prev.stop();
     const next = await this.getNewTrack(kind);
 
     this.updateTrack(next, prev);

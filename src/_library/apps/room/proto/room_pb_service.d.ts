@@ -1,8 +1,8 @@
 // package: room
 // file: apps/room/proto/room.proto
 
-import * as apps_room_proto_room_pb from "../../../apps/room/proto/room_pb";
-import {grpc} from "@improbable-eng/grpc-web";
+import * as apps_room_proto_room_pb from '../../../apps/room/proto/room_pb';
+import { grpc } from '@improbable-eng/grpc-web';
 
 type RoomServiceCreateRoom = {
   readonly methodName: string;
@@ -102,8 +102,8 @@ export class RoomSignal {
   static readonly Signal: RoomSignalSignal;
 }
 
-export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
-export type Status = { details: string, code: number; metadata: grpc.Metadata }
+export type ServiceError = { message: string; code: number; metadata: grpc.Metadata };
+export type Status = { details: string; code: number; metadata: grpc.Metadata };
 
 interface UnaryResponse {
   cancel(): void;
@@ -137,74 +137,74 @@ export class RoomServiceClient {
   createRoom(
     requestMessage: apps_room_proto_room_pb.CreateRoomRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.CreateRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.CreateRoomReply | null) => void,
   ): UnaryResponse;
   createRoom(
     requestMessage: apps_room_proto_room_pb.CreateRoomRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.CreateRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.CreateRoomReply | null) => void,
   ): UnaryResponse;
   updateRoom(
     requestMessage: apps_room_proto_room_pb.UpdateRoomRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.UpdateRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.UpdateRoomReply | null) => void,
   ): UnaryResponse;
   updateRoom(
     requestMessage: apps_room_proto_room_pb.UpdateRoomRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.UpdateRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.UpdateRoomReply | null) => void,
   ): UnaryResponse;
   endRoom(
     requestMessage: apps_room_proto_room_pb.EndRoomRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.EndRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.EndRoomReply | null) => void,
   ): UnaryResponse;
   endRoom(
     requestMessage: apps_room_proto_room_pb.EndRoomRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.EndRoomReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.EndRoomReply | null) => void,
   ): UnaryResponse;
   getRooms(
     requestMessage: apps_room_proto_room_pb.GetRoomsRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.GetRoomsReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.GetRoomsReply | null) => void,
   ): UnaryResponse;
   getRooms(
     requestMessage: apps_room_proto_room_pb.GetRoomsRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.GetRoomsReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.GetRoomsReply | null) => void,
   ): UnaryResponse;
   addPeer(
     requestMessage: apps_room_proto_room_pb.AddPeerRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.AddPeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.AddPeerReply | null) => void,
   ): UnaryResponse;
   addPeer(
     requestMessage: apps_room_proto_room_pb.AddPeerRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.AddPeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.AddPeerReply | null) => void,
   ): UnaryResponse;
   updatePeer(
     requestMessage: apps_room_proto_room_pb.UpdatePeerRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.UpdatePeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.UpdatePeerReply | null) => void,
   ): UnaryResponse;
   updatePeer(
     requestMessage: apps_room_proto_room_pb.UpdatePeerRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.UpdatePeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.UpdatePeerReply | null) => void,
   ): UnaryResponse;
   removePeer(
     requestMessage: apps_room_proto_room_pb.RemovePeerRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.RemovePeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.RemovePeerReply | null) => void,
   ): UnaryResponse;
   removePeer(
     requestMessage: apps_room_proto_room_pb.RemovePeerRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.RemovePeerReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.RemovePeerReply | null) => void,
   ): UnaryResponse;
   getPeers(
     requestMessage: apps_room_proto_room_pb.GetPeersRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.GetPeersReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.GetPeersReply | null) => void,
   ): UnaryResponse;
   getPeers(
     requestMessage: apps_room_proto_room_pb.GetPeersRequest,
-    callback: (error: ServiceError|null, responseMessage: apps_room_proto_room_pb.GetPeersReply|null) => void
+    callback: (error: ServiceError | null, responseMessage: apps_room_proto_room_pb.GetPeersReply | null) => void,
   ): UnaryResponse;
 }
 
@@ -214,4 +214,3 @@ export class RoomSignalClient {
   constructor(serviceHost: string, options?: grpc.RpcOptions);
   signal(metadata?: grpc.Metadata): BidirectionalStream<apps_room_proto_room_pb.Request, apps_room_proto_room_pb.Reply>;
 }
-

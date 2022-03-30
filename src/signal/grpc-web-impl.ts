@@ -24,7 +24,7 @@ class IonSFUGRPCWebSignal implements Signal {
     }) as grpc.Client<pb.SignalRequest, pb.SignalReply>;
 
     client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) => {
-      this._onclose?.call(this, new CustomEvent("sfu",{ "detail": {status, statusMessage}}));
+      this._onclose?.call(this, new CustomEvent('sfu', { detail: { status, statusMessage } }));
     });
 
     client.onMessage((reply: pb.SignalReply) => {
@@ -60,7 +60,6 @@ class IonSFUGRPCWebSignal implements Signal {
   }
 
   join(sid: string, uid: string, offer: RTCSessionDescriptionInit) {
-
     const request = new pb.SignalRequest();
     const join = new pb.JoinRequest();
     join.setSid(sid);
