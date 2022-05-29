@@ -55,7 +55,8 @@ export class Transport {
     };
 
     this.pc.oniceconnectionstatechange = async (e) => {
-      if (this.pc.iceConnectionState === 'disconnected') {
+      // iOS iceConnectionState can go straight to "failed" without emitting "disconnected"
+      if (this.pc.iceConnectionState === 'disconnected' || this.pc.iceConnectionState === 'failed') {
         if (this.pc.restartIce !== undefined) {
           // this will trigger onNegotiationNeeded
           this.pc.restartIce();
