@@ -7,7 +7,7 @@ interface VideoConstraints {
   };
 }
 
-const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd'] as const;
+const resolutions = ['qvga', 'vga', 'shd', 'hd', 'fhd', 'qhd', 'uhd'] as const;
 
 export const VideoConstraints: VideoConstraints = {
   qvga: {
@@ -15,13 +15,13 @@ export const VideoConstraints: VideoConstraints = {
       width: { ideal: 320 },
       height: { ideal: 180 },
       frameRate: {
-        ideal: 15,
+        ideal: 30,
         max: 30,
       },
     },
     encodings: {
       maxBitrate: 150_000,
-      maxFramerate: 15.0,
+      maxFramerate: 30.0,
     },
   },
   vga: {
@@ -91,6 +91,20 @@ export const VideoConstraints: VideoConstraints = {
     },
     encodings: {
       maxBitrate: 8_000_000,
+      maxFramerate: 30.0,
+    },
+  },
+  uhd: {
+    resolution: {
+      width: { ideal: 4096 },
+      height: { ideal: 2048 },
+      frameRate: {
+        ideal: 30,
+        max: 60,
+      },
+    },
+    encodings: {
+      maxBitrate: 20_000_000,
       maxFramerate: 30.0,
     },
   },

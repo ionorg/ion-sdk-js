@@ -1,5 +1,6 @@
 import { Signal } from './signal';
 import { LocalStream, makeRemote, RemoteStream } from './stream';
+import * as sdputils from './sdputils'
 
 const API_CHANNEL = 'ion-sfu';
 const ERR_NO_SESSION = 'no active session, join first';
@@ -139,6 +140,7 @@ export default class Client {
     });
 
     const offer = await this.transports[Role.pub].pc.createOffer();
+
     await this.transports[Role.pub].pc.setLocalDescription(offer);
     const answer = await this.signal.join(sid, uid, offer);
     await this.transports[Role.pub].pc.setRemoteDescription(answer);
@@ -238,8 +240,17 @@ export default class Client {
     let answer: RTCSessionDescriptionInit | undefined;
     try {
       offer = await this.transports[Role.pub].pc.createOffer({ iceRestart });
+      // Set video send bitrate
+      // var opts = {
+      //   videoSendBitrate: 20000,
+      //   videoSendInitialBitrate: 5000
+      // };
+      // offer.sdp = sdputils.maybeSetVideoSendInitialBitRate(offer.sdp, opts);
+      // offer.sdp = sdputils.maybeSetVideoSendBitRate(offer.sdp, opts);
+      //offer.sdp = offer.sdp.replace(/(a=fmtp:\d+ .*level-asymmetry-allowed=.*)\r\n/gm, "$1;x-google-start-bitrate=300;x-google-min-bitrate=500;x-google-max-bitrate=500\r\n");
       await this.transports[Role.pub].pc.setLocalDescription(offer);
       answer = await this.signal.offer(offer);
+      console.log("ANSWER = ", answer);
       await this.transports[Role.pub].pc.setRemoteDescription(answer);
     } catch (err) {
       /* tslint:disable-next-line:no-console */
