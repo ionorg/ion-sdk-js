@@ -370,6 +370,15 @@ class RoomGRPCClient extends EventEmitter {
         });        
     }
 
+    async updatePeer(pinfo: RoomInfo) {
+        const request = new room.Request()
+        const updatePeer = new room.UpdatePeerRequest();
+        const p = new room.Peer();
+        updatePeer.setPeer(p);
+        
+        // TODO
+    }
+
     mapToObj(map: Map<string, any>){
         if (!map) {
             return {};

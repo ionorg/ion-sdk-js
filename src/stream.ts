@@ -83,7 +83,7 @@ export const VideoConstraints: VideoConstraints = {
   qhd: {
     resolution: {
       width: { ideal: 2560 },
-      height: { ideal: 1440 },
+      height: { ideal: 1280 },
       frameRate: {
         ideal: 30,
         max: 60,
@@ -269,7 +269,7 @@ export class LocalStream extends MediaStream {
       let selCodec: RTCRtpCodecCapability | undefined;
       // 42e01f for safari/chrome/firefox cross-browser compatibility
       if (kind === 'video' && this.constraints.codec && this.constraints.codec.toLowerCase() === 'h264') {
-        this.constraints.preferredCodecProfile = '42e01f'
+        //this.constraints.preferredCodecProfile = '42e01f'
       }
       if (this.constraints.preferredCodecProfile && kind === 'video') {
         const allCodecProfiles = cap.codecs.filter(

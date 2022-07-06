@@ -249,6 +249,8 @@ class RTCGRPCSignal implements Signal {
     }
     constructor(service: Service, connector: Connector) {
         this.connector = connector;
+        // Eugene G: Remove limit on max events.
+        this._event.setMaxListeners(0);
         const client = grpc.client(sfu_rpc.RTC.Signal, this.connector.grpcClientRpcOptions()) as grpc.Client<pb.Request, pb.Reply>;
         client.onEnd((status: grpc.Code, statusMessage: string, trailers: grpc.Metadata) =>
             connector.onEnd(service, status, statusMessage, trailers));
